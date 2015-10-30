@@ -1864,17 +1864,6 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 	g_Number_of_GeneratedVehicles = 0;
 
 
-	//if(Iteration>= g_settings.IteraitonNoStartSignalOptimization && ((Iteration - g_settings.IteraitonNoStartSignalOptimization)%g_settings.IteraitonStepSizeSignalOptimization ==0))
-	//{
-	//	for(int i=0; i< g_NodeVector.size(); i++)
-	//{
-	//	g_NodeVector[i].QuickSignalOptimization ();
-	//
-	//}
-
-	//}
-
-
 	for (unsigned li = 0; li < g_LinkVector.size(); li++)
 	{
 		DTALink* pLink = g_LinkVector[li];
@@ -1976,36 +1965,6 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 		//}
 		//// load into loading buffer
 	}
-	//for(unsigned li = 0; li< g_LinkVector.size(); li++)
-	//{
-	//	DTALink* pLink = g_LinkVector[li];
-
-	//	if(pLink ->LoadingBufferVector!=NULL)
-	//		delete pLink ->LoadingBufferVector;
-
-	//	if(pLink ->LoadingBufferSize >=1)
-	//	{
-	//		pLink ->LoadingBufferVector = new int[pLink ->LoadingBufferSize];
-	//		pLink ->LoadingBufferSize = 0; // reset
-	//	}
-	//}
-
-	//// assign vehicles to loading buffer
-	//for (std::vector<DTAVehicle*>::iterator iterVehicle = g_VehicleVector.begin(); iterVehicle != g_VehicleVector.end(); iterVehicle++)
-	//{
-	//	DTAVehicle* pVeh = (*iterVehicle);
-	//	pVeh->PreTripReset();
-
-	//	if(pVeh->m_NodeSize >=2)  // has feasible path
-	//	{
-	//		int FirstLink =pVeh->m_LinkAry[0].LinkNo;
-
-	//		DTALink* pLink = g_LinkVector[FirstLink];
-	//		pLink ->LoadingBufferVector [pLink ->LoadingBufferSize ++] = pVeh->m_AgentID ;
-	//	}
-	//	// load into loading buffer
-	//}
-
 
 	cout << "start simulation process..." << endl;
 
@@ -2031,18 +1990,6 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 
 	for (time = g_DemandLoadingStartTimeInMin; time < min(g_PlanningHorizon, g_SimululationReadyToEnd); meso_simulation_time_interval_no++)  // the simulation time clock is advanced by 0.1 seconds
 	{
-
-		//if(g_TrafficFlowModelFlag == trm_car_following) // car following model
-		//{
-		//time= g_DemandLoadingStartTimeInMin+ micro_simulation_time_interval_no*1.0/60.0;
-		//meso_simulation_time_interval_no = micro_simulation_time_interval_no/6;
-		//}else
-		//{
-		//time= g_DemandLoadingStartTimeInMin+ meso_simulation_time_interval_no*g_DTASimulationInterval;
-		//
-		//}
-
-
 		time = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no*g_DTASimulationInterval;
 
 

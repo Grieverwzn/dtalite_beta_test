@@ -245,7 +245,7 @@ void g_AgentBasedAssisnment()  // this is an adaptation of OD trip based assignm
 
 		g_SetupTDTollValue(iteration);
 
-		
+
 
 
 
@@ -291,7 +291,7 @@ void g_AgentBasedAssisnment()  // this is an adaptation of OD trip based assignm
 			}
 			g_GenerateVehicleData_ODEstimation();
 		}
-		cout << "---- Network Loading for Iteration " << iteration+1 << "----" << endl;
+		cout << "---- Network Loading for Iteration " << iteration + 1 << "----" << endl;
 
 		NetworkLoadingOutput SimuOutput;
 

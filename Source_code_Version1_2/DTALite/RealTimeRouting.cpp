@@ -956,7 +956,7 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 	// copy existing link number (and remaining links)
 
 
-	for (int i = 0; i< pVeh->m_NodeSize - 1; i++)
+	for (int i = 0; i < pVeh->m_NodeSize - 1; i++)
 	{
 		CurrentPathLinkList[i] = pVeh->m_LinkAry[i].LinkNo;
 		AbsArrivalTimeOnDSNVector[i] = pVeh->m_LinkAry[i].AbsArrivalTimeOnDSN;
@@ -964,7 +964,7 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 
 
 	_proxy_ABM_log(0, "** original agent %d's path sequence = ", pVeh->m_AgentID);
-	for (int i = 0; i< pVeh->m_NodeSize -1 ; i++)
+	for (int i = 0; i < pVeh->m_NodeSize - 1; i++)
 	{
 		int link_no = pVeh->m_LinkAry[i].LinkNo;
 
@@ -986,45 +986,45 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 
 	int count = pVeh->m_SimLinkSequenceNo;
 
-		count += 1; // for detour
-	
-
-		std::vector<int> detour_link_sequence;
+	count += 1; // for detour
 
 
-		for (int i = 0; i < detour_node_sequence.size(); i++)
+	std::vector<int> detour_link_sequence;
+
+
+	for (int i = 0; i < detour_node_sequence.size(); i++)
+	{
+
+		if (i >= 1)
 		{
-
-			if (i >= 1)
+			if (g_LinkMap.find(GetLinkStringID(detour_node_sequence[i - 1], detour_node_sequence[i])) != g_LinkMap.end())
 			{
-				if (g_LinkMap.find(GetLinkStringID(detour_node_sequence[i - 1], detour_node_sequence[i])) != g_LinkMap.end())
-				{
-				
+
 				DTALink* pDetourLink = g_LinkMap[GetLinkStringID(detour_node_sequence[i - 1], detour_node_sequence[i])];
 				if (pDetourLink != NULL)
 				{
-				
-				detour_link_sequence.push_back(pDetourLink->m_LinkNo);
-				}
+
+					detour_link_sequence.push_back(pDetourLink->m_LinkNo);
 				}
 			}
-
 		}
 
-
-		for (int ll = 0; ll < detour_link_sequence.size(); ll++)
-			{
-			CurrentPathLinkList[count++] = detour_link_sequence[ll];
-				//			CurrentTime+= g_LinkVector[is.DetourLinkArray [ll]]->m_FreeFlowTravelTime;  // add travel time along the path to get the starting time at the end of subpath
-			}
+	}
 
 
-		if (detour_link_sequence.size() >=1)
-			StartingNodeID = g_LinkVector[detour_link_sequence[detour_link_sequence.size() - 1]]->m_ToNodeID;
-		else if (pVeh->m_SimLinkSequenceNo>=0)
-			StartingNodeID = g_LinkVector[pVeh->m_SimLinkSequenceNo]->m_ToNodeID;
+	for (int ll = 0; ll < detour_link_sequence.size(); ll++)
+	{
+		CurrentPathLinkList[count++] = detour_link_sequence[ll];
+		//			CurrentTime+= g_LinkVector[is.DetourLinkArray [ll]]->m_FreeFlowTravelTime;  // add travel time along the path to get the starting time at the end of subpath
+	}
 
-	if (pVeh->m_OriginNodeID < 0 || pVeh->m_DestinationNodeID <0)
+
+	if (detour_link_sequence.size() >= 1)
+		StartingNodeID = g_LinkVector[detour_link_sequence[detour_link_sequence.size() - 1]]->m_ToNodeID;
+	else if (pVeh->m_SimLinkSequenceNo >= 0)
+		StartingNodeID = g_LinkVector[pVeh->m_SimLinkSequenceNo]->m_ToNodeID;
+
+	if (pVeh->m_OriginNodeID < 0 || pVeh->m_DestinationNodeID < 0)
 	{
 
 		cout << "m_OriginNodeID < 0 || m_DestinationNodeID <0" << endl;
@@ -1041,7 +1041,7 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 	// compare the newly calculated path and existing path
 
 	int bSwitchFlag = 0;
-	for (int i = 0; i<NodeSize - 1; i++)
+	for (int i = 0; i < NodeSize - 1; i++)
 	{
 
 		if (CurrentPathLinkList[count] != NewSubPathLinkList[i])
@@ -1054,40 +1054,10 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 
 	NodeSize = count + 1;
 
-	/*	for (int i = 0; i < NodeSize - 1; i++)
-	{
-	DTALink* pLink  = g_LinkIDMap[CurrentPathLinkList[i]];
-	TRACE("%d ->%d\n", pLink->m_FromNodeNumber, pLink->m_ToNodeNumber);
-
-	}*/
-
 	if (NodeSize <= 1)
 		return;
 
 
-	//			// add link to VMS respons link
-	//#ifdef  _large_memory_usage_lr
-	//			bool bLinkAdded = false;
-	//			for(int i =0; i< pVeh->m_VMSResponseVector.size(); i++)
-	//			{
-	//				if(pVeh->m_VMSResponseVector[i].LinkNo == CurrentLinkID)
-	//				{
-	//					bLinkAdded = true;
-	//					break;
-	//				}
-	//
-	//			}
-	//
-	//			if(!bLinkAdded)
-	//			{
-	//				DTAVMSRespone vms;
-	//				vms.LinkNo = CurrentLinkID;
-	//				vms.ResponseTime = current_time;
-	//				vms.SwitchFlag = bSwitchFlag;
-	//				pVeh->m_VMSResponseVector.push_back (vms);
-	//
-	//			}
-	//#endif
 
 	if (bSwitchFlag == 0)
 		return;
@@ -1123,7 +1093,7 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 		int NodeNumberSum = 0;
 		float Distance = 0;
 
-		for (int i = 0; i< NodeSize - 1; i++)
+		for (int i = 0; i < NodeSize - 1; i++)
 		{
 			pVeh->m_LinkAry[i].AbsArrivalTimeOnDSN = AbsArrivalTimeOnDSNVector[i];
 
@@ -1143,7 +1113,7 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 		}
 
 		_proxy_ABM_log(0, "** after path switch, updated agent %d's path sequence = ", pVeh->m_AgentID);
-		for (int i = 0; i< pVeh->m_NodeSize - 1; i++)
+		for (int i = 0; i < pVeh->m_NodeSize - 1; i++)
 		{
 			int link_no = pVeh->m_LinkAry[i].LinkNo;
 
@@ -1176,7 +1146,9 @@ void g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(int VehicleID)
 	bool bGeneralizedCostFlag = false;
 	bool bDebugFlag = false;
 
-	int NodeSize = g_PrevailingTimeNetwork_MP[processor_id].FindBestPathWithVOT(pVeh->m_OriginZoneID, pVeh->m_OriginNodeID, pVeh->m_DepartureTime, pVeh->m_DestinationZoneID, pVeh->m_DestinationNodeID, pVeh->m_DemandType, pVeh->m_VOT, PathLinkList, TotalCost, bGeneralizedCostFlag, bDebugFlag);
+	int NodeSize = g_PrevailingTimeNetwork_MP[processor_id].FindBestPathWithVOT(pVeh->m_OriginZoneID, pVeh->m_OriginNodeID, 
+		pVeh->m_DepartureTime, pVeh->m_DestinationZoneID, pVeh->m_DestinationNodeID, 
+		pVeh->m_DemandType, pVeh->m_VOT, PathLinkList, TotalCost, bGeneralizedCostFlag, bDebugFlag);
 
 	if (pVeh->m_LinkAry != NULL)  // delete the old path
 	{
@@ -1234,122 +1206,122 @@ void g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(int VehicleID)
 void g_ReadRealTimeSimulationSettingsFile()
 {
 
-		// we enable information updating for real-time simulation mode
-		g_bInformationUpdatingAndReroutingFlag = true;
+	// we enable information updating for real-time simulation mode
+	g_bInformationUpdatingAndReroutingFlag = true;
 
-		int record_count = 0;
-			_proxy_ABM_log(0, "read configuration from DTASettings.ini.");
+	int record_count = 0;
+	_proxy_ABM_log(0, "read configuration from DTASettings.ini.");
 
-		std:string timestamp_in_string;
-			std::string  break_point_flag;
-			int output_TD_start_time_in_min = 0;
+	std::string timestamp_in_string;
+	std::string break_point_flag;
+	int output_TD_start_time_in_min = 0;
 
-			int output_MOE_aggregation_time_interval_in_min = 1;
-			int update_attribute_aggregation_time_interval_in_min = 1;
-
-
-
-			std::string output_TD_link_travel_time_file, output_TD_link_MOE_file,
-				update_trip_file, update_TD_link_attribute_file;
-
-			int day_no = 0;
-
-			int start_time_in_second = g_DemandLoadingStartTimeInMin * 60;
-			int end_time_in_second = g_DemandLoadingEndTimeInMin * 60;
-
-			int RT_Input_LinkAttribute = g_GetPrivateProfileInt("ABM_integration", "RT_Input_LinkAttribute_Frequency_in_Seconds", 0, g_DTASettingFileName);
-			int RT_Input_Update_Agent = g_GetPrivateProfileInt("ABM_integration", "RT_Input_Agent_Frequency_in_Seconds", 0, g_DTASettingFileName);
-			int RT_Input_Routing_Policy = g_GetPrivateProfileInt("ABM_integration", "RT_Input_Routing_Policy_Frequency_in_Seconds", 0, g_DTASettingFileName);
-
-			if (RT_Input_Routing_Policy > 0 )
-				g_use_global_path_set_flag = 1;
-
-			int RT_Output_LinkMOE = g_GetPrivateProfileInt("ABM_integration", "RT_Output_LinkMOE_Frequency_in_Seconds", 0, g_DTASettingFileName);
-			_proxy_ABM_log(0, "-- output link MOE every %d (min)\n", RT_Output_LinkMOE/60);
-
-			int RT_Output_PathMOE = 15 * 60;
-			int RT_Output_ODMOE = g_GetPrivateProfileInt("ABM_integration", "RT_Output_Routing_Policy_Frequency_in_Seconds", 0, g_DTASettingFileName);
-			int RT_Output_Complete_Agent = g_GetPrivateProfileInt("ABM_integration", "RT_Output_Complete_Agent_Frequency_in_Seconds", 0, g_DTASettingFileName);
-			int RT_Output_Tagged_Agent = g_GetPrivateProfileInt("ABM_integration", "RT_Output_Tagged_Agent_Frequency_in_Seconds", 0, g_DTASettingFileName);;
-			int RT_Input_DMS = -1;
-
-			_proxy_ABM_log(0, "Real time link MOE output time period: %d->%d (sec),  %d->%d (min), for every %d sec \n", 
-				start_time_in_second, end_time_in_second, start_time_in_second / 60, end_time_in_second / 60, RT_Output_LinkMOE);
-
-			_proxy_ABM_log(0, "Real time path MOE output for every %d sec (%d min) \n", RT_Output_PathMOE, RT_Output_PathMOE / 60);
-			_proxy_ABM_log(0, "Real time OD MOE output for every %d sec  (%d min) \n", RT_Output_ODMOE , RT_Output_ODMOE / 60);
-			_proxy_ABM_log(0, "Real time trip-complete agent output for every %d sec  (%d min) \n", RT_Output_Complete_Agent, RT_Output_Complete_Agent / 60);
-			_proxy_ABM_log(0, "Real time tagged agent output (based on input_tag_settings.csv)  for every %d sec  (%d min) \n", RT_Output_Tagged_Agent, RT_Output_Tagged_Agent / 60);
-			_proxy_ABM_log(0, "Real time link attribute input for every %d sec  (%d min) \n", RT_Input_LinkAttribute, RT_Input_LinkAttribute / 60);
-			_proxy_ABM_log(0, "Real time link attribute input: Accepted Field: from_node_id,to_node_id,link_outflow_capacity,link_storage_capacity,speed_limit,demand_type1,demand_type2,demand_typeX\n");
-			_proxy_ABM_log(0, "Real time agent input for every %d sec  (%d min) \n", RT_Input_Update_Agent, RT_Input_Update_Agent / 60);
-			_proxy_ABM_log(0, "Real time DMS input for every %d sec  (%d min) \n", RT_Input_DMS, RT_Input_DMS / 60);
-			_proxy_ABM_log(0, "Real time routing policy  input for every %d sec  (%d min) \n", RT_Input_Routing_Policy, RT_Input_Routing_Policy / 60);
-
-			for (int timestamp_in_second = start_time_in_second; timestamp_in_second <= end_time_in_second; timestamp_in_second++)
-			{
-				g_RealTimeSimulationSettingsMap[timestamp_in_second].break_point_flag = true;
-
-				if (break_point_flag.find("break_and_wait") != string::npos)
-				{
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].break_and_wait_flag = true;
-
-				}
-
-				int hour = timestamp_in_second / 3600;
-				int min = (timestamp_in_second - hour * 3600)/60;
-				int sec = timestamp_in_second - hour * 3600 - min * 60;
+	int output_MOE_aggregation_time_interval_in_min = 1;
+	int update_attribute_aggregation_time_interval_in_min = 1;
 
 
 
-				CString time_str;
-				time_str.Format("_%02dh%02dm%02ds", hour, min, sec);
+	std::string output_TD_link_travel_time_file, output_TD_link_MOE_file,
+		update_trip_file, update_TD_link_attribute_file;
 
-				string timestamp_str = CString2StdString(time_str);
+	int day_no = 0;
+
+	int start_time_in_second = g_DemandLoadingStartTimeInMin * 60;
+	int end_time_in_second = g_DemandLoadingEndTimeInMin * 60;
+
+	int RT_Input_LinkAttribute = g_GetPrivateProfileInt("ABM_integration", "RT_Input_LinkAttribute_Frequency_in_Seconds", 0, g_DTASettingFileName);
+	int RT_Input_Update_Agent = g_GetPrivateProfileInt("ABM_integration", "RT_Input_Agent_Frequency_in_Seconds", 0, g_DTASettingFileName);
+	int RT_Input_Routing_Policy = g_GetPrivateProfileInt("ABM_integration", "RT_Input_Routing_Policy_Frequency_in_Seconds", 0, g_DTASettingFileName);
+
+	if (RT_Input_Routing_Policy > 0)
+		g_use_global_path_set_flag = 1;
+
+	int RT_Output_LinkMOE = g_GetPrivateProfileInt("ABM_integration", "RT_Output_LinkMOE_Frequency_in_Seconds", 0, g_DTASettingFileName);
+	_proxy_ABM_log(0, "-- output link MOE every %d (min)\n", RT_Output_LinkMOE / 60);
+
+	int RT_Output_PathMOE = 15 * 60;
+	int RT_Output_ODMOE = g_GetPrivateProfileInt("ABM_integration", "RT_Output_Routing_Policy_Frequency_in_Seconds", 0, g_DTASettingFileName);
+	int RT_Output_Complete_Agent = g_GetPrivateProfileInt("ABM_integration", "RT_Output_Complete_Agent_Frequency_in_Seconds", 0, g_DTASettingFileName);
+	int RT_Output_Tagged_Agent = g_GetPrivateProfileInt("ABM_integration", "RT_Output_Tagged_Agent_Frequency_in_Seconds", 0, g_DTASettingFileName);;
+	int RT_Input_DMS = -1;
+
+	_proxy_ABM_log(0, "Real time link MOE output time period: %d->%d (sec),  %d->%d (min), for every %d sec \n",
+		start_time_in_second, end_time_in_second, start_time_in_second / 60, end_time_in_second / 60, RT_Output_LinkMOE);
+
+	_proxy_ABM_log(0, "Real time path MOE output for every %d sec (%d min) \n", RT_Output_PathMOE, RT_Output_PathMOE / 60);
+	_proxy_ABM_log(0, "Real time OD MOE output for every %d sec  (%d min) \n", RT_Output_ODMOE, RT_Output_ODMOE / 60);
+	_proxy_ABM_log(0, "Real time trip-complete agent output for every %d sec  (%d min) \n", RT_Output_Complete_Agent, RT_Output_Complete_Agent / 60);
+	_proxy_ABM_log(0, "Real time tagged agent output (based on input_tag_settings.csv)  for every %d sec  (%d min) \n", RT_Output_Tagged_Agent, RT_Output_Tagged_Agent / 60);
+	_proxy_ABM_log(0, "Real time link attribute input for every %d sec  (%d min) \n", RT_Input_LinkAttribute, RT_Input_LinkAttribute / 60);
+	_proxy_ABM_log(0, "Real time link attribute input: Accepted Field: from_node_id,to_node_id,link_outflow_capacity,link_storage_capacity,speed_limit,demand_type1,demand_type2,demand_typeX\n");
+	_proxy_ABM_log(0, "Real time agent input for every %d sec  (%d min) \n", RT_Input_Update_Agent, RT_Input_Update_Agent / 60);
+	_proxy_ABM_log(0, "Real time DMS input for every %d sec  (%d min) \n", RT_Input_DMS, RT_Input_DMS / 60);
+	_proxy_ABM_log(0, "Real time routing policy  input for every %d sec  (%d min) \n", RT_Input_Routing_Policy, RT_Input_Routing_Policy / 60);
+
+	for (int timestamp_in_second = start_time_in_second; timestamp_in_second <= end_time_in_second; timestamp_in_second++)
+	{
+		g_RealTimeSimulationSettingsMap[timestamp_in_second].break_point_flag = true;
+
+		if (break_point_flag.find("break_and_wait") != string::npos)
+		{
+			g_RealTimeSimulationSettingsMap[timestamp_in_second].break_and_wait_flag = true;
+
+		}
+
+		int hour = timestamp_in_second / 3600;
+		int min = (timestamp_in_second - hour * 3600) / 60;
+		int sec = timestamp_in_second - hour * 3600 - min * 60;
 
 
-				if (RT_Output_LinkMOE >= 1 && timestamp_in_second%RT_Output_LinkMOE == 0)  // time resolution
-				{
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].output_TD_link_MOE_file = "RT_Output_LinkMOE" + timestamp_str + ".csv";
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].output_TD_aggregation_time_in_min = RT_Output_LinkMOE / 60;
-				}
-				if (RT_Output_ODMOE >= 1 && timestamp_in_second%RT_Output_ODMOE == 0)  // time resolution
-				{
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].output_od_moe_file = "RT_Output_ODMOE" + timestamp_str + ".csv";
-				}
-				if (RT_Output_Complete_Agent >= 1 && timestamp_in_second%RT_Output_Complete_Agent == 0)  // time resolution
-				{
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].output_trip_file = "RT_Output_Complete_Agent" + timestamp_str + ".csv";
-				}
 
-				if (RT_Output_Tagged_Agent >= 1 && timestamp_in_second%RT_Output_Tagged_Agent == 0)  // time resolution
-				{
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].output_tag_agent_file = "RT_Output_Tagged_Agent" + timestamp_str + ".csv";
-				}
+		CString time_str;
+		time_str.Format("_%02dh%02dm%02ds", hour, min, sec);
 
-				if (RT_Input_LinkAttribute >= 1 && timestamp_in_second%RT_Input_LinkAttribute == 0)  // time resolution
-				{
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].update_TD_link_attribute_file = "RT_Input_LinkAttribute" + timestamp_str + ".csv";
-				}
-				if (RT_Input_Update_Agent >= 1 && timestamp_in_second%RT_Input_Update_Agent == 0)  // time resolution
-				{
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file = "RT_Input_Agent" + timestamp_str + ".csv";
-				}
-				if (RT_Input_DMS >= 1 && timestamp_in_second%RT_Input_DMS == 0)  // time resolution
-				{
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].update_DMS_file = "RT_Input_DMS" + timestamp_str + ".csv";
-				}
-
-				if (RT_Input_Routing_Policy >= 1 && timestamp_in_second%RT_Input_Routing_Policy == 0)  // time resolution
-				{
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].update_routing_policy_file = "RT_Input_Routing_Policy" + timestamp_str + ".csv";
-				}
-				record_count++;
-			}
+		string timestamp_str = CString2StdString(time_str);
 
 
-			//cout << "File input_simulation_schedule.csv has " << record_count << " file records." << endl;
-			//g_LogFile << "File input_simulation_schedule.csv has " << record_count << " file records." << endl;
+		if (RT_Output_LinkMOE >= 1 && timestamp_in_second%RT_Output_LinkMOE == 0)  // time resolution
+		{
+			g_RealTimeSimulationSettingsMap[timestamp_in_second].output_TD_link_MOE_file = "RT_Output_LinkMOE" + timestamp_str + ".csv";
+			g_RealTimeSimulationSettingsMap[timestamp_in_second].output_TD_aggregation_time_in_min = RT_Output_LinkMOE / 60;
+		}
+		if (RT_Output_ODMOE >= 1 && timestamp_in_second%RT_Output_ODMOE == 0)  // time resolution
+		{
+			g_RealTimeSimulationSettingsMap[timestamp_in_second].output_od_moe_file = "RT_Output_ODMOE" + timestamp_str + ".csv";
+		}
+		if (RT_Output_Complete_Agent >= 1 && timestamp_in_second%RT_Output_Complete_Agent == 0)  // time resolution
+		{
+			g_RealTimeSimulationSettingsMap[timestamp_in_second].output_trip_file = "RT_Output_Complete_Agent" + timestamp_str + ".csv";
+		}
+
+		if (RT_Output_Tagged_Agent >= 1 && timestamp_in_second%RT_Output_Tagged_Agent == 0)  // time resolution
+		{
+			g_RealTimeSimulationSettingsMap[timestamp_in_second].output_tag_agent_file = "RT_Output_Tagged_Agent" + timestamp_str + ".csv";
+		}
+
+		if (RT_Input_LinkAttribute >= 1 && timestamp_in_second%RT_Input_LinkAttribute == 0)  // time resolution
+		{
+			g_RealTimeSimulationSettingsMap[timestamp_in_second].update_TD_link_attribute_file = "RT_Input_LinkAttribute" + timestamp_str + ".csv";
+		}
+		if (RT_Input_Update_Agent >= 1 && timestamp_in_second%RT_Input_Update_Agent == 0)  // time resolution
+		{
+			g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file = "RT_Input_Agent" + timestamp_str + ".csv";
+		}
+		if (RT_Input_DMS >= 1 && timestamp_in_second%RT_Input_DMS == 0)  // time resolution
+		{
+			g_RealTimeSimulationSettingsMap[timestamp_in_second].update_DMS_file = "RT_Input_DMS" + timestamp_str + ".csv";
+		}
+
+		if (RT_Input_Routing_Policy >= 1 && timestamp_in_second%RT_Input_Routing_Policy == 0)  // time resolution
+		{
+			g_RealTimeSimulationSettingsMap[timestamp_in_second].update_routing_policy_file = "RT_Input_Routing_Policy" + timestamp_str + ".csv";
+		}
+		record_count++;
+	}
+
+
+	//cout << "File input_simulation_schedule.csv has " << record_count << " file records." << endl;
+	//g_LogFile << "File input_simulation_schedule.csv has " << record_count << " file records." << endl;
 
 }
 
@@ -1563,7 +1535,7 @@ void g_ExchangeRealTimeSimulationData(int day_no,int timestamp_in_second)
 		{
 			int number_of_vehicles = 0;
 
-			cout << "Reading input update agent file " << g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file;
+			cout << "Reading input update agent file " << g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file<<endl;
 			_proxy_ABM_log(0, "reading input update agent file %s\n", g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file.c_str());
 
 			bool b_trip_file_ready = g_ReadTripCSVFile(g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file.c_str(), false);

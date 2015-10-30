@@ -2949,6 +2949,14 @@ public:
 	std::vector<GDPoint> m_ShapePoints;
 
 	std::vector<int> m_alt_path_node_sequence;
+
+	//-------------MODIFIED BY QU----2015.10.29-------//
+	string m_vehicleID;
+	string m_routeID;
+	float m_capacity;
+	//------------------------------------------------//
+
+
 	//void StorePath(int DayNo)
 	//{
 
@@ -4611,3 +4619,9 @@ extern int g_GetFreeMemoryDataInMB();
 extern CString g_GetUsedMemoryDataInMB();
 extern int g_InitialFreeMemory;
 ////////////////////////////////
+
+//---------MODIFIED BY QU---------//
+bool g_IsPathNodeSequenceAFeasiblePath(std::vector<int> path_node_sequence);
+bool g_IsScheduleNodeAsServiceNode(std::vector<int> schedule_node_sequence);
+bool g_IsServiceNodeInPathNode(std::vector<int> path_node_sequence, std::vector<int> schedule_node_sequence);
+//--------------------------------//

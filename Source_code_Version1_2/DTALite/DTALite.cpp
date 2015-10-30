@@ -2148,8 +2148,19 @@ void g_ReadInputFiles()
 		}
 		else
 		{
+			//------------MODIFIED BY QU 10.29----------------------------//
+			//*******************************
+			// step 12: transit trip file input
+			cout << "Step 12.1: Reading transit trip file..." << endl;
+			//------------------------------------------------------------//
 			g_ReadTransitTripCSVFile(); // read the transit schedule first // later on for optimization 
 
+
+			//------------MODIFIED BY QU 10.29----------------------------//
+			//*******************************
+			// step 12: reading/initialing agent file input
+			cout << "Step 12.2: Reading/Initializing agent trip file..." << endl;
+			//------------------------------------------------------------//
 			if (g_UEAssignmentMethod == analysis_vehicle_binary_file_based_scenario_evaluation)
 			{
 				g_ReadAgentBinFile("agent.bin", true);
@@ -6539,13 +6550,13 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 	{
 		if (g_ZoneMap.find(z) != g_ZoneMap.end())
 		{
-		int zone_index = g_ZoneMap[z].m_ZoneSequentialNo;
+			int zone_index = g_ZoneMap[z].m_ZoneSequentialNo;
 
-		if (g_SystemDemand.m_alpha != NULL && zone_index >=0)
-		{
-		
-		_proxy_ODME_log(0, 0, "initial alpha[%d]= %f\n", z, g_SystemDemand.m_alpha[zone_index]);
-		}
+			if (g_SystemDemand.m_alpha != NULL && zone_index >= 0)
+			{
+
+				_proxy_ODME_log(0, 0, "initial alpha[%d]= %f\n", z, g_SystemDemand.m_alpha[zone_index]);
+			}
 		}
 	}
 
@@ -6867,7 +6878,7 @@ bool g_ReadTransitTripCSVFile()
 
 	float total_number_of_vehicles_to_be_generated = 0;
 
-	if (parser_transit_trip.OpenCSVFile("input_transit_trip.csv",false))
+	if (parser_transit_trip.OpenCSVFile("input_transit_trip.csv", false))
 	{
 		int count = 0;
 
@@ -6888,7 +6899,7 @@ bool g_ReadTransitTripCSVFile()
 
 			std::vector<CCoordinate> CoordinateVector;
 			string geo_string;
-				
+
 			int day_no;
 			parser_transit_trip.GetValueByFieldName("day_no", day_no);
 
@@ -6896,156 +6907,303 @@ bool g_ReadTransitTripCSVFile()
 
 			std::vector<int> path_node_sequence;
 
+			//--------MODIFIED BY QU 2015.10.29-----------------------------------//
+			string m_vehicleID;
+			int m_routeID;
+			float m_capacity;
+			parser_transit_trip.GetValueByFieldName("vehicle_id", m_vehicleID);
+			parser_transit_trip.GetValueByFieldName("route_id", m_routeID);
+			parser_transit_trip.GetValueByFieldName("vehicle_capacity", m_capacity);
+
+
+			//-------transit vehicle feasible check------------------------------//
+			if (m_capacity < 0)
+			{
+				cout << "The capacity of transit (vehicle_id = " << m_vehicleID << ", route_id =" << m_routeID << ") is lower than 0, please check!"<<endl;
+				g_ProgramStop();
+			}
+
 			string path_node_sequence_str;
 			if (parser_transit_trip.GetValueByFieldName("path_node_sequence", path_node_sequence_str) == true)
 			{
 
 				path_node_sequence = ParseLineToIntegers(path_node_sequence_str);
-				number_of_nodes = path_node_sequence.size();
-			}
 
-
-				DTAVehicle* pVehicle = 0;
-				pVehicle = new (std::nothrow) DTAVehicle;
-				if (pVehicle == NULL)
+				if (g_IsPathNodeSequenceAFeasiblePath(path_node_sequence))
 				{
-					cout << "Insufficient memory...";
-					getchar();
-					exit(0);
-
-				}
-
-				pVehicle->m_AgentID = g_VehicleVector.size();
-				pVehicle->m_RandomSeed = pVehicle->m_AgentID;
-
-				pVehicle->m_OriginZoneID = 1;
-				pVehicle->m_DestinationZoneID = 1;
-
-				parser_transit_trip.GetValueByFieldName("from_zone_id", pVehicle->m_OriginZoneID);
-				parser_transit_trip.GetValueByFieldName("to_zone_id", pVehicle->m_DestinationZoneID);
-				parser_transit_trip.GetValueByFieldName("departure_time", pVehicle->m_DepartureTime);
-
-				if (g_DemandLoadingStartTimeInMin > pVehicle->m_DepartureTime)
-					g_DemandLoadingStartTimeInMin = pVehicle->m_DepartureTime;
-
-				
-
-
-				if (path_node_sequence.size() >= 2)
-				{
-				
-					if (g_NodeNametoIDMap.find(path_node_sequence[0]) != g_NodeNametoIDMap.end())
-					{
-						pVehicle->m_OriginNodeID = g_NodeNametoIDMap[path_node_sequence[0]];
-					}
-					if (g_NodeNametoIDMap.find(path_node_sequence[path_node_sequence.size() - 1]) != g_NodeNametoIDMap.end())
-					{
-						pVehicle->m_DestinationNodeID = g_NodeNametoIDMap[path_node_sequence[path_node_sequence.size() - 1]];
-
-					}
+					number_of_nodes = path_node_sequence.size();
 				}
 				else
 				{
-
-					int origin_node_id = -1;
-					int destination_node_id = -1;
-
-					parser_transit_trip.GetValueByFieldName("origin_node_id", origin_node_id);
-					parser_transit_trip.GetValueByFieldName("destination_node_id", destination_node_id);
-
-					pVehicle->m_OriginNodeID = g_NodeNametoIDMap[origin_node_id];
-					pVehicle->m_DestinationNodeID = g_NodeNametoIDMap[destination_node_id];
-
-
+					cout << "The path_node_sequence of transit (vehicle_id = " << m_vehicleID << ", route_id =" << m_routeID << ") is an infeasible path, please check!"<<endl;
+					g_ProgramStop();
 				}
+			}
+			else
+			{
+				cout << "The path_node_sequence of transit (vehicle_id = " << m_vehicleID << ", route_id =" << m_routeID << ") is not given, please check!"<<endl;
+				g_ProgramStop();
+			}
 
+			//--------------------------------------------------------------------//
 
-				string schedule_node_sequence_str;
-				if (parser_transit_trip.GetValueByFieldName("schedule_node_sequence", schedule_node_sequence_str) == true)
-				{
-					std::vector<int> schedule_node_sequence;
-					schedule_node_sequence = ParseLineToIntegers(schedule_node_sequence_str);
-
-					for (int i = 0; i < schedule_node_sequence.size(); i++)
-					{
-						int node_id = g_NodeNametoIDMap[schedule_node_sequence[i]];
-						pVehicle->m_StopTimeMap[node_id].Init();
-					}
-				}
-
-
-				
-				pVehicle->m_transit_service_flag = true;
-				pVehicle->m_DemandType = -1;
-				pVehicle->m_VehicleType = 6; //BUS
-
-				if (pVehicle->m_VehicleType <= g_VehicleTypeVector.size())
-					pVehicle->m_PCE = g_VehicleTypeVector[pVehicle->m_VehicleType - 1].PCE;
-				else
-					pVehicle->m_PCE = 1;
-				
-				pVehicle->m_InformationType = 0;
-
-				pVehicle->m_VOT = 10;
-				pVehicle->m_Age = 5;
-
-
-				pVehicle->m_TimeToRetrieveInfo = pVehicle->m_DepartureTime;
-				pVehicle->m_ArrivalTime = 0;
-				pVehicle->m_bComplete = false;
-				pVehicle->m_bLoaded = false;
-				pVehicle->m_TollDollarCost = 0;
-				pVehicle->m_Emissions = 0;
-				pVehicle->m_Distance = 0;
-
-				pVehicle->m_NodeSize = number_of_nodes;
-
-				pVehicle->m_NodeNumberSum = 0;
-				pVehicle->m_Distance = 0;
-
-
-				g_VehicleVector.push_back(pVehicle);
-				g_AddVehicleID2ListBasedonDepartureTime(pVehicle);
-				g_VehicleMap[pVehicle->m_AgentID] = pVehicle;
-
-				pVehicle->m_LinkAry = new SVehicleLink[number_of_nodes];
-				pVehicle->m_NodeNumberSum = 0;
-				pVehicle->m_Distance = 0;
-
-				for (int i = 0; i < number_of_nodes - 1; i++) // NodeSize-1 is the number of links along the paths
-				{
-
-					DTALink* pLink = g_LinkMap[GetLinkStringID(path_node_sequence[i], path_node_sequence[i + 1])];
-
-					if (pLink != NULL)
-					{
-						pVehicle->m_LinkAry[i].LinkNo = pLink->m_LinkNo;
-
-
-						if (pVehicle->m_LinkAry[i].LinkNo < g_LinkVector.size())
-						{
-							pVehicle->m_Distance += pLink->m_Length;
-
-						}
-
-					}
-
-					if (i == 0)
-						pVehicle->m_NodeNumberSum += path_node_sequence[i];
-
-					pVehicle->m_NodeNumberSum += path_node_sequence[i+1];
-
-				}
-				pVehicle->m_bSwitch = false; // no need to go through assignment stage 
-				count++;
+			DTAVehicle* pVehicle = 0;
+			pVehicle = new (std::nothrow) DTAVehicle;
+			if (pVehicle == NULL)
+			{
+				cout << "Insufficient memory...";
+				getchar();
+				exit(0);
 
 			}
-			CString str_summary;
-			str_summary.Format("Number of transit trips =,%d\n", count);
-			g_SummaryStatFile.WriteTextLabel(str_summary);
+
+			//--------MODIFIED BY QU 2015.10.29---add attributions to vehicle-----//
+			pVehicle->m_vehicleID = m_vehicleID;
+			pVehicle->m_routeID = m_routeID;
+			pVehicle->m_capacity = m_capacity;
+			//--------------------------------------------------------------------//
+
+			pVehicle->m_AgentID = g_VehicleVector.size();
+			pVehicle->m_RandomSeed = pVehicle->m_AgentID;
+
+			pVehicle->m_OriginZoneID = 1;
+			pVehicle->m_DestinationZoneID = 1;
+
+			parser_transit_trip.GetValueByFieldName("from_zone_id", pVehicle->m_OriginZoneID);
+			parser_transit_trip.GetValueByFieldName("to_zone_id", pVehicle->m_DestinationZoneID);
+			parser_transit_trip.GetValueByFieldName("departure_time", pVehicle->m_DepartureTime);
+
+			if (g_DemandLoadingStartTimeInMin > pVehicle->m_DepartureTime)
+				g_DemandLoadingStartTimeInMin = pVehicle->m_DepartureTime;
+
+
+			//if (path_node_sequence.size() >= 2)
+			//{
+
+			//	/*if (g_NodeNametoIDMap.find(path_node_sequence[0]) != g_NodeNametoIDMap.end())
+			//	{
+			//		pVehicle->m_OriginNodeID = g_NodeNametoIDMap[path_node_sequence[0]];
+			//	}
+			//	if (g_NodeNametoIDMap.find(path_node_sequence[path_node_sequence.size() - 1]) != g_NodeNametoIDMap.end())
+			//	{
+			//		pVehicle->m_DestinationNodeID = g_NodeNametoIDMap[path_node_sequence[path_node_sequence.size() - 1]];
+
+			//	}*/
+			//}
+			//else
+			//{
+
+				origin_node_id = -1;
+				int destination_node_id = -1;
+
+				parser_transit_trip.GetValueByFieldName("origin_node_id", origin_node_id);
+				parser_transit_trip.GetValueByFieldName("destination_node_id", destination_node_id);
+
+				pVehicle->m_OriginNodeID = g_NodeNametoIDMap[origin_node_id];
+				pVehicle->m_DestinationNodeID = g_NodeNametoIDMap[destination_node_id];
+
+
+			//}
+
+			//----------QU 10.30---transit path_node_sequence feasible checking-------//
+			if (pVehicle->m_OriginNodeID != g_NodeNametoIDMap[path_node_sequence[0]] ||
+				pVehicle->m_DestinationNodeID != g_NodeNametoIDMap[path_node_sequence[path_node_sequence.size() - 1]])
+			{
+				cout << "The first/last node in 'path_node_sequence' of transit (vehicle_id = " << m_vehicleID
+					<< ", route_id =" << m_routeID << ") is not same as the origin/destination node, please check!" << endl;
+				g_ProgramStop();
+			}
+			//------------------------------------------------------------------------//
+
+
+			string schedule_node_sequence_str;
+			if (parser_transit_trip.GetValueByFieldName("schedule_node_sequence", schedule_node_sequence_str) == true)
+			{
+				std::vector<int> schedule_node_sequence;
+				schedule_node_sequence = ParseLineToIntegers(schedule_node_sequence_str);
+
+				//--------MODIFIED BY QU 2015.10.29---feasible check for service node-----//
+				if (!g_IsScheduleNodeAsServiceNode(schedule_node_sequence))
+				{
+					cout << "Some nodes in 'schedule_node_sequence' of transit (vehicle_id = " << m_vehicleID << ", route_id =" << m_routeID << ") are not service node, please check!"<<endl;
+					/*getchar();
+					exit(0);*/
+					g_ProgramStop();
+				}
+				if (!g_IsServiceNodeInPathNode(path_node_sequence, schedule_node_sequence))
+				{
+					cout << "Some nodes in 'schedule_node_sequence' of transit (vehicle_id = " << m_vehicleID << ", route_id =" << m_routeID << ") are not in 'path_node_sequence', please check!" << endl;
+					/*getchar();
+					exit(0);*/
+					g_ProgramStop();
+				}
+				//--------------------------------------------------------------------//
+
+				for (int i = 0; i < schedule_node_sequence.size(); i++)
+				{
+					int node_id = g_NodeNametoIDMap[schedule_node_sequence[i]];
+					pVehicle->m_StopTimeMap[node_id].Init();
+				}
+			}
+			else
+			{
+				cout << "The schedule_node_sequence of transit (vehicle_id = " << m_vehicleID << ", route_id =" << m_routeID << ") is not given, please check!" << endl;
+				g_ProgramStop();
+			}
+
+
+			pVehicle->m_transit_service_flag = true;
+			pVehicle->m_DemandType = -1;
+			pVehicle->m_VehicleType = 6; //BUS
+
+			if (pVehicle->m_VehicleType <= g_VehicleTypeVector.size())
+				pVehicle->m_PCE = g_VehicleTypeVector[pVehicle->m_VehicleType - 1].PCE;
+			else
+				pVehicle->m_PCE = 1;
+
+			pVehicle->m_InformationType = 0;
+
+			pVehicle->m_VOT = 10;
+			pVehicle->m_Age = 5;
+
+
+			pVehicle->m_TimeToRetrieveInfo = pVehicle->m_DepartureTime;
+			pVehicle->m_ArrivalTime = 0;
+			pVehicle->m_bComplete = false;
+			pVehicle->m_bLoaded = false;
+			pVehicle->m_TollDollarCost = 0;
+			pVehicle->m_Emissions = 0;
+			pVehicle->m_Distance = 0;
+
+			pVehicle->m_NodeSize = number_of_nodes;
+
+			pVehicle->m_NodeNumberSum = 0;
+			pVehicle->m_Distance = 0;
+
+
+			g_VehicleVector.push_back(pVehicle);
+			g_AddVehicleID2ListBasedonDepartureTime(pVehicle);
+			g_VehicleMap[pVehicle->m_AgentID] = pVehicle;
+
+			pVehicle->m_LinkAry = new SVehicleLink[number_of_nodes];
+			pVehicle->m_NodeNumberSum = 0;
+			pVehicle->m_Distance = 0;
+
+			for (int i = 0; i < number_of_nodes - 1; i++) // NodeSize-1 is the number of links along the paths
+			{
+
+				DTALink* pLink = g_LinkMap[GetLinkStringID(path_node_sequence[i], path_node_sequence[i + 1])];
+
+				if (pLink != NULL)
+				{
+					pVehicle->m_LinkAry[i].LinkNo = pLink->m_LinkNo;
+
+
+					if (pVehicle->m_LinkAry[i].LinkNo < g_LinkVector.size())
+					{
+						pVehicle->m_Distance += pLink->m_Length;
+
+					}
+
+				}
+
+				if (i == 0)
+					pVehicle->m_NodeNumberSum += path_node_sequence[i];
+
+				pVehicle->m_NodeNumberSum += path_node_sequence[i + 1];
+
+			}
+			pVehicle->m_bSwitch = false; // no need to go through assignment stage 
+			count++;
+
 		}
+		CString str_summary;
+		str_summary.Format("Number of transit trips =,%d\n", count);
+		g_SummaryStatFile.WriteTextLabel(str_summary);
+	}
 
 
-		return true;
+	return true;
 }
 
+
+
+
+
+//---------------------MODIFIED BY QU-------------------//
+bool g_IsPathNodeSequenceAFeasiblePath(std::vector<int> path_node_sequence)
+{
+	bool isFeasible = true;
+	if (path_node_sequence.size() == 0)
+		return true;
+	if (path_node_sequence.size() == 1)
+		return false;
+
+	for (int i = 0; i < path_node_sequence.size()-1; i++)
+	{
+		int from_node = path_node_sequence[i];
+		int to_node = path_node_sequence[i + 1];
+
+		string link_str = GetLinkStringID(from_node, to_node);;
+		if (g_LinkMap.find(link_str) == g_LinkMap.end())
+		{
+			isFeasible = false;
+			break;
+		}
+
+	}
+	return isFeasible;
+}
+bool g_IsServiceNodeInPathNode(std::vector<int> path_node_sequence, std::vector<int> schedule_node_sequence)
+{
+	bool isSubSet = true;
+	for (int i = 0; i < schedule_node_sequence.size(); i++)
+	{
+		int sche_node = schedule_node_sequence[i];
+
+		bool isIn = false;
+
+		for (int j = 0; j < path_node_sequence.size(); j++)
+		{
+			int path_node = path_node_sequence[j];
+			if (path_node == sche_node)
+			{
+				isIn = true;
+				break;
+			}
+		}
+
+		if (!isIn)
+		{
+			isSubSet = false;
+			break;
+		}
+	}
+	return isSubSet;
+}
+bool g_IsScheduleNodeAsServiceNode(std::vector<int> schedule_node_sequence)
+{
+	bool isSubSet = true;
+
+	for (int i = 0; i < schedule_node_sequence.size(); i++)
+	{
+		if (g_NodeNametoIDMap.find(schedule_node_sequence[i]) == g_NodeNametoIDMap.end())
+		{
+			isSubSet = false;
+			break;
+		}
+		else
+		{
+			int node_index = g_NodeNametoIDMap[schedule_node_sequence[i]];
+			DTANode node = g_NodeVector[node_index];
+			if (node.m_transit_demand_type_code.size() == 0)
+			{
+				isSubSet = false;
+				break;
+			}
+		}
+	}
+
+	return isSubSet;
+}
+//------------------------------------------------------//

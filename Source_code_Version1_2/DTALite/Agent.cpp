@@ -419,6 +419,11 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 		int information_type = 0;
 		while (parser_agent.ReadRecord())
 		{
+			//------------QU 10.30------------------//
+			//---initializing for checking status---//
+			bUpdatePath = false;
+			start_time_value = -100;
+			//--------------------------------------//
 
 			if ((count + 1) % 1000 == 0 && bOutputLogFlag)
 			{
@@ -497,6 +502,9 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 				count_for_not_defined_zones++;
 				_proxy_ABM_log(0, "--step 4.1: from_zone_id = %d not defined, exit.\n", from_zone_id);
 
+				cout << "--step 4.1: from_zone_id =" << from_zone_id << "not defined, exit" << endl;
+				g_ProgramStop();
+
 				continue;
 			}
 
@@ -505,6 +513,8 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 				count_for_not_defined_zones++;
 				_proxy_ABM_log(0, "--step 4.1: to_zone_id=%d not defined, exit\n", to_zone_id);
 
+				cout << "--step 4.1: to_zone_id =" << to_zone_id << "not defined, exit" << endl;
+				g_ProgramStop();
 				continue;
 			}
 			// to do: update origin only when vehicle has not departed yet
@@ -580,8 +590,6 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 			pVehicle->m_DestinationNodeID = destination_node_id;
 
 
-
-
 			if (origin_node_id == destination_node_id)
 			{  // do not simulate intra zone traffic
 				_proxy_ABM_log(0, "--step 5.3: found intrazone traffic %d->%d, not simulated\n",
@@ -644,9 +652,6 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 
 
 
-
-
-
 			int beginning_departure_time = departure_time;
 
 			ASSERT(pVehicle->m_DepartureTime < 4000);
@@ -688,7 +693,7 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 					pVehicle->m_VehicleType = VehicleType;
 				}
 
-				 information_type = pVehicle->m_InformationType;
+				information_type = pVehicle->m_InformationType;
 
 				parser_agent.GetValueByFieldNameRequired("information_type", information_type); //default is 0;
 
@@ -747,6 +752,34 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 
 			int sub_path_switch_flag = 0;
 
+
+			//-----QU 10.30-------------------------------------------------------------------------------------------//
+			//====feasible path checking==========//
+			std::vector<int> path_node_sequence;
+			string path_node_sequence_str;
+			parser_agent.GetValueByFieldNameRequired("path_node_sequence", path_node_sequence_str);
+
+			path_node_sequence = ParseLineToIntegers(path_node_sequence_str);
+
+			if (!g_IsPathNodeSequenceAFeasiblePath(path_node_sequence))
+			{
+				cout << "Errors in " << file_name << ": the path node sequence of (agent_id = " << agent_id
+					<< ", tour_id = " << ExternalTourID << ") is infeasible, please check!" << endl;
+				g_ProgramStop();
+			}
+
+			if (path_node_sequence.size() >= 2)
+			{
+				if (origin_node_number != path_node_sequence[0] || destination_node_number != path_node_sequence[path_node_sequence.size() - 1])
+				{
+					cout << "Errors in " << file_name << ": the path node sequence of (agent_id = " << agent_id
+						<< ", tour_id = " << ExternalTourID << ") is infeasible, because the origin/destination node does not equal to the first/last node in path_node_sequence, please check!" << endl;
+					g_ProgramStop();
+				}
+			}
+			//------------------------------------//
+			//--------------------------------------------------------------------------------------------------------//
+
 			if (bCreateNewAgent == true)
 			{
 
@@ -776,59 +809,78 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 
 				_proxy_ABM_log(0, "--step 11: create new path\n");
 
-				std::vector<int> path_node_sequence;
-				string path_node_sequence_str;
-				parser_agent.GetValueByFieldNameRequired("path_node_sequence", path_node_sequence_str);
 
-				path_node_sequence = ParseLineToIntegers(path_node_sequence_str);
 				if (path_node_sequence.size() >= 2)
 				{
+					//-----QU 10.30-------------------------------------------------------------------------------------------//
 					_proxy_ABM_log(0, "--step 11.1: read and add path_node_sequence = %s\n", path_node_sequence_str.c_str());
 					AddPathToVehicle(pVehicle, path_node_sequence, file_name.c_str());
+					//--------------------------------------------------------------------------------------------------------//
 
 				}
 				else
 				{
-
+					//-----QU 10.30------------to do list: information type and new path--------------------------------------//
 					g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(pVehicle->m_AgentID);
-						_proxy_ABM_log(0, "--step 11.2: no routing policy, create shortest path based on prevailing traffic time\n");
+					_proxy_ABM_log(0, "--step 11.2: no routing policy, create shortest path based on prevailing traffic time\n");
+					//--------------------------------------------------------------------------------------------------------//
 
 				}
 
-			} else if (bUpdatePath)
+			}
+			else if (bUpdatePath) //not new 
 			{
-				_proxy_ABM_log(0, "--step 12: update existing new path (which has not been used before the trip starts) if the destination or departure time is changed\n");
+				//-----QU 10.30-----------------------//
+				if (path_node_sequence.size() >= 2)
+				{
+					AddPathToVehicle(pVehicle, path_node_sequence, file_name.c_str());
+					_proxy_ABM_log(0, "--step 11.1: read and add path_node_sequence = %s\n", path_node_sequence_str.c_str());
+				}
+				//-----------------------------------//
+				else
+				{
+					//-----QU 10.30------------to do list: information type and new path--------------------------------------//
 
-				g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(pVehicle->m_AgentID);
+					//--for information type 0;
+					//--for information type 1;
+					//--for information type 2;
 
-			} else if (parser_agent.GetValueByFieldName("path_switch_flag", sub_path_switch_flag))
+					//--for information type 3-------has been finished~~~//
+					_proxy_ABM_log(0, "--step 12: update existing new path (which has not been used before the trip starts) if the destination or departure time is changed\n");
+
+					g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(pVehicle->m_AgentID);
+					//--------------------------------------------------------------------------------------------------------//
+				}
+
+			}
+			else if (parser_agent.GetValueByFieldName("path_switch_flag", sub_path_switch_flag))
 			{
 				if (sub_path_switch_flag >= 1)  // if the user defines  path_switch_flag >=1
+				{
+					_proxy_ABM_log(0, "--step 13: path_switch_flag=1 for starting from current link\n");
+
+					//first, check if m_alt_path_node_sequence has been defined in the memory
+					std::vector<int> sub_path_node_sequence = pVehicle->m_alt_path_node_sequence;
+					_proxy_ABM_log(0, "--step 13.1: size of in memory alternative path node sequence = %d\n", pVehicle->m_alt_path_node_sequence.size());
+
+					string detour_node_sequence_str;
+					if (parser_agent.GetValueByFieldName("alt_path_node_sequence", detour_node_sequence_str) == true)
 					{
-						_proxy_ABM_log(0, "--step 13: path_switch_flag=1 for starting from current link\n");
+						//second, rewrite alt_path_node_sequence if the user defines the node sequence in the input agent text file, again
 
-						//first, check if m_alt_path_node_sequence has been defined in the memory
-						std::vector<int> sub_path_node_sequence = pVehicle->m_alt_path_node_sequence;
-						_proxy_ABM_log(0, "--step 13.1: size of in memory alternative path node sequence = %d\n", pVehicle->m_alt_path_node_sequence.size());
-
-						string detour_node_sequence_str;
-						if (parser_agent.GetValueByFieldName("alt_path_node_sequence", detour_node_sequence_str) == true)
-						{
-							//second, rewrite alt_path_node_sequence if the user defines the node sequence in the input agent text file, again
-
-							sub_path_node_sequence = ParseLineToIntegers(detour_node_sequence_str);
-							_proxy_ABM_log(0, "--step 13.2: size of alternative path node sequence in input agent file = %d\n", sub_path_node_sequence);
-						}
-
-						if (sub_path_node_sequence.size() > 0)
-						{
-
-							g_UpdateAgentPathBasedOnDetour(pVehicle->m_AgentID, sub_path_node_sequence);
-							_proxy_ABM_log(0, "--step 13.3: switch to alternative path\n");
-						}
+						sub_path_node_sequence = ParseLineToIntegers(detour_node_sequence_str);
+						_proxy_ABM_log(0, "--step 13.2: size of alternative path node sequence in input agent file = %d\n", sub_path_node_sequence);
 					}
+
+					if (sub_path_node_sequence.size() > 0)
+					{
+
+						g_UpdateAgentPathBasedOnDetour(pVehicle->m_AgentID, sub_path_node_sequence);
+						_proxy_ABM_log(0, "--step 13.3: switch to alternative path\n");
+					}
+				}
 			}
-				
+
 			int number_of_agents = 1;
 
 			float ending_departure_time = 0;
@@ -1685,7 +1737,7 @@ void g_AccessibilityMatrixGenerationForAllDemandTypes(string FileName, bool bTim
 
 
 	int total_demand_type = g_DemandTypeVector.size();
-	cout << "------00---------" << endl;
+	//cout << "------00---------" << endl;
 	int StatisticsIntervalSize = max(1, (DemandLoadingEndTimeInMin - DemandLoadingStartTimeInMin) / g_AggregationTimetInterval);
 
 	//cout << "allocating memory for time-dependent ODMOE data...for " << g_ODZoneIDSize << " X " <<  g_ODZoneIDSize << "zones for " << 
@@ -1711,7 +1763,7 @@ void g_AccessibilityMatrixGenerationForAllDemandTypes(string FileName, bool bTim
 	DAccessibilityMatrix = Allocate4DDynamicArray<int>(total_demand_type + 1, g_ODZoneIDSize + 1, StatisticsIntervalSize, number_of_travel_time_budget_intervals);
 
 
-	cout << "------05---------" << endl;
+	//cout << "------05---------" << endl;
 	for (int d = 1; d <= total_demand_type; d++)
 	for (int i = 0; i <= g_ODZoneIDSize; i++)
 	for (int j = 0; j <= g_ODZoneIDSize; j++)
@@ -1730,7 +1782,7 @@ void g_AccessibilityMatrixGenerationForAllDemandTypes(string FileName, bool bTim
 			ODDollarCost[d][i][j][t] = 0;
 		}
 	}
-	cout << "------07---------" << endl;
+	//cout << "------07---------" << endl;
 
 	for (int d = 1; d <= total_demand_type; d++)
 	for (int i = 1; i <= g_ODZoneIDSize; i++)

@@ -149,10 +149,10 @@ void g_WriteUserDefinedMOE(CCSVWriter  &g_MultiScenarioSummaryStatFile, int day_
 	g_MultiScenarioSummaryStatFile.WriteRecord();
 
 }
-void g_MultiScenarioTrafficAssignment() 
+void g_MultiScenarioTrafficAssignment()
 {
 
-	if(g_InitializeLogFiles()==0) 
+	if (g_InitializeLogFiles() == 0)
 		return;
 
 
@@ -162,20 +162,20 @@ void g_MultiScenarioTrafficAssignment()
 	g_SummaryStatFile.WriteTextLabel(__DATE__);
 	g_SummaryStatFile.WriteTextLabel("\n");
 
-	
 
-	cout << "DTALite: A Fast Open-Source DTA Simulation Engine"<< endl;
-	cout << "Version 1.1.0, Release Date " << __DATE__ << "."<< endl;
 
-	g_LogFile << "---DTALite: A Fast Open-Source DTA Simulation Engine---"<< endl;
-	g_LogFile << "Version 1.1.0, Release Date " << __DATE__ << "."<< endl;
+	cout << "DTALite: A Fast Open-Source DTA Simulation Engine" << endl;
+	cout << "Version 1.1.0, Release Date " << __DATE__ << "." << endl;
+
+	g_LogFile << "---DTALite: A Fast Open-Source DTA Simulation Engine---" << endl;
+	g_LogFile << "Version 1.1.0, Release Date " << __DATE__ << "." << endl;
 
 
 	time_t t = time(0);   // get time now
-	struct tm * now = localtime( & t );
+	struct tm * now = localtime(&t);
 	CString time_str;
 	//`January', `February', `March', `April', `May', `June', `July', `August', `September', `October', `November', `December'. 
-	time_str.Format("Simulation Date =,year: %d,month:%02d,day:%d,hour:%2d,min:%2d\n",now->tm_year + 1900, (now->tm_mon + 1),now->tm_mday,now->tm_hour ,now->tm_min);
+	time_str.Format("Simulation Date =,year: %d,month:%02d,day:%d,hour:%2d,min:%2d\n", now->tm_year + 1900, (now->tm_mon + 1), now->tm_mday, now->tm_hour, now->tm_min);
 
 	g_SummaryStatFile.WriteTextLabel(time_str);
 
@@ -194,7 +194,7 @@ void g_MultiScenarioTrafficAssignment()
 	int NumberOfCriticalLinks = 3;
 	int NumberOfCriticalODPairs = 3;
 
-	g_MultiScenarioSummaryStatFile.Open ("output_multi_scenario_results.csv");
+	g_MultiScenarioSummaryStatFile.Open("output_multi_scenario_results.csv");
 	g_MultiScenarioSummaryStatFile.WriteTextString("Unit of output:");
 	g_MultiScenarioSummaryStatFile.WriteTextString(",,distance=,miles");
 	g_MultiScenarioSummaryStatFile.WriteTextString(",,speed=,mph");
@@ -203,9 +203,9 @@ void g_MultiScenarioTrafficAssignment()
 
 	int cl;
 
-	g_MultiScenarioSummaryStatFile.SetFieldName ("scenario_no");
-	g_MultiScenarioSummaryStatFile.SetFieldName ("demand_multiplier");
-	g_MultiScenarioSummaryStatFile.SetFieldName ("scenario_name");
+	g_MultiScenarioSummaryStatFile.SetFieldName("scenario_no");
+	g_MultiScenarioSummaryStatFile.SetFieldName("demand_multiplier");
+	g_MultiScenarioSummaryStatFile.SetFieldName("scenario_name");
 	g_MultiScenarioSummaryStatFile.SetFieldName("scenario_data");
 	g_MultiScenarioSummaryStatFile.SetFieldName("number_of_iterations");
 	g_MultiScenarioSummaryStatFile.SetFieldName("day_no");
@@ -213,87 +213,87 @@ void g_MultiScenarioTrafficAssignment()
 
 
 	CCSVParser parser_MOE_settings;
-	if (parser_MOE_settings.OpenCSVFile("input_MOE_settings.csv",false))
+	if (parser_MOE_settings.OpenCSVFile("input_MOE_settings.csv", false))
 	{
-		while(parser_MOE_settings.ReadRecord())
+		while (parser_MOE_settings.ReadRecord())
 		{
 			string moe_type, moe_category_label;
 
-			int demand_type =  0;
+			int demand_type = 0;
 			int vehicle_type = 0;
 			int information_type = 0;
 			int from_node_id = 0;
-			int mid_node_id	=0;
-			int to_node_id	=0;
-			int origin_zone_id	=0;
-			int destination_zone_id	=0;
-			int departure_starting_time	 = 0;
-			int departure_ending_time= 1440;
-			int entrance_starting_time	= 0;
+			int mid_node_id = 0;
+			int to_node_id = 0;
+			int origin_zone_id = 0;
+			int destination_zone_id = 0;
+			int departure_starting_time = 0;
+			int departure_ending_time = 1440;
+			int entrance_starting_time = 0;
 			int entrance_ending_time = 1440;
 
 
-			parser_MOE_settings.GetValueByFieldName("moe_type",moe_type);
-			parser_MOE_settings.GetValueByFieldName("moe_category_label",moe_category_label);
+			parser_MOE_settings.GetValueByFieldName("moe_type", moe_type);
+			parser_MOE_settings.GetValueByFieldName("moe_category_label", moe_category_label);
 
-			TRACE("%s\n",moe_category_label.c_str ());
-			if(moe_category_label.find (",") !=  string::npos)
+			TRACE("%s\n", moe_category_label.c_str());
+			if (moe_category_label.find(",") != string::npos)
 			{
-				moe_category_label = '"' + moe_category_label + '"' ;
+				moe_category_label = '"' + moe_category_label + '"';
 			}
 
 
-			g_MultiScenarioSummaryStatFile.SetFieldNameWithCategoryName ("#_of_vehicles_"+moe_category_label,moe_category_label );
-			g_MultiScenarioSummaryStatFile.SetFieldName ("percentage_"+moe_category_label );
-			g_MultiScenarioSummaryStatFile.SetFieldName ("avg_distance_"+moe_category_label);
-			g_MultiScenarioSummaryStatFile.SetFieldName ("avg_travel_time(min)_"+moe_category_label);
-			g_MultiScenarioSummaryStatFile.SetFieldName ("avg_speed_"+moe_category_label);
-			g_MultiScenarioSummaryStatFile.SetFieldName ("avg_toll_cost_"+moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldNameWithCategoryName("#_of_vehicles_" + moe_category_label, moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("percentage_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_distance_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_travel_time(min)_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_speed_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_toll_cost_" + moe_category_label);
 
-			g_MultiScenarioSummaryStatFile.SetFieldName("avg_energy_"+moe_category_label);
-			g_MultiScenarioSummaryStatFile.SetFieldName("avg_CO2_"+moe_category_label);
-			g_MultiScenarioSummaryStatFile.SetFieldName("avg_NOX_"+moe_category_label);
-			g_MultiScenarioSummaryStatFile.SetFieldName("avg_CO_"+moe_category_label);
-			g_MultiScenarioSummaryStatFile.SetFieldName("avg_HC_"+moe_category_label);
-			g_MultiScenarioSummaryStatFile.SetFieldName("avg_MilesPerGallon_"+moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_energy_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_CO2_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_NOX_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_CO_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_HC_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_MilesPerGallon_" + moe_category_label);
 
 			std::transform(moe_type.begin(), moe_type.end(), moe_type.begin(), ::tolower);
 
-			if(moe_type.find("link") != string::npos)  // Link MOE
+			if (moe_type.find("link") != string::npos)  // Link MOE
 			{
 				//			g_MultiScenarioSummaryStatFile.SetFieldName("level_of_service"+moe_category_label);
 
-				g_MultiScenarioSummaryStatFile.SetFieldName("SOV_volume"+moe_category_label);
-				g_MultiScenarioSummaryStatFile.SetFieldName("HOV_volume"+moe_category_label);
-				g_MultiScenarioSummaryStatFile.SetFieldName("Truck_volume"+moe_category_label);
-				g_MultiScenarioSummaryStatFile.SetFieldName("Intermodal_volume"+moe_category_label);
+				g_MultiScenarioSummaryStatFile.SetFieldName("SOV_volume" + moe_category_label);
+				g_MultiScenarioSummaryStatFile.SetFieldName("HOV_volume" + moe_category_label);
+				g_MultiScenarioSummaryStatFile.SetFieldName("Truck_volume" + moe_category_label);
+				g_MultiScenarioSummaryStatFile.SetFieldName("Intermodal_volume" + moe_category_label);
 
-				g_MultiScenarioSummaryStatFile.SetFieldName("number_of_crashes_per_year"+moe_category_label);
-				g_MultiScenarioSummaryStatFile.SetFieldName("number_of_fatal_and_injury_crashes_per_year"+moe_category_label);
-				g_MultiScenarioSummaryStatFile.SetFieldName("number_of_property_damage_only_crashes_per_year"+moe_category_label);
+				g_MultiScenarioSummaryStatFile.SetFieldName("number_of_crashes_per_year" + moe_category_label);
+				g_MultiScenarioSummaryStatFile.SetFieldName("number_of_fatal_and_injury_crashes_per_year" + moe_category_label);
+				g_MultiScenarioSummaryStatFile.SetFieldName("number_of_property_damage_only_crashes_per_year" + moe_category_label);
 
 			}
 
 		}
 
 
-		parser_MOE_settings.CloseCSVFile ();
+		parser_MOE_settings.CloseCSVFile();
 	}
 
 
-	g_MultiScenarioSummaryStatFile.WriteHeader (true,false);
+	g_MultiScenarioSummaryStatFile.WriteHeader(true, false);
 
 
 	int total_scenarios = 0;
 	{
-	CCSVParser parser_sce;
-	if (parser_sce.OpenCSVFile("input_scenario_settings.csv"))
-	{
-		while(parser_sce.ReadRecord())
+		CCSVParser parser_sce;
+		if (parser_sce.OpenCSVFile("input_scenario_settings.csv"))
 		{
-		total_scenarios++;
-		}	
-	}
+			while (parser_sce.ReadRecord())
+			{
+				total_scenarios++;
+			}
+		}
 	}
 	CCSVParser parser_scenario;
 	int line_no = 1;
@@ -301,10 +301,10 @@ void g_MultiScenarioTrafficAssignment()
 	if (parser_scenario.OpenCSVFile("input_scenario_settings.csv"))
 	{
 
-		for(int day = 0; day < 1000; day ++)
+		for (int day = 0; day < 1000; day++)
 		{
-		
-			g_LearningPercVector[day] =  g_LearningPercentage;
+
+			g_LearningPercVector[day] = g_LearningPercentage;
 		}
 
 
@@ -316,26 +316,26 @@ void g_MultiScenarioTrafficAssignment()
 
 		while (parser_scenario.ReadRecord())
 		{
-			if(line_no>= max_scenarios)
+			if (line_no >= max_scenarios)
 				break;
-			if(parser_scenario.GetValueByFieldNameWithPrintOut("scenario_no",scenario_no)==false)
+			if (parser_scenario.GetValueByFieldNameWithPrintOut("scenario_no", scenario_no) == false)
 			{
 				cout << "Field scenario_no cannot be found in file input_scenario_settings.csv. Please check." << endl;
 				g_ProgramStop();
 			}
 
-			if(parser_scenario.GetValueByFieldNameWithPrintOut("scenario_name",scenario_name)==false)
+			if (parser_scenario.GetValueByFieldNameWithPrintOut("scenario_name", scenario_name) == false)
 			{
 				cout << "Field scenario_name cannot be found in file input_scenario_settings.csv. Please check." << endl;
 				g_ProgramStop();
 			}
 
-			parser_scenario.GetValueByFieldNameWithPrintOut("random_seed",g_RandomSeed);
+			parser_scenario.GetValueByFieldNameWithPrintOut("random_seed", g_RandomSeed);
 
 
-			g_SummaryStatFile.WriteTextLabel ("----------------------");
-			g_SummaryStatFile.WriteTextLabel (scenario_name.c_str ());
-			g_SummaryStatFile.WriteTextLabel ("----------------------\n");
+			g_SummaryStatFile.WriteTextLabel("----------------------");
+			g_SummaryStatFile.WriteTextLabel(scenario_name.c_str());
+			g_SummaryStatFile.WriteTextLabel("----------------------\n");
 
 			g_VehicleLoadingMode = demand_matrix_file_mode;  // default meta data mode
 
@@ -343,29 +343,29 @@ void g_MultiScenarioTrafficAssignment()
 			{
 				if (parser_scenario.GetValueByFieldName("number_of_iterations", TotalUEIterationNumber) == false)
 				{
-				cout << "Field number_of_iterations cannot be found in file input_scenario_settings.csv. Please check." << endl;
-				g_ProgramStop();
+					cout << "Field number_of_iterations cannot be found in file input_scenario_settings.csv. Please check." << endl;
+					g_ProgramStop();
 				}
 			}
 
-			g_NumberOfIterations = TotalUEIterationNumber-1;			// 0+1 iterations
+			g_NumberOfIterations = TotalUEIterationNumber - 1;			// 0+1 iterations
 
 			int traffic_flow_model = 3;
-			if(parser_scenario.GetValueByFieldNameWithPrintOut("traffic_flow_model",traffic_flow_model)==false)
+			if (parser_scenario.GetValueByFieldNameWithPrintOut("traffic_flow_model", traffic_flow_model) == false)
 			{
 				cout << "Field traffic_flow_model cannot be found in file input_scenario_settings.csv. Please check." << endl;
 				g_ProgramStop();
 			}
 
 			int SignalRepresentationFlag = 0;
-			
-			parser_scenario.GetValueByFieldName("signal_representation_model",SignalRepresentationFlag);
 
-			g_SignalRepresentationFlag =  (e_signal_representation_model) SignalRepresentationFlag;
+			parser_scenario.GetValueByFieldName("signal_representation_model", SignalRepresentationFlag);
+
+			g_SignalRepresentationFlag = (e_signal_representation_model)SignalRepresentationFlag;
 
 			g_SummaryStatFile.WriteTextLabel("Signal Control Representation =,");
 
-			switch( g_SignalRepresentationFlag)
+			switch (g_SignalRepresentationFlag)
 			{
 
 			case signal_model_continuous_flow: 		g_LogFile << "Continuous Flow with Link Capacity Constrai" << endl;
@@ -382,7 +382,7 @@ void g_MultiScenarioTrafficAssignment()
 
 			default: 		g_LogFile << "No Valid Model is Selected" << endl;
 				g_SummaryStatFile.WriteTextString("Invalid Model");
-				break; 
+				break;
 			}
 
 
@@ -391,13 +391,13 @@ void g_MultiScenarioTrafficAssignment()
 
 			g_UEAssignmentMethod = analysis_day_to_day_learning_threshold_route_choice;
 			int UEAssignmentMethod = 0;
-			if(parser_scenario.GetValueByFieldName("traffic_analysis_method",UEAssignmentMethod)==false)
+			if (parser_scenario.GetValueByFieldName("traffic_analysis_method", UEAssignmentMethod) == false)
 			{
 				if (parser_scenario.GetValueByFieldName("traffic_assignment_method", UEAssignmentMethod) == false)
 				{
-				
+
 					cout << "Field traffic_analysis_method has not been specified in file input_scenario_settings.csv. A default method of day-to-day learning is used." << endl;
-				getchar();
+					getchar();
 				}
 			}
 
@@ -409,7 +409,7 @@ void g_MultiScenarioTrafficAssignment()
 			g_LogFile << "Traffic Flow Model =  ";
 			g_SummaryStatFile.WriteTextLabel("Traffic Flow Model =,");
 
-			switch( g_TrafficFlowModelFlag)
+			switch (g_TrafficFlowModelFlag)
 			{
 			case tfm_BPR: 		g_LogFile << "BPR Function" << endl;
 				g_SummaryStatFile.WriteTextString("BPR Function");
@@ -428,66 +428,66 @@ void g_MultiScenarioTrafficAssignment()
 				break;
 
 				traffic_flow_model = tfm_newells_model;  // newell's model
-				g_EmissionDataOutputFlag  = 2;  // with emission data
+				g_EmissionDataOutputFlag = 2;  // with emission data
 
 				break;
 
 
 			default: 		g_LogFile << "No Valid Model is Selected" << endl;
 				g_SummaryStatFile.WriteTextString("Invalid Model");
-				break; 
+				break;
 			}
 
 
-		if(g_UEAssignmentMethod == analysis_day_to_day_learning_threshold_route_choice )
+			if (g_UEAssignmentMethod == analysis_day_to_day_learning_threshold_route_choice)
 			{
-				if(parser_scenario.GetValueByFieldName("switching_percentage_iterations_1",g_LearningPercVector[1])==false)
+				if (parser_scenario.GetValueByFieldName("switching_percentage_iterations_1", g_LearningPercVector[1]) == false)
 					g_LearningPercVector[1] = g_LearningPercentage;
 
-				if( TotalUEIterationNumber >= 1000)
+				if (TotalUEIterationNumber >= 1000)
 				{
-					cout << "Too many iterations/days. Please contact the developer at xzhou99@gmail.com." << endl; 					
+					cout << "Too many iterations/days. Please contact the developer at xzhou99@gmail.com." << endl;
 					g_ProgramStop();
 				}
-		
-				for(int day = 2; day <= TotalUEIterationNumber; day ++)
+
+				for (int day = 2; day <= TotalUEIterationNumber; day++)
 				{
 					CString str_learning;
-					str_learning.Format ("iteration_%d",day);
+					str_learning.Format("iteration_%d", day);
 
 					string str = CString2StdString(str_learning);
-					if(parser_scenario.GetValueByFieldName(str,g_LearningPercVector[day]) == false)  // no data
+					if (parser_scenario.GetValueByFieldName(str, g_LearningPercVector[day]) == false)  // no data
 						g_LearningPercVector[day] = g_LearningPercentage;
 
-					if(g_LearningPercVector[day]>100)
+					if (g_LearningPercVector[day] > 100)
 						g_LearningPercVector[day] = 100;
 
-					if(g_LearningPercVector[day]<0)
+					if (g_LearningPercVector[day] < 0)
 						g_LearningPercVector[day] = 0;
 				}
 
-			
-			
+
+
 			}
 
-				g_ODEstimationFlag = 0;
+			g_ODEstimationFlag = 0;
 
-				CCSVParser parser_RTSimulation_settings;
+			CCSVParser parser_RTSimulation_settings;
 
 			switch (g_UEAssignmentMethod)
 			{
 			case analysis_MSA:
-				g_SummaryStatFile.WriteParameterValue ("Assignment method","MSA");
+				g_SummaryStatFile.WriteParameterValue("Assignment method", "MSA");
 				break;
 			case analysis_ABM_integration:
-				g_SummaryStatFile.WriteParameterValue ("Assignment method","ABM+DTA integration");
+				g_SummaryStatFile.WriteParameterValue("Assignment method", "ABM+DTA integration");
 				break;
 			case analysis_gap_function_MSA_step_size:
-				g_SummaryStatFile.WriteParameterValue ("Assignment method","Gap-funciton with step size based adjustment");
+				g_SummaryStatFile.WriteParameterValue("Assignment method", "Gap-funciton with step size based adjustment");
 				break;
 
 			case analysis_accessibility_distance:
-				g_SummaryStatFile.WriteParameterValue ("Routing method","Assessibility based on distance");
+				g_SummaryStatFile.WriteParameterValue("Routing method", "Assessibility based on distance");
 				break;
 
 			case analysis_accessibility_travel_time:
@@ -495,7 +495,7 @@ void g_MultiScenarioTrafficAssignment()
 				break;
 
 			case analysis_OD_demand_estimation:
-				g_SummaryStatFile.WriteParameterValue ("Routing method","OD demand estimation");
+				g_SummaryStatFile.WriteParameterValue("Routing method", "OD demand estimation");
 				g_AgentBasedAssignmentFlag = 0; // zone based mode only
 				g_UEAssignmentMethod = analysis_MSA; // default assignment mode to MSA, use ODME_step_size after running ODME
 				g_ODEstimationFlag = 1;
@@ -503,7 +503,7 @@ void g_MultiScenarioTrafficAssignment()
 
 			case analysis_vehicle_binary_file_based_scenario_evaluation:
 				g_SummaryStatFile.WriteParameterValue("Assignment method", "Load binary agent file with demand type definition from scenarios files: Scenario_Demand_Type.csv, Scenario_Vehicle_Type.csv, Scenario_VOT.csv.");
-				
+
 				g_VehicleLoadingMode = vehicle_binary_file_mode;
 				break;
 
@@ -536,7 +536,7 @@ void g_MultiScenarioTrafficAssignment()
 
 			case analysis_system_optimal:
 				g_SummaryStatFile.WriteParameterValue("Assignment method", "System Optimal for all agents: Based on agent binary file.");
-	
+
 				g_VehicleLoadingMode = vehicle_binary_file_mode;
 				break;
 
@@ -548,7 +548,7 @@ void g_MultiScenarioTrafficAssignment()
 				g_use_global_path_set_flag = 1;
 				break;
 			default:
-				g_SummaryStatFile.WriteParameterValue ("Assignment method","Unsupported");
+				g_SummaryStatFile.WriteParameterValue("Assignment method", "Unsupported");
 
 				cout << "Assignment method in input_scenario_settings.csv =  " << g_UEAssignmentMethod << " which is unsupported. Please check." << endl;
 
@@ -556,7 +556,7 @@ void g_MultiScenarioTrafficAssignment()
 
 			}
 
-			
+
 			if (g_UEAssignmentMethod == analysis_ABM_integration)
 			{
 				g_ReadRealTimeSimulationSettingsFile();
@@ -567,48 +567,48 @@ void g_MultiScenarioTrafficAssignment()
 			{
 
 
-			g_RealTimeSimulationSettings.synchronization_sleep_time_interval_in_second
+				g_RealTimeSimulationSettings.synchronization_sleep_time_interval_in_second
 					= g_GetPrivateProfileInt("synchronization", "sleep_time_interval_in_second ", 1, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.input_link_attribute_generated_from_external_program 
-				= g_GetPrivateProfileInt("input_link_attribute", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.input_link_attribute_generated_from_external_program
+					= g_GetPrivateProfileInt("input_link_attribute", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.input_link_attribute_updating_time_interval_in_second 
-				= g_GetPrivateProfileInt("input_link_attribute", "updating_time_interval_in_second", 6, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.input_link_attribute_updating_time_interval_in_second
+					= g_GetPrivateProfileInt("input_link_attribute", "updating_time_interval_in_second", 6, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.input_trip_generated_from_external_program
-				= g_GetPrivateProfileInt("input_trip", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.input_trip_generated_from_external_program
+					= g_GetPrivateProfileInt("input_trip", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.input_trip_updating_time_interval_in_min 
-				= g_GetPrivateProfileInt("input_trip", "updating_time_interval_in_min", 1, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.input_trip_updating_time_interval_in_min
+					= g_GetPrivateProfileInt("input_trip", "updating_time_interval_in_min", 1, g_real_time_simulation_setting_FileName);
 
 
-			g_RealTimeSimulationSettings.output_link_performance_generated_to_external_program 
-				= g_GetPrivateProfileInt("output_link_performance", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.output_link_performance_generated_to_external_program
+					= g_GetPrivateProfileInt("output_link_performance", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.output_link_performance_updating_time_interval_in_min 
-				= g_GetPrivateProfileInt("output_link_performance", "updating_time_interval_in_min", 1, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.output_link_performance_updating_time_interval_in_min
+					= g_GetPrivateProfileInt("output_link_performance", "updating_time_interval_in_min", 1, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.output_trip_generated_to_external_program 
-				= g_GetPrivateProfileInt("output_trip", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.output_trip_generated_to_external_program
+					= g_GetPrivateProfileInt("output_trip", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.output_trip_updating_time_interval_in_min 
-				= g_GetPrivateProfileInt("output_trip", "updating_time_interval_in_min", 1, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.output_trip_updating_time_interval_in_min
+					= g_GetPrivateProfileInt("output_trip", "updating_time_interval_in_min", 1, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.output_travel_cost_skim_generated_to_external_program
-				= g_GetPrivateProfileInt("output_travel_cost_skim", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.output_travel_cost_skim_generated_to_external_program
+					= g_GetPrivateProfileInt("output_travel_cost_skim", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.output_travel_cost_skim_updating_time_interval_in_min
-				= g_GetPrivateProfileInt("output_travel_cost_skim", "updating_time_interval_in_min", 1, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.output_travel_cost_skim_updating_time_interval_in_min
+					= g_GetPrivateProfileInt("output_travel_cost_skim", "updating_time_interval_in_min", 1, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.output_routing_policy_generated_to_external_program
-				= g_GetPrivateProfileInt("output_trip", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.output_routing_policy_generated_to_external_program
+					= g_GetPrivateProfileInt("output_trip", "generated_from_external_program", 0, g_real_time_simulation_setting_FileName);
 
-			g_RealTimeSimulationSettings.output_routing_policy_updating_time_interval_in_min
-				= g_GetPrivateProfileInt("output_trip", "updating_time_interval_in_min", 1, g_real_time_simulation_setting_FileName);
+				g_RealTimeSimulationSettings.output_routing_policy_updating_time_interval_in_min
+					= g_GetPrivateProfileInt("output_trip", "updating_time_interval_in_min", 1, g_real_time_simulation_setting_FileName);
 
 			}
-			
+
 
 
 			g_SummaryStatFile.WriteTextString(" ");
@@ -620,27 +620,27 @@ void g_MultiScenarioTrafficAssignment()
 			g_ODEstimation_max_ratio_deviation_wrt_hist_demand = 0.20f;
 
 
-			if(g_ODEstimationFlag ==1)
+			if (g_ODEstimationFlag == 1)
 			{
-				if(parser_scenario.GetValueByFieldName("ODME_start_iteration",g_ODEstimation_StartingIteration)==false)
+				if (parser_scenario.GetValueByFieldName("ODME_start_iteration", g_ODEstimation_StartingIteration) == false)
 				{
 					g_ODEstimation_StartingIteration = 20;
 					cout << "Field ODME_start_iteration has not been specified in file input_scenario_settings.csv. A default factor of 20 is used." << endl;
 					getchar();
 				}
-				
 
-				if( TotalUEIterationNumber> g_ODEstimation_StartingIteration && g_ODEstimation_StartingIteration >= _MAX_ODT_PATH_SIZE_4_ODME)
+
+				if (TotalUEIterationNumber > g_ODEstimation_StartingIteration && g_ODEstimation_StartingIteration >= _MAX_ODT_PATH_SIZE_4_ODME)
 				{
-					cout << "Field ODME_start_iteration should be less than " << _MAX_ODT_PATH_SIZE_4_ODME  << endl;
-					g_ODEstimation_StartingIteration = _MAX_ODT_PATH_SIZE_4_ODME-1;
+					cout << "Field ODME_start_iteration should be less than " << _MAX_ODT_PATH_SIZE_4_ODME << endl;
+					g_ODEstimation_StartingIteration = _MAX_ODT_PATH_SIZE_4_ODME - 1;
 					getchar();
 				}
 
 				float ODEstimation_max_percentage_deviation_wrt_hist_demand = 20;
-				if(parser_scenario.GetValueByFieldName("ODME_max_percentage_deviation_wrt_hist_demand",ODEstimation_max_percentage_deviation_wrt_hist_demand)==false)
+				if (parser_scenario.GetValueByFieldName("ODME_max_percentage_deviation_wrt_hist_demand", ODEstimation_max_percentage_deviation_wrt_hist_demand) == false)
 				{
-					
+
 
 					cout << "Field ODME_max_percentage_deviation_wrt_hist_demand has not been specified in file input_scenario_settings.csv. A default value of 30 (%) is used." << endl;
 					getchar();
@@ -648,13 +648,13 @@ void g_MultiScenarioTrafficAssignment()
 
 				g_ODEstimation_max_ratio_deviation_wrt_hist_demand = ODEstimation_max_percentage_deviation_wrt_hist_demand / 100.0;
 				g_ODEstimation_StepSize = 0.05f;
-				if(parser_scenario.GetValueByFieldName("ODME_step_size",g_ODEstimation_StepSize)==false)
+				if (parser_scenario.GetValueByFieldName("ODME_step_size", g_ODEstimation_StepSize) == false)
 				{
 					cout << "Field ODME_step_size has not been specified in file input_scenario_settings.csv. A default value of 0.05 is used." << endl;
 					getchar();
 				}
 
-				if(g_ODEstimation_StepSize<0 || g_ODEstimation_StepSize>=1)
+				if (g_ODEstimation_StepSize < 0 || g_ODEstimation_StepSize >= 1)
 				{
 					cout << "Field ODME_step_size =" << g_ODEstimation_StepSize << ", which should be between 0 and 1" << endl;
 					getchar();
@@ -665,16 +665,16 @@ void g_MultiScenarioTrafficAssignment()
 			}
 
 
-	
-			
 
-			if(parser_scenario.GetValueByFieldNameWithPrintOut("demand_multiplier",g_DemandGlobalMultiplier)==false )
+
+
+			if (parser_scenario.GetValueByFieldNameWithPrintOut("demand_multiplier", g_DemandGlobalMultiplier) == false)
 			{
 				cout << "Field demand_multiplier cannot be found in file input_scenario_settings.csv. Please check." << endl;
 				g_ProgramStop();
 			}
 
-			string File_Link_Based_Toll,File_Incident,File_MessageSign,File_WorkZone;
+			string File_Link_Based_Toll, File_Incident, File_MessageSign, File_WorkZone;
 
 			if (line_no == 1)  // read it once
 			{
@@ -682,7 +682,7 @@ void g_MultiScenarioTrafficAssignment()
 
 
 			}
-	
+
 			g_ReadScenarioInputFiles(scenario_no);
 
 			cout << "Start Traffic Assignment/Simulation... " << endl;
@@ -690,43 +690,44 @@ void g_MultiScenarioTrafficAssignment()
 			cout << "Agent based dynamic traffic assignment... " << endl;
 
 
-		if (g_UEAssignmentMethod == analysis_LR_agent_based_system_optimization)  // 12
-		{
-			g_SummaryStatFile.WriteParameterValue("Routing method", "Lagrangian relaxation based, agent-based routing");
-			g_AgentBasedOptimization();
-			
-		}else
-		{
-
-			if (g_AgentBasedAssignmentFlag == 1)
+			if (g_UEAssignmentMethod == analysis_LR_agent_based_system_optimization)  // 12
 			{
-				g_SummaryStatFile.WriteParameterValue("Routing method", "Individual agent-based routing");
-				g_AgentBasedAssisnment();  // agent-based assignment
+				g_SummaryStatFile.WriteParameterValue("Routing method", "Lagrangian relaxation based, agent-based routing");
+				g_AgentBasedOptimization();
+
 			}
 			else
 			{
-				g_SummaryStatFile.WriteParameterValue("Assignment method", "Zone-based routing");
-				g_ZoneBasedDynamicTrafficAssignment(); // multi-iteration dynamic traffic assignment
+
+				if (g_AgentBasedAssignmentFlag == 1)
+				{
+					g_SummaryStatFile.WriteParameterValue("Routing method", "Individual agent-based routing");
+					g_AgentBasedAssisnment();  // agent-based assignment
+				}
+				else
+				{
+					g_SummaryStatFile.WriteParameterValue("Assignment method", "Zone-based routing");
+					g_ZoneBasedDynamicTrafficAssignment(); // multi-iteration dynamic traffic assignment
+
+				}
+
 
 			}
 
-
-		}
-
-		g_SummaryStatFile.WriteTextLabel("\n")
-			;
+			g_SummaryStatFile.WriteTextLabel("\n")
+				;
 			g_OutputSimulationStatistics(g_NumberOfIterations);
 
-			g_MultiScenarioSummaryStatFile.SetValueByFieldName ("scenario_no",scenario_no);
-			g_MultiScenarioSummaryStatFile.SetValueByFieldName ("scenario_name",scenario_name);
-			g_MultiScenarioSummaryStatFile.SetValueByFieldName ("number_of_iterations",TotalUEIterationNumber);
-			g_MultiScenarioSummaryStatFile.SetValueByFieldName ("demand_multiplier",g_DemandGlobalMultiplier);
+			g_MultiScenarioSummaryStatFile.SetValueByFieldName("scenario_no", scenario_no);
+			g_MultiScenarioSummaryStatFile.SetValueByFieldName("scenario_name", scenario_name);
+			g_MultiScenarioSummaryStatFile.SetValueByFieldName("number_of_iterations", TotalUEIterationNumber);
+			g_MultiScenarioSummaryStatFile.SetValueByFieldName("demand_multiplier", g_DemandGlobalMultiplier);
 
-			#ifdef _large_memory_usage_lr
+#ifdef _large_memory_usage_lr
 			g_SummaryStatFile.WriteParameterValue("Memory use mode", "large memory for demand-dependent data");
-			#endif 		
+#endif 		
 
-			g_MultiScenarioSummaryStatFile.SetValueByFieldName ("traffic_flow_model",traffic_flow_model);
+			g_MultiScenarioSummaryStatFile.SetValueByFieldName("traffic_flow_model", traffic_flow_model);
 
 
 
@@ -737,10 +738,11 @@ void g_MultiScenarioTrafficAssignment()
 			line_no++;
 		}  // for each scenario
 
-		g_MultiScenarioSummaryStatFile.WriteTextLabel (g_GetAppRunningTime());
-		parser_MOE_settings.CloseCSVFile ();
+		g_MultiScenarioSummaryStatFile.WriteTextLabel(g_GetAppRunningTime());
+		parser_MOE_settings.CloseCSVFile();
 
-	}else
+	}
+	else
 	{
 
 		cout << "File input_scenario_settings.csv cannot be found. Please check." << endl;
