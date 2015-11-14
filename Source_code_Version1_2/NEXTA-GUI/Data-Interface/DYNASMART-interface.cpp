@@ -1458,6 +1458,8 @@ BOOL CTLiteDoc::ReadDYNASMARTSimulationResults()
 	}
 
 		RecalculateLinkMOEFromVehicleTrajectoryFile();
+
+
 	if(m_VehicleSet.size() > 500000)
 	{
 	CString msg;

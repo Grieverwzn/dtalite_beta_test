@@ -4804,7 +4804,7 @@ void g_ReadDTALiteSettings()
 	g_SystemOptimalStartingTimeinMin = g_GetPrivateProfileInt("system_optimal_assignment", "re_routing_start_time_in_min", 0, g_DTASettingFileName);
 
 	g_VMSPerceptionErrorRatio = g_GetPrivateProfileFloat("traveler_information", "coefficient_of_variation_of_VMS_perception_error", 0.05f, g_DTASettingFileName);
-	g_information_updating_interval_in_min = g_GetPrivateProfileInt("traveler_information", "information_updating_interval", 5, g_DTASettingFileName);
+	g_information_updating_interval_in_min = g_GetPrivateProfileInt("traveler_information", "information_updating_interval_in_min", 5, g_DTASettingFileName);
 
 	g_output_OD_path_MOE_file = g_GetPrivateProfileInt("output", "OD_path_MOE_file", 0, g_DTASettingFileName);
 	g_output_OD_TD_path_MOE_file = g_GetPrivateProfileInt("output", "OD_path_MOE_file", 0, g_DTASettingFileName);
@@ -5522,9 +5522,9 @@ void g_DetermineDemandLoadingPeriod()
 				g_ProgramStop();
 			}
 
-			if (end_time_in_min > 1440)
+			if (end_time_in_min > 2880)
 			{
-				cout << "end_time_in_min should be less than 1440 min in input_demand_meta_data.csv" << endl;
+				cout << "end_time_in_min should be less than 2880 min in input_demand_meta_data.csv" << endl;
 				g_ProgramStop();
 			}
 
@@ -5620,9 +5620,9 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 			parser.GetValueByFieldNameWithPrintOut("start_time_in_min", start_time_in_min);
 			parser.GetValueByFieldNameWithPrintOut("end_time_in_min", end_time_in_min);
 
-			if (end_time_in_min > 1440)
+			if (end_time_in_min > 2880)
 			{
-				cout << "end_time_in_min should be less than 1440 min in input_demand_meta_data.csv" << endl;
+				cout << "end_time_in_min should be less than 2880 min in input_demand_meta_data.csv" << endl;
 				g_ProgramStop();
 			}
 

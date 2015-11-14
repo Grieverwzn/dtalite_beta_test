@@ -135,7 +135,7 @@ extern float g_DefaultSaturationFlowRate_in_vehphpl;
 #define MAX_LINK_NO 65530
 #endif
 
-#define MAX_NODE_SIZE_IN_A_PATH 2000
+#define MAX_NODE_SIZE_IN_A_PATH 3000
 #define MAX_LINK_SIZE_IN_VMS 20
 
 #define MAX_CPU_SIZE 20

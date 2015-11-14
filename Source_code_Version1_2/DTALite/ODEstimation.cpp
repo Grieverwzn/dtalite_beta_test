@@ -309,15 +309,6 @@ bool g_ReadLinkMeasurementFile()
 			int dest_node_id = -1;
 			parser.GetValueByFieldNameRequired("link_count", volume_count);
 
-			float avg_speed = 0;
-			parser.GetValueByFieldNameRequired("speed", avg_speed);
-
-			float travel_time_in_min = 0;
-			parser.GetValueByFieldNameRequired("travel_time_in_min", travel_time_in_min);
-
-
-			float density = -1;
-			parser.GetValueByFieldNameRequired("lane_density", density);
 
 			pLink->m_bSensorData = true;
 			SLinkMeasurement element;
@@ -331,26 +322,13 @@ bool g_ReadLinkMeasurementFile()
 				count_sensor_count++;
 			}
 
-			if (density >= 1)
-			{
-				element.ObsDensity = density;
-				g_ObsDensityAvailableFlag = true;
-			}
+			//if (density >= 1)
+			//{
+			//	element.ObsDensity = density;
+			//	g_ObsDensityAvailableFlag = true;
+			//}
 
-			if (avg_speed)  // with spped data
-			{
-				element.ObsTravelTime = pLink->m_Length / max(1, avg_speed)*60;  // use speed as travel time; 1 hour -> 60 min
-				g_ObsTravelTimeAvailableFlag = true;
-				speed_sensor_count++;
-
-			}
-
-			if (travel_time_in_min >= 0.1)  // with travel time data 
-			{
-				element.ObsTravelTime = travel_time_in_min;
-				g_ObsTravelTimeAvailableFlag = true;
-			}
-
+	
 			std::string second_count_sensor_id;
 			parser.GetValueByFieldName("second_count_sensor_id", second_count_sensor_id);
 
@@ -1595,8 +1573,8 @@ void g_OutputODMEResults()
 	validation_result_file.SetFieldName ("to_node_id");
 	validation_result_file.SetFieldName ("link_id");
 	validation_result_file.SetFieldName ("time_interval");
-	validation_result_file.SetFieldName ("observed_link_count/speed");
-	validation_result_file.SetFieldName ("simulated_link_count/speed");
+	validation_result_file.SetFieldName ("observed_link_count");
+	validation_result_file.SetFieldName ("simulated_link_count");
 
 	validation_result_file.SetFieldName ("simulated_over_observed_ratio");
 	validation_result_file.SetFieldName ("simulated_vs_observed_percentage_error");

@@ -821,7 +821,16 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 				else
 				{
 					//-----QU 10.30------------to do list: information type and new path--------------------------------------//
-					g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(pVehicle->m_AgentID);
+
+					if (pVehicle->m_InformationType == info_hist_based_on_routing_policy || pVehicle->m_InformationType == learning_from_hist_travel_time)
+					{
+						g_UseExternalPathDefinedInRoutingPolicy(pVehicle);
+					}
+					else // pVehicle >=2
+					{
+						g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(pVehicle->m_AgentID);
+					}
+
 					_proxy_ABM_log(0, "--step 11.2: no routing policy, create shortest path based on prevailing traffic time\n");
 					//--------------------------------------------------------------------------------------------------------//
 
@@ -847,8 +856,45 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 
 					//--for information type 3-------has been finished~~~//
 					_proxy_ABM_log(0, "--step 12: update existing new path (which has not been used before the trip starts) if the destination or departure time is changed\n");
+					
+					if (parser_agent.GetValueByFieldName("path_switch_flag", sub_path_switch_flag))  // user defined
+					{
+						if (sub_path_switch_flag >= 1)  // if the user defines  path_switch_flag >=1
+						{
+							_proxy_ABM_log(0, "--step 13: path_switch_flag=1 for starting from current link\n");
 
-					g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(pVehicle->m_AgentID);
+							//first, check if m_alt_path_node_sequence has been defined in the memory
+							std::vector<int> sub_path_node_sequence = pVehicle->m_alt_path_node_sequence;
+							_proxy_ABM_log(0, "--step 13.1: size of in memory alternative path node sequence = %d\n", pVehicle->m_alt_path_node_sequence.size());
+
+							string detour_node_sequence_str;
+							if (parser_agent.GetValueByFieldName("alt_path_node_sequence", detour_node_sequence_str) == true)
+							{
+								//second, rewrite alt_path_node_sequence if the user defines the node sequence in the input agent text file, again
+
+								sub_path_node_sequence = ParseLineToIntegers(detour_node_sequence_str);
+								_proxy_ABM_log(0, "--step 13.2: size of alternative path node sequence in input agent file = %d\n", sub_path_node_sequence);
+							}
+
+							if (sub_path_node_sequence.size() > 0)
+							{
+
+								g_UpdateAgentPathBasedOnDetour(pVehicle->m_AgentID, sub_path_node_sequence);
+								_proxy_ABM_log(0, "--step 13.3: switch to alternative path\n");
+							}
+						}
+					}
+					else // no user defined, use default settings 
+					{					if (pVehicle->m_InformationType == info_hist_based_on_routing_policy || pVehicle->m_InformationType == learning_from_hist_travel_time)
+										{
+											g_UseExternalPathDefinedInRoutingPolicy(pVehicle);
+										}
+										else // pVehicle >=2
+										{
+											g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(pVehicle->m_AgentID);
+										}
+					}
+
 					//--------------------------------------------------------------------------------------------------------//
 				}
 

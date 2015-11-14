@@ -188,14 +188,12 @@ void CDlgLinkProperties::OnBnClickedOk()
 
 	int CurSelNo = m_LinkTypeComboBox.GetCurSel ();
 
+
 	char LinkTypeString[50]; 
-	if(CurSelNo>0)
-	{
 	
-		m_LinkTypeComboBox.GetLBText (CurSelNo,m_Text);
-		sscanf_s(m_Text, "%d,%s", &LinkType, LinkTypeString,sizeof(LinkTypeString));
-	
-	}
+	m_LinkTypeComboBox.GetLBText (CurSelNo,m_Text);
+	sscanf_s(m_Text, "%d,%s", &LinkType, LinkTypeString,sizeof(LinkTypeString));
+	TRACE("updated link type = %d", LinkType);
 
 	OnOK();
 }

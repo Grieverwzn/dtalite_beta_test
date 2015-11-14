@@ -4453,7 +4453,9 @@ void CTLiteView::OnLButtonUp(UINT nFlags, CPoint point)
 	{
 
 		MoveNode(pDoc->m_SelectedNodeID,point);
-
+		pDoc->m_bLinkToBeShifted = true;
+		pDoc->OffsetLink();
+		pDoc->GenerateOffsetLinkBand();
 		m_bMouseDownFlag = false;
 
 	}
@@ -4856,6 +4858,11 @@ void CTLiteView::OnMouseMove(UINT nFlags, CPoint point)
 	{
 
 		MoveNode(pDoc->m_SelectedNodeID,point);
+
+		pDoc->m_bLinkToBeShifted = true;
+		pDoc->OffsetLink();
+		pDoc->GenerateOffsetLinkBand();
+
 		Invalidate();
 
 	}
@@ -8916,6 +8923,8 @@ void CTLiteView::OnNodeRemovenodeavoidanceconstraint()
 void CTLiteView::OnEditMovenode()
 {
 	m_ToolMode = move_node_tool;
+
+	
 	CMainFrame* pMainFrame = (CMainFrame*) AfxGetMainWnd();
 	pMainFrame->m_iSelectedLayer = layer_node;
 

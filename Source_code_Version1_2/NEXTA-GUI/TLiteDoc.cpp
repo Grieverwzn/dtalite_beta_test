@@ -2998,6 +2998,8 @@ void CTLiteDoc::ReCalculateLinkBandWidth()
 	{
 
 		DTALink* pLink = (*iLink);
+		if (pLink->m_FromNodeNumber == 31 && pLink->m_ToNodeNumber == 30)
+			TRACE("");
 
 		float link_volume = 0;
 		// default mode
@@ -3078,6 +3080,9 @@ void CTLiteDoc::GenerateOffsetLinkBand()
 		(*iLink)->m_ReferenceBandLeftShapePoints.clear();
 		(*iLink)->m_ReferenceBandRightShapePoints.clear();
 
+		if ((*iLink)->m_FromNodeNumber == 31 && (*iLink)->m_ToNodeNumber == 30)
+			TRACE("");
+
 		if((*iLink)->m_ShapePoints.size() ==0)
 			continue;
 
@@ -3103,6 +3108,12 @@ void CTLiteDoc::GenerateOffsetLinkBand()
 
 				if(fabs(DeltaY)>0.00001)
 					theta = atan2(DeltaY, DeltaX);
+				else {
+					if (DeltaX > 0)
+						theta = 0;
+					else 
+						theta = PI;
+					}
 			}
 
 			GDPoint pt;
@@ -3112,8 +3123,10 @@ void CTLiteDoc::GenerateOffsetLinkBand()
 
 			(*iLink)->m_BandLeftShapePoints.push_back (pt);
 
-			pt.x  = (*iLink)->m_ShapePoints[si].x + (*iLink)->m_BandWidthValue*lane_offset* cos(theta-PI/2.0f);
-			pt.y = (*iLink)->m_ShapePoints[si].y + (*iLink)->m_BandWidthValue*lane_offset* sin(theta-PI/2.0f);
+			double x_offset = (*iLink)->m_BandWidthValue*lane_offset* cos(theta - PI / 2.0f);
+			double y_offset = (*iLink)->m_BandWidthValue*lane_offset* sin(theta - PI / 2.0f);
+			pt.x = (*iLink)->m_ShapePoints[si].x + x_offset;
+			pt.y = (*iLink)->m_ShapePoints[si].y + y_offset;
 
 			(*iLink)->m_BandRightShapePoints.push_back (pt);
 
@@ -3191,6 +3204,10 @@ void CTLiteDoc::OffsetLink()
 
 		for (iLink = m_LinkSet.begin(); iLink != m_LinkSet.end(); iLink++)
 		{
+			if ((*iLink)->m_FromNodeNumber == 31 && (*iLink)->m_ToNodeNumber == 30)
+				TRACE("");
+
+
 			if((*iLink) -> m_bToBeShifted)
 			{
 				//Test if an opposite link exits
@@ -3212,7 +3229,7 @@ void CTLiteDoc::OffsetLink()
 
 		for (iLink = m_LinkSet.begin(); iLink != m_LinkSet.end(); iLink++)
 		{
-			if ((*iLink)->m_FromNodeNumber == 41 && (*iLink)->m_ToNodeNumber == 9053)
+			if ((*iLink)->m_FromNodeNumber == 31 && (*iLink)->m_ToNodeNumber == 30)
 			{
 
 				TRACE("");
@@ -3231,6 +3248,12 @@ void CTLiteDoc::OffsetLink()
 				double theta = 0;			
 				if(fabs(DeltaY)>0.00001)
 					theta= atan2(DeltaY, DeltaX);
+				else {
+					if (DeltaX > 0)
+						theta = 0;
+					else
+						theta = PI;
+					}
 
 				for(unsigned int si = 0; si < (*iLink) ->m_Original_ShapePoints .size(); si++)
 				{
@@ -9432,9 +9455,8 @@ void CTLiteDoc::LoadSimulationOutput()
 		if (ReadVehicleBinFile(m_ProjectDirectory + "agent.bin", 2) == false)
 		{
 			ReadVehicleCSVFile_Parser(m_ProjectDirectory+ "output_agent.csv");
-
+			RecalculateLinkMOEFromVehicleTrajectoryFile(); 
 			//ReadAgentCSVFile(m_ProjectDirectory + "output_agent.csv", 2);
-
 		}// try version 2 format first
 	}
 

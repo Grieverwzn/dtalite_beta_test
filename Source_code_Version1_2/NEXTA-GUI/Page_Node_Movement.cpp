@@ -126,9 +126,9 @@ BOOL CPage_Node_Movement::OnInitDialog()
 
 	m_Column_names.push_back ("Prohibition"); //4
 
-	m_Column_names.push_back ("Simu Total Volume"); //6
-	m_Column_names.push_back ("Simu Hourly Volume"); //7
-	m_Column_names.push_back ("Simu Delay (sec)"); //8
+	m_Column_names.push_back ("Simu Total Volume"); //5
+	m_Column_names.push_back ("Simu Hourly Volume"); //6
+	m_Column_names.push_back ("Simu Delay (sec)"); //7
 
 	//if(m_bSigalizedNode == true)
 	//{
@@ -200,7 +200,7 @@ BOOL CPage_Node_Movement::OnInitDialog()
 		m_ListCtrl.SetItemText(Index, column_index++,str);
 
 		m_ListCtrl.SetItemText(Index, column_index++,m_pDoc->GetTurnString(movement.movement_turn)); //2: turn type
-		m_ListCtrl.SetItemText(Index, column_index++,m_pDoc->GetTurnDirectionString( movement.movement_approach_turn)); //2: turn type
+		m_ListCtrl.SetItemText(Index, column_index++,m_pDoc->GetTurnDirectionString( movement.movement_approach_turn)); //3: turn type
 
 		if(movement.turning_prohibition_flag  == 1)
 			str.Format ("Prohibited"); 
@@ -208,21 +208,18 @@ BOOL CPage_Node_Movement::OnInitDialog()
 			str.Format (""); 
 
 
-		m_ListCtrl.SetItemText(Index, column_index++,str );
+		m_ListCtrl.SetItemText(Index, column_index++,str );  //4
 
 
-		str.Format ("%d",movement.QEM_Lanes ); // 4: number of lanes 
-		m_ListCtrl.SetItemText(Index, column_index++,str );
-
-		str.Format ("%.0f",movement.sim_turn_count   ); // 7: simulated volume
+		str.Format ("%.0f",movement.sim_turn_count   ); // 5: simulated volume
 		m_ListCtrl.SetItemText(Index, column_index++,str );
 
 		float number_of_hours = max(0.01,(m_pDoc->m_TimingPlanVector[PlanNo].end_time_in_min -  m_pDoc->m_TimingPlanVector[PlanNo].start_time_in_min )/60.0);
 		float sim_turn_hourly_count = movement.sim_turn_count / number_of_hours;
-		str.Format ("%.0f",sim_turn_hourly_count); // simulated volume
+		str.Format ("%.0f",sim_turn_hourly_count); // 6: simulated hourly volume
 		m_ListCtrl.SetItemText(Index, column_index++,str );
 
-		str.Format ("%.1f",movement.sim_turn_delay*60   ); // simulated turn delay
+		str.Format ("%.1f",movement.sim_turn_delay*60   ); // 7: simulated turn delay
 		m_ListCtrl.SetItemText(Index, column_index++,str );
 
 		str.Format ("%.1f",movement.QEM_StartTime   ); // green start time 
@@ -788,30 +785,7 @@ void CPage_Node_Movement::SaveData()
 		int PrevQEM_lanes = pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].QEM_Lanes;
 		int QEM_Phase1 =  pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].QEM_Phase1;
 
-		CString LaneString =  m_ListCtrl.GetItemText (i,GetColumnIndex("# of Lanes")); 
-		int QEM_lanes= atoi(LaneString);
-
-		// update # of lanes on link
-
-		if(PrevQEM_lanes != QEM_lanes)
-		{
-		DTALink* pLink0 = m_pDoc->m_LinkNoMap[pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].IncomingLinkNo ];
-
-		switch (pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].movement_turn)
-			{
-			case DTA_Through: pLink0->m_NumberOfLanes = QEM_lanes; break;
-
-
-			case DTA_LeftTurn: 
-			case DTA_LeftTurn2:
-			pLink0->m_NumberOfLeftTurnLanes = QEM_lanes  ; break;
-
-			
-			case DTA_RightTurn:
-			case DTA_RightTurn2: 
-			pLink0->m_NumberOfRightTurnLanes = QEM_lanes   ; break;
-			}
-		}
+	
 		int obs_turn_hourly_count = pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].obs_turn_hourly_count  ;
 		int obs_turn_delay = pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].obs_turn_delay  ;
 
@@ -856,8 +830,7 @@ void CPage_Node_Movement::SaveData()
 		if(movement_approach_turn != pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].movement_approach_turn ||
 			obs_turn_hourly_count != pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].obs_turn_hourly_count  ||
 			obs_turn_delay != pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].obs_turn_delay  || 
-			turning_prohibition_flag != pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].turning_prohibition_flag || 
-			QEM_lanes != pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].QEM_Lanes
+			turning_prohibition_flag != pNode->m_MovementDataMap[m_TimingPlanName].m_MovementVector[i].turning_prohibition_flag
 	)
 
 		{
