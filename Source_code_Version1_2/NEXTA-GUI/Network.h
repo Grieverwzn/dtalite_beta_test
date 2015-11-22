@@ -529,6 +529,8 @@ public:
 	float NOX;
 	float CO;
 	float HC;
+	float PM;
+	float PM2_5;
 	CVehicleEmission()
 	{
 		Energy = 0;
@@ -536,6 +538,8 @@ public:
 		NOX = 0;
 		CO = 0;
 		HC = 0;
+		PM = 0;
+		PM2_5 = 0;
 
 	}
 
@@ -546,7 +550,8 @@ public:
 		NOX = 0;
 		CO = 0;
 		HC = 0;
-	
+		PM = 0;
+		PM2_5 = 0;
 	
 	}
 };
@@ -3708,25 +3713,25 @@ float 	GetRampImpactedFlag(int DepartureTime = -1)
 
 		}
 
-//		//density
-//		for(int t =0; t< m_LinkMOEAry.size(); t++)
-//		{
-//			int number_of_vehicles_on_the_link = m_LinkMOEAry[t].ArrivalCumulativeFlow- m_LinkMOEAry[t].DepartureCumulativeFlow;
-//
-//			m_LinkMOEAry[t].Density = number_of_vehicles_on_the_link / (max(0.0001,m_Length * m_NumberOfLanes)); 
-//
-//				if(this->m_FromNodeNumber == 48 && this->m_ToNodeNumber == 41)
-//			{
-//
-//				TRACE("\ntime t= %d, v_count =%d,  den = %.1f",t, number_of_vehicles_on_the_link, m_LinkMOEAry[t].Density  );
-//			
-//			}
-//
-//
-//
-//			//ratio between 0 and 1
-////			m_LinkMOEAry[t].QueueLength = min(1.0,number_of_vehicles_on_the_link/(max(0.0001, m_Length * m_NumberOfLanes * m_Kjam )));
-//		}
+		//density
+		for (int t = 0; t< m_LinkMOEArySize; t++)
+		{
+			int number_of_vehicles_on_the_link = m_LinkMOEAry[t].ArrivalCumulativeFlow- m_LinkMOEAry[t].DepartureCumulativeFlow;
+
+			m_LinkMOEAry[t].Density = number_of_vehicles_on_the_link / (max(0.0001,m_Length * m_NumberOfLanes)); 
+
+				if(this->m_FromNodeNumber == 48 && this->m_ToNodeNumber == 41)
+			{
+
+				TRACE("\ntime t= %d, v_count =%d,  den = %.1f",t, number_of_vehicles_on_the_link, m_LinkMOEAry[t].Density  );
+			
+			}
+
+
+
+			//ratio between 0 and 1
+			m_LinkMOEAry[t].QueueLength = min(1.0,number_of_vehicles_on_the_link/(max(0.0001, m_Length * m_NumberOfLanes * m_Kjam )));
+		}
 
 	}
 	float GetSimulatedDensity(int current_time)
@@ -4092,7 +4097,7 @@ public:
 		m_Distance =0;
 		m_TravelTime = 0;
 		m_Reliability = 0;
-		m_Emissions = 0;
+		m_PM = 0;
 		m_Safety = 0;
 		m_Fuel = 0;
 		m_MaxTravelTime = 0;
@@ -4251,7 +4256,7 @@ public:
 
 	float m_TravelTime;
 	float m_Reliability;
-	float m_Emissions;
+	float m_PM;
 	float m_Safety;
 	float m_Fuel;
 	int m_NumberOfSensorsPassed;
@@ -4437,7 +4442,8 @@ public:
 
 	float m_TollDollarCost;
 	float m_VOT;
-	float m_Emissions;
+	float m_PM;
+	float m_PM2_5;
 	DTAVehicle()
 	{
 
@@ -4486,6 +4492,8 @@ public:
 		m_Delay = 0;
 
 		m_PricingType = -1;
+		m_PM = 0;
+		m_PM2_5 = 0;
 
 	};
 	~DTAVehicle()
@@ -5141,7 +5149,7 @@ public:
 		TotalTravelTimePerMile = 0;
 		TotalDistance = 0;
 		TotalCost = 0;
-		TotalEmissions = 0;
+		TotalPM= 0;
 		TotalGeneralizedCost = 0;
 		TotalGeneralizedTime = 0;
 		DisplayValue = 0;
@@ -5169,7 +5177,7 @@ public:
 		TotalTravelTimePerMileVariance = 0;
 		TotalDistance = 0;
 		TotalCost = 0;
-		TotalEmissions = 0;
+		TotalPM = 0;
 		TotalGeneralizedCost = 0;
 		TotalGeneralizedTime = 0;
 		bImpactFlag = false;
@@ -5196,7 +5204,7 @@ public:
 	float TotalGeneralizedCost;
 	float TotalGeneralizedTime;
 	float TotalCost;
-	float TotalEmissions;
+	float TotalPM;
 	float AvgTravelTime;
 	float AvgDistance;
 

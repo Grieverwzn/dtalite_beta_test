@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerWorkingDirectory>C:\Users\yunchaoq\Desktop\PROJECT\DTA DEBUG\Weihe\YQ_C_ODD150_12345_SQ_ITER50_TEST\YQ_C_ODD150_12345_SQ_ITER50_TEST</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>C:\DataSet\Korea_test_11_vehtypes_kko</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

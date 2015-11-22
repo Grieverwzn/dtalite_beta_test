@@ -1481,7 +1481,7 @@ void CTLiteDoc::GeneratePathFromVehicleData()
 						m_PathMap[label].TotalTravelTime  += (pVehicle->m_ArrivalTime-pVehicle->m_DepartureTime);
 						m_PathMap[label].TotalDistance   += pVehicle->m_Distance;
 						m_PathMap[label].TotalCost   += pVehicle->m_TollDollarCost;
-						m_PathMap[label].TotalEmissions   += pVehicle->m_Emissions;
+						m_PathMap[label].TotalPM  += pVehicle->m_PM;
 					
 						m_PathMap[label].emissiondata.Energy += pVehicle->m_EmissionData .Energy;
 						m_PathMap[label].emissiondata.CO2 += pVehicle->m_EmissionData .CO2;
@@ -1498,7 +1498,7 @@ void CTLiteDoc::GeneratePathFromVehicleData()
 						m_ODMatrixMap[label].TotalTravelTime  += (pVehicle->m_ArrivalTime-pVehicle->m_DepartureTime);
 						m_ODMatrixMap[label].TotalDistance   += pVehicle->m_Distance;
 						m_ODMatrixMap[label].TotalCost   += pVehicle->m_TollDollarCost;
-						m_ODMatrixMap[label].TotalEmissions   += pVehicle->m_Emissions;
+						m_ODMatrixMap[label].TotalPM  += pVehicle->m_PM;
 					
 						m_ODMatrixMap[label].emissiondata.Energy += pVehicle->m_EmissionData .Energy;
 						m_ODMatrixMap[label].emissiondata.CO2 += pVehicle->m_EmissionData .CO2;

@@ -225,7 +225,6 @@ void g_ReadDSPVehicleFile(string file_name)
 			pVehicle->m_bComplete = false;
 			pVehicle->m_bLoaded = false;
 			pVehicle->m_TollDollarCost = 0;
-			pVehicle->m_Emissions = 0;
 			pVehicle->m_Distance = 0;
 
 			pVehicle->m_NodeSize = 0;
@@ -788,7 +787,6 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 				pVehicle->m_bComplete = false;
 				pVehicle->m_bLoaded = false;
 				pVehicle->m_TollDollarCost = 0;
-				pVehicle->m_Emissions = 0;
 				pVehicle->m_Distance = 0;
 
 				pVehicle->m_NodeSize = 0;
@@ -1103,7 +1101,6 @@ bool g_ReadTRANSIMSTripFile(string file_name, bool bOutputLogFlag)
 			//pVehicle->m_bComplete = false;
 			//pVehicle->m_bLoaded  = false;
 			//pVehicle->m_TollDollarCost = 0;
-			//pVehicle->m_Emissions  = 0;
 			//pVehicle->m_Distance = 0;
 
 			//pVehicle->m_NodeSize = 0;
@@ -1572,7 +1569,6 @@ bool g_ReadAgentBinFile(string file_name, bool b_with_updated_demand_type_info)
 			pVehicle->m_bComplete = false;
 			pVehicle->m_bLoaded = false;
 			pVehicle->m_TollDollarCost = 0;
-			pVehicle->m_Emissions = 0;
 			pVehicle->m_Distance = 0;
 			pVehicle->m_NodeNumberSum = 0;
 

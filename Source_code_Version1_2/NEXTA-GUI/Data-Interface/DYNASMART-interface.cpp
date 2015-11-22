@@ -102,7 +102,7 @@ bool CTLiteDoc::ReadGPSData(string FileName)
 
 			pVehicle->m_VOT = 10;
 			pVehicle->m_TollDollarCost = 0;
-			pVehicle->m_Emissions = 0;
+			pVehicle->m_PM = 0;
 			pVehicle->m_Distance = Trajectory_Length/5280;
 
 			//pVehicle->m_Distance = 0;
@@ -1339,7 +1339,7 @@ BOOL CTLiteDoc::ReadDYNASMARTSimulationResults()
 				}
 
 				pVehicle->m_TollDollarCost = 0;
-				pVehicle->m_Emissions = 0;
+				pVehicle->m_PM = 0;
 
 				pVehicle->m_Distance = 0;
 
@@ -2391,7 +2391,7 @@ bool CTLiteDoc::ReadDYNASMARTVehicleTrajectoryFile(LPCTSTR lpszFileName, int dat
 
 			pVehicle->m_VOT = 10;
 			pVehicle->m_TollDollarCost = 0;
-			pVehicle->m_Emissions = 0;
+			pVehicle->m_PM = 0;
 
 			pVehicle->m_Distance = 0;
 
@@ -2493,6 +2493,10 @@ void CTLiteDoc::RecalculateLinkMOEFromVehicleTrajectoryFile()
 {
 	std::list<DTALink*>::iterator iLink ;
 
+	for (std::list<DTALink*>::iterator iLink = m_LinkSet.begin(); iLink != m_LinkSet.end(); iLink++)
+	{
+		(*iLink)->ResetMOEAry(g_Simulation_Time_Horizon);  // use one day horizon as the default value
+	}
 
 	int count  = 0;
 	std::list<DTAVehicle*>::iterator iVehicle;

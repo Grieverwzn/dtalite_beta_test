@@ -2043,7 +2043,7 @@ void g_ReadInputFiles()
 			{
 				element.cumulative_info_class_percentage[ic] = element.cumulative_info_class_percentage[ic - 1] + element.info_class_percentage[ic];
 			}
-			for (int i = 0; i < g_VehicleTypeVector.size() - 1; i++)
+			for (int i = 0; i < g_VehicleTypeVector.size() - 1; i++)  // the vehicle type here is dynamically determined from th rea
 			{
 				std::ostringstream  str_percentage_of_vehicle_type;
 				str_percentage_of_vehicle_type << "percentage_of_vehicle_type" << i + 1;
@@ -7072,7 +7072,6 @@ bool g_ReadTransitTripCSVFile()
 			pVehicle->m_bComplete = false;
 			pVehicle->m_bLoaded = false;
 			pVehicle->m_TollDollarCost = 0;
-			pVehicle->m_Emissions = 0;
 			pVehicle->m_Distance = 0;
 
 			pVehicle->m_NodeSize = number_of_nodes;

@@ -6684,7 +6684,7 @@ bool CTLiteDoc::WriteSelectVehicleDataToCSVFile(LPCTSTR lpszFileName, std::vecto
 				VehicleDataFile << pVehicle->m_InformationClass << ",";
 				VehicleDataFile << pVehicle->m_VOT << ",";
 				VehicleDataFile << pVehicle->m_TollDollarCost << ",";
-				VehicleDataFile << pVehicle->m_Emissions << ",";
+				VehicleDataFile << pVehicle->m_PM << ",";
 				VehicleDataFile << pVehicle->m_Distance << ",";
 				VehicleDataFile << pVehicle->m_NodeSize << ",\"";
 
@@ -6756,11 +6756,13 @@ void CTLiteDoc::ReadVehicleCSVFile_Parser(LPCTSTR lpszFileName)
 			pVehicle->m_VehicleID		= m_VehicleID;
 			parser.GetValueByFieldName("from_zone_id",pVehicle->m_OriginZoneID);
 			parser.GetValueByFieldName("to_zone_id",pVehicle->m_DestinationZoneID);
-	
+			parser.GetValueByFieldName("origin_node_id", pVehicle->m_OriginNodeID);
+			parser.GetValueByFieldName("destination_node_id", pVehicle->m_DestinationNodeID);
+
 			pVehicle->m_bComplete = true;
 
-			parser.GetValueByFieldName("start_time_in_min",pVehicle->m_DepartureTime);
-			parser.GetValueByFieldName("end_time_in_min",pVehicle->m_ArrivalTime);
+			parser.GetValueByFieldName("departure_time_in_min",pVehicle->m_DepartureTime);
+			parser.GetValueByFieldName("arrival_time_in_min",pVehicle->m_ArrivalTime);
 
 
 			if(g_Simulation_Time_Horizon < pVehicle->m_ArrivalTime)
@@ -6786,7 +6788,15 @@ void CTLiteDoc::ReadVehicleCSVFile_Parser(LPCTSTR lpszFileName)
 			std::string path_node_sequence,path_time_sequence;
 			parser.GetValueByFieldName("path_node_sequence",path_node_sequence );
 			parser.GetValueByFieldName("path_time_sequence",path_time_sequence );
+			
 
+			parser.GetValueByFieldName("TotalEnergy_(KJ)", pVehicle->m_EmissionData.Energy);
+			parser.GetValueByFieldName("CO2_(g)", pVehicle->m_EmissionData.CO2);
+			parser.GetValueByFieldName("NOX_(g)", pVehicle->m_EmissionData.NOX);
+			parser.GetValueByFieldName("CO_(g)", pVehicle->m_EmissionData.CO);
+			parser.GetValueByFieldName("HC_(g)", pVehicle->m_EmissionData.HC);
+			parser.GetValueByFieldName("PM_(g)", pVehicle->m_EmissionData.PM);
+			parser.GetValueByFieldName("PM_2.5(g)", pVehicle->m_EmissionData.PM2_5);
 
 
 			std::vector<int> node_sequence;
@@ -6893,197 +6903,7 @@ void CTLiteDoc::ReadVehicleCSVFile_Parser(LPCTSTR lpszFileName)
 	}
 }
 
-void CTLiteDoc::ReadVehicleCSVFile(LPCTSTR lpszFileName)
-{
 
-	//   cout << "Read vehicle file... "  << endl;
-	// vehicle_id,  origin_zone_id, destination_zone_id, departure_time,
-	//	arrival_time, complete_flag, trip_time, demand_type, occupancy, information_type,
-	//	value_of_time, path_min_cost,distance_in_mile, number_of_nodes,
-	//	node id, node arrival time
-
-	float LengthinMB;
-	FILE* pFile;
-	fopen_s(&pFile,lpszFileName,"rb");
-	if(pFile!=NULL)
-	{
-		fseek(pFile, 0, SEEK_END );
-		int Length = ftell(pFile);
-		fclose(pFile);
-		LengthinMB= Length*1.0/1024/1024;
-		if(LengthinMB>250)
-		{
-			CString msg;
-			msg.Format("The Vehicle.csv file is %5.1f MB in size.\nIt could take quite a while to load this file.\nWould you like to load the vehicle file?",LengthinMB);
-			if(AfxMessageBox(msg,MB_YESNO|MB_ICONINFORMATION)==IDNO)
-				return;
-		}
-	}
-
-
-
-	FILE* st = NULL;
-	fopen_s(&st,lpszFileName,"r");
-	if(st!=NULL)
-	{
-		char  str_line[2000]; // input string
-		int str_line_size;
-		g_read_a_line(st,str_line, str_line_size); //  skip the first line
-
-
-		m_VehicleSet.clear();
-		int count = 0;
-		int vehicle_id;
-		int from_zone_id;
-		int to_zone_id;
-		float departure_time;
-		float arrival_time;
-		int complete_flag;
-		float trip_time;
-		int demand_type;
-		int pricing_type;
-		int vehicle_type;
-		int information_type;
-		float value_of_time;
-		float toll_cost_in_dollar;
-		float emissions;
-		float distance_in_mile;
-		int number_of_nodes;
-
-		while(fscanf(st,"%d,%d,%d,%f,%f,%d,%f,%d,%d,%d,%d,%f,%f,%f,%f,%d,\"",
-			&vehicle_id,
-			&from_zone_id,
-			&to_zone_id,
-			&departure_time,
-			&arrival_time,
-			&complete_flag,
-			&trip_time,
-			&demand_type,
-			&pricing_type,
-			&vehicle_type,
-			&information_type,
-			&value_of_time,
-			&toll_cost_in_dollar,
-			&emissions,
-			&distance_in_mile,
-			&number_of_nodes)>0	)
-		{
-			if(vehicle_id <0)
-				break;
-
-			DTAVehicle* pVehicle = 0;
-			pVehicle = new DTAVehicle;
-			pVehicle->m_VehicleID		= vehicle_id;
-			pVehicle->m_OriginZoneID	= from_zone_id;
-			pVehicle->m_DestinationZoneID = to_zone_id;
-			pVehicle->m_DepartureTime	=  departure_time;
-			pVehicle->m_ArrivalTime =  arrival_time;
-
-			if(g_Simulation_Time_Horizon < pVehicle->m_ArrivalTime)
-				g_Simulation_Time_Horizon = pVehicle->m_ArrivalTime;
-
-			if(complete_flag==0) 
-				pVehicle->m_bComplete = false;
-			else
-				pVehicle->m_bComplete = true;
-
-			pVehicle->m_TripTime  = trip_time;
-
-			pVehicle->m_DemandType = demand_type;
-			pVehicle->m_PricingType = pricing_type;
-
-			pVehicle->m_VehicleType = vehicle_type;
-			pVehicle->m_InformationClass = information_type;
-			pVehicle->m_VOT = value_of_time;
-			pVehicle->m_TollDollarCost =toll_cost_in_dollar;
-			pVehicle->m_Emissions = emissions;
-			pVehicle->m_Distance = distance_in_mile;
-			pVehicle->m_NodeSize	= number_of_nodes;
-
-
-			if(pVehicle->m_NodeSize>=1)  // in case reading error
-			{
-				pVehicle->m_NodeAry = new SVehicleLink[pVehicle->m_NodeSize];
-
-				pVehicle->m_NodeNumberSum = 0;
-				for(int i=0; i< pVehicle->m_NodeSize; i++)
-				{
-
-					int node_id;
-					float time_stamp,travel_time, emissions;
-
-					if(fscanf(st,"<%d;%f;%f;%f>",&node_id,&time_stamp,&travel_time, &emissions) ==0)
-						break;
-
-
-					m_PathNodeVectorSP[i] = node_id;
-					pVehicle->m_NodeNumberSum += m_PathNodeVectorSP[i];
-					if(i>=1)
-					{
-						DTALink* pLink = FindLinkWithNodeNumbers(m_PathNodeVectorSP[i-1],m_PathNodeVectorSP[i]);
-						if(pLink==NULL)
-						{
-							AfxMessageBox("Error in reading file output_agent.csv");
-							fclose(st);
-
-							return;
-						}
-						pVehicle->m_NodeAry[i].LinkNo  = pLink->m_LinkNo ;
-
-						// random error beyond 6 seconds for better ainimation
-
-						float random_value = g_RNNOF()*0.01; // 0.1 min = 6 seconds
-						pVehicle->m_NodeAry[i].ArrivalTimeOnDSN =  time_stamp;
-
-						pLink->m_total_assigned_link_volume +=1;
-
-						if(pVehicle->m_NodeAry[i].ArrivalTimeOnDSN < 10000) // feasible arrival time
-						{
-
-							if(i>=2)
-								travel_time  = pVehicle->m_NodeAry[i].ArrivalTimeOnDSN - pVehicle->m_NodeAry[i-1].ArrivalTimeOnDSN;
-							else // first link
-								travel_time  = pVehicle->m_NodeAry[i].ArrivalTimeOnDSN - pVehicle->m_DepartureTime ;
-
-
-							if(travel_time- pLink->m_FreeFlowTravelTime > 100)
-							{
-								TRACE("");
-							}
-							pLink->m_TotalTravelTime += travel_time;
-
-							float delay = travel_time- pLink->m_FreeFlowTravelTime;
-							pLink->m_total_delay += delay;
-							pLink->AddNodeDelay(pVehicle->m_NodeAry[i].ArrivalTimeOnDSN ,delay);
-
-						}else
-						{
-							TRACE("");
-						}
-
-						pLink->m_total_link_volume_of_incomplete_trips = pLink->m_total_assigned_link_volume - pLink->m_total_link_volume ;
-
-
-
-
-					}
-
-
-				}
-				fscanf(st, "\"");
-				m_VehicleSet.push_back (pVehicle);
-				m_VehicleIDMap[pVehicle->m_VehicleID]  = pVehicle;
-
-
-				count++;
-			} 
-		}
-
-		fclose(st);
-		m_SimulationVehicleDataLoadingStatus.Format ("%d vehicles are loaded from file %s.",count,lpszFileName);
-
-	}
-}
 
 bool CTLiteDoc::SaveInputPathCSVFile(LPCTSTR lpszFileName)
 {
@@ -7865,7 +7685,7 @@ bool CTLiteDoc::ReadVehicleBinFile(LPCTSTR lpszFileName, int version_number = 2)
 		int information_type;
 		float value_of_time;
 		float toll_cost_in_dollar;
-		float emissions;
+		float PM;
 		float distance_in_mile;
 		int number_of_nodes;
 		float Energy;
@@ -7883,7 +7703,7 @@ bool CTLiteDoc::ReadVehicleBinFile(LPCTSTR lpszFileName, int version_number = 2)
 		int version_no;
 
 		int day_no;	
-		float reserverd_field2;
+		float PM2_5;
 		int number_of_VMS_response_links;
 
 
@@ -7981,7 +7801,8 @@ bool CTLiteDoc::ReadVehicleBinFile(LPCTSTR lpszFileName, int version_number = 2)
 			pVehicle->m_InformationClass = header.information_type;
 			pVehicle->m_VOT = header.value_of_time;
 			pVehicle->m_TollDollarCost = header.toll_cost_in_dollar;
-			pVehicle->m_Emissions = header.emissions;
+			pVehicle->m_PM = header.PM;
+			pVehicle->m_PM2_5 = header_extension.PM2_5;
 			pVehicle->m_Distance = header.distance_in_mile;
 			pVehicle->m_NodeSize	= header.number_of_nodes;
 
@@ -8008,7 +7829,8 @@ bool CTLiteDoc::ReadVehicleBinFile(LPCTSTR lpszFileName, int version_number = 2)
 			pVehicle->m_EmissionData .NOX = header.NOX;
 			pVehicle->m_EmissionData .CO = header.CO;
 			pVehicle->m_EmissionData .HC = header.HC;
-
+			pVehicle->m_EmissionData.PM = header.PM;
+			pVehicle->m_EmissionData.PM2_5 = header_extension.PM2_5;
 			if (pVehicle->m_NodeSize >= MAX_NODE_SIZE_IN_A_PATH)
 			{
 				AfxMessageBox("Too many nodes in a path.");
@@ -9422,41 +9244,21 @@ void CTLiteDoc::LoadSimulationOutput()
 
 	CCSVParser parser;
 
-
-	//std::string AMS_traffic_data_settings = CString2StdString (m_ProjectDirectory)+"AMS_traffic_data_settings.csv";
-
-
-	//string model_static_link_MOE = "output_LinkMOE.csv";
-	//parser.GetValueBySectionKeyFieldName(AMS_traffic_data_settings,"model","static_link_MOE","file_name",model_static_link_MOE);
-
-	//string loading_flag = "yes";
-	//parser.GetValueBySectionKeyFieldName(AMS_traffic_data_settings,"model","static_link_MOE","loading_flag",loading_flag);
-
-	//if(loading_flag=="yes")
-	//{
-	//}
-
-	//string model_time_dependent_link_MOE = "output_LinkTDMOE.bin";
-	//parser.GetValueBySectionKeyFieldName(AMS_traffic_data_settings,"model","model_time_dependent_link_MOE","file_name",model_time_dependent_link_MOE);
-
-	//string model_time_dependent_link_MOE_format = "binary";
-	//parser.GetValueBySectionKeyFieldName(AMS_traffic_data_settings,"model","model_time_dependent_link_MOE","format",model_time_dependent_link_MOE_format);
-
-	//parser.GetValueBySectionKeyFieldName(AMS_traffic_data_settings,"model","model_time_dependent_link_MOE","loading_flag",loading_flag);
-
+	//step 1: static link MOE csv
 	ReadSimulationLinkOvarvallMOEData(m_ProjectDirectory + "output_linkMOE.csv");
 
-//	if (ReadSimulationLinkMOEData_SimpleBin(m_ProjectDirectory + "output_CompactLinkTDMOE.bin") == false)
+	// step 2: TDMOE bin
 	ReadSimulationLinkMOEData_Bin(m_ProjectDirectory + "output_LinkTDMOE.bin");
 
-	//
-	if (ReadVehicleBinFile(m_ProjectDirectory + "agent_scenario.bin", 2) == false)
+	// step 3: 
+		if (ReadVehicleBinFile(m_ProjectDirectory + "agent_scenario.bin", 2) == false)
 	{
 		if (ReadVehicleBinFile(m_ProjectDirectory + "agent.bin", 2) == false)
 		{
 			ReadVehicleCSVFile_Parser(m_ProjectDirectory+ "output_agent.csv");
 			RecalculateLinkMOEFromVehicleTrajectoryFile(); 
-			//ReadAgentCSVFile(m_ProjectDirectory + "output_agent.csv", 2);
+//			ReadSensorTrajectoryData(m_ProjectDirectory + "output_trajectory.csv");
+
 		}// try version 2 format first
 	}
 
@@ -9490,7 +9292,6 @@ void CTLiteDoc::LoadSimulationOutput()
 	//LoadGPSData();
 	
 	
-	ReadSensorTrajectoryData(m_ProjectDirectory+"sensor_trajectory.csv");
 	
 	SetStatusText("Generating OD statistics...");
 
@@ -10959,7 +10760,7 @@ void CTLiteDoc::OnImportVehiclefile()
 		szFilter);
 	if(dlg.DoModal() == IDOK)
 	{
-		ReadVehicleCSVFile(dlg.GetPathName ());
+		ReadVehicleCSVFile_Parser(dlg.GetPathName ());
 	}
 
 	CalculateDrawingRectangle();
@@ -12821,13 +12622,15 @@ void CTLiteDoc::GenerateVehicleClassificationData(VEHICLE_CLASSIFICATION_SELECTI
 				m_ClassificationTable[index].TotalCost   += pVehicle->m_TollDollarCost;
 				m_ClassificationTable[index].TotalGeneralizedCost += ( pVehicle->m_TollDollarCost + pVehicle->m_TripTime /60.0f* pVehicle->m_VOT );
 				m_ClassificationTable[index].TotalGeneralizedTime += pVehicle->m_TollDollarCost/max(1,pVehicle->m_VOT)*60.0f + pVehicle->m_TripTime ;
-				m_ClassificationTable[index].TotalEmissions   += pVehicle->m_Emissions;
+				m_ClassificationTable[index].TotalPM  += pVehicle->m_PM;
 
 				m_ClassificationTable[index].emissiondata.Energy += pVehicle->m_EmissionData .Energy;
 				m_ClassificationTable[index].emissiondata.CO2 += pVehicle->m_EmissionData .CO2;
 				m_ClassificationTable[index].emissiondata.NOX += pVehicle->m_EmissionData .NOX;
 				m_ClassificationTable[index].emissiondata.CO += pVehicle->m_EmissionData .CO;
 				m_ClassificationTable[index].emissiondata.HC += pVehicle->m_EmissionData .HC;
+				m_ClassificationTable[index].emissiondata.PM += pVehicle->m_EmissionData.PM;
+				m_ClassificationTable[index].emissiondata.PM2_5 += pVehicle->m_EmissionData.PM2_5;
 
 
 			}
@@ -13047,12 +12850,37 @@ void CTLiteDoc::GenerateClassificationForDisplay(VEHICLE_X_CLASSIFICATION x_clas
 		case CLS_total_HC: 
 			value = m_ClassificationTable[index].emissiondata .HC     ;
 			break;
+
+		case CLS_total_PM:
+			value = m_ClassificationTable[index].emissiondata.PM;
+			break;
+
+		case CLS_total_PM2_5:
+			value = m_ClassificationTable[index].emissiondata.PM2_5;
+			break;
+
 		case CLS_avg_HC: 
 			value = m_ClassificationTable[index].emissiondata .HC  /max(1,m_ClassificationTable[index].TotalVehicleSize);
 			break;
 		case CLS_avg_HC_per_mile: 
 			value = m_ClassificationTable[index].emissiondata .HC  /max(1,m_ClassificationTable[index].TotalDistance);
 			break;
+
+
+		case CLS_avg_PM:
+			value = m_ClassificationTable[index].emissiondata.PM / max(1, m_ClassificationTable[index].TotalVehicleSize);
+			break;
+		case CLS_avg_PM_per_mile:
+			value = m_ClassificationTable[index].emissiondata.PM / max(1, m_ClassificationTable[index].TotalDistance);
+			break;
+
+		case CLS_avg_PM2_5:
+			value = m_ClassificationTable[index].emissiondata.PM2_5 / max(1, m_ClassificationTable[index].TotalVehicleSize);
+			break;
+		case CLS_avg_PM2_5_per_mile:
+			value = m_ClassificationTable[index].emissiondata.PM2_5 / max(1, m_ClassificationTable[index].TotalDistance);
+			break;
+
 		case CLS_total_gallon: 
 			value = m_ClassificationTable[index].emissiondata .Energy/1000/(121.7)     ;
 			break;
@@ -15109,7 +14937,7 @@ bool CTLiteDoc::ReadGPSBinFile(LPCTSTR lpszFileName, int date_id,int max_GPS_dat
 
 			pVehicle->m_VOT = 10;
 			pVehicle->m_TollDollarCost = 0;
-			pVehicle->m_Emissions = 0;
+			pVehicle->m_PM = 0;
 
 
 			pVehicle->m_VehicleLocationSize	= header.number_of_nodes;
@@ -15652,7 +15480,7 @@ bool CTLiteDoc::ReadSensorTrajectoryData(LPCTSTR lpszFileName)
 
 	//		pVehicle->m_VOT = 10;
 	//		pVehicle->m_TollDollarCost = 0;
-	//		pVehicle->m_Emissions = 0;
+	//		pVehicle->m_PM = 0;
 
 
 	//		pVehicle->m_VehicleLocationSize	= header.number_of_nodes;
@@ -16776,7 +16604,7 @@ bool CTLiteDoc::ReadModelAgentTrajectory(LPCTSTR lpszFileName)
 
 			pVehicle->m_VOT = 10;
 			pVehicle->m_TollDollarCost = 0;
-			pVehicle->m_Emissions = 0;
+			pVehicle->m_PM = 0;
 
 				m_VehicleSet.push_back (pVehicle);
 				m_VehicleIDMap[pVehicle->m_VehicleID]  = pVehicle;
@@ -16931,7 +16759,7 @@ bool CTLiteDoc::ReadGPSTrajectory(LPCTSTR lpszFileName)
 
 			pVehicle->m_VOT = 10;
 			pVehicle->m_TollDollarCost = 0;
-			pVehicle->m_Emissions = 0;
+			pVehicle->m_PM = 0;
 
 			m_VehicleSet.push_back(pVehicle);
 			m_VehicleIDMap[pVehicle->m_VehicleID] = pVehicle;
@@ -17260,7 +17088,7 @@ bool CTLiteDoc::ReadAimCSVFiles(LPCTSTR lpszFileName, int date_id)
 							pVehicle->m_PricingType = 1;
 							pVehicle->m_VOT = 10;
 							pVehicle->m_TollDollarCost = 0;
-							pVehicle->m_Emissions = 0;
+							pVehicle->m_PM = 0;
 
 							pVehicle->m_VehicleLocationSize	= 0;
 

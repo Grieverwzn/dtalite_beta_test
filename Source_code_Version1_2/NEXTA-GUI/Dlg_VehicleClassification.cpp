@@ -180,6 +180,9 @@ BOOL CDlg_VehicleClassification::OnInitDialog()
 	m_ComboY.AddString ("Total NOx (g)");  
 	m_ComboY.AddString ("Total CO (g)");  
 	m_ComboY.AddString ("Total HC (g)");  
+	m_ComboY.AddString("Total PM (g)");
+	m_ComboY.AddString("Total PM2.5 (g)");
+
 	m_ComboY.AddString ("Total Gallon");  
 
 	m_ComboY.AddString ("Avg Energy (KJ/vehicle/mile)");
@@ -187,6 +190,9 @@ BOOL CDlg_VehicleClassification::OnInitDialog()
 	m_ComboY.AddString ("Avg NOx (g/vehicle/mile)");
 	m_ComboY.AddString ("Avg CO (g/vehicle/mile)");
 	m_ComboY.AddString ("Avg HC (g/vehicle/mile)");
+	m_ComboY.AddString("Avg PM (g/vehicle/mile)");
+	m_ComboY.AddString("Avg PM2.5 (g/vehicle/mile)");
+
 	m_ComboY.AddString ("Avg Miles per Gallon");
 
 	m_ComboX.SetCurSel (m_XSelectionNo);

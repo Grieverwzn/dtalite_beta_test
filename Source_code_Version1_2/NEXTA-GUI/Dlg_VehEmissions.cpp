@@ -955,7 +955,7 @@ void CDlg_VehPathAnalysis::FilterPaths()
 						m_PathVector[p].m_TravelTimePerMileVector.push_back((pVehicle->m_ArrivalTime-pVehicle->m_DepartureTime)/max(0.01,pVehicle->m_Distance));
 
 						m_PathVector[p].TotalCost   += pVehicle->m_TollDollarCost;
-						m_PathVector[p].TotalEmissions   += pVehicle->m_Emissions;
+						m_PathVector[p].TotalPM  += pVehicle->m_PM;
 					
 						m_PathVector[p].emissiondata.Energy += pVehicle->m_EmissionData .Energy;
 						m_PathVector[p].emissiondata.CO2 += pVehicle->m_EmissionData .CO2;
@@ -981,7 +981,7 @@ void CDlg_VehPathAnalysis::FilterPaths()
 					ps_element.TotalTravelTime  += (pVehicle->m_ArrivalTime-pVehicle->m_DepartureTime);
 					ps_element.TotalDistance   += pVehicle->m_Distance;
 					ps_element.TotalCost    += pVehicle->m_TollDollarCost ;
-					ps_element.TotalEmissions    += pVehicle->m_Emissions ;
+					ps_element.TotalPM   += pVehicle->m_PM ;
 
 					ps_element.m_TravelTimeVector.push_back((pVehicle->m_ArrivalTime-pVehicle->m_DepartureTime));
 					ps_element.m_TravelTimeVector.push_back((pVehicle->m_ArrivalTime-pVehicle->m_DepartureTime)/max(0.01,pVehicle->m_Distance));

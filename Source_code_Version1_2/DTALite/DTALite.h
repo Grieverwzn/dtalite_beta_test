@@ -84,7 +84,7 @@ extern e_signal_representation_model g_SignalRepresentationFlag;
 #define MAX_MEASUREMENT_INTERVAL 15 
 
 #define MAX_INFO_CLASS_SIZE 7
-#define MAX_VEHICLE_TYPE_SIZE 10
+#define MAX_VEHICLE_TYPE_SIZE 15
 #define MAX_DEMAND_TYPE_SIZE  40 // because C starts from 0 
 #define MAX_DEMAND_TIME_SIZE  96 // because C starts from 0 
 #define MAX_TIME_INTERVAL_SIZE 300
@@ -577,13 +577,16 @@ public:
 	float TotalNOX;
 	float TotalCO;
 	float TotalHC;
+	float TotalPM;
+	float TotalPM2_5;
 
 	float AvgEnergy;
 	float AvgCO2;
 	float AvgNOX;
 	float AvgCO;
 	float AvgHC;
-
+	float AvgPM;
+	float AvgPM2_5;
 	float TotalMilesPerGallon;
 	float AvgMilesPerGallon;
 
@@ -602,12 +605,16 @@ public:
 		TotalNOX = 0;
 		TotalCO = 0;
 		TotalHC = 0;
+		TotalPM = 0;
+		TotalPM2_5 = 0;
 
 		AvgEnergy = 0;
 		AvgCO2  = 0;
 		AvgNOX  = 0;
 		AvgCO = 0;
 		AvgHC = 0;
+		AvgPM = 0;
+		AvgPM2_5 = 0;
 		TotalMilesPerGallon = 0;
 		AvgMilesPerGallon = 0;
 
@@ -626,6 +633,8 @@ public:
 	float NOX;
 	float CO;
 	float HC;
+	float PM;
+	float PM2_5;
 	EmissionLaneData()
 	{
 		Energy = 0;
@@ -633,6 +642,8 @@ public:
 		NOX = 0;
 		CO = 0;
 		HC = 0;
+		PM = 0;
+		PM2_5 = 0;
 	}
 
 };
@@ -968,6 +979,8 @@ public:
 	float NOX;
 	float CO;
 	float HC;
+	float PM;
+	float PM2_5;
 
 #endif 
 	float UserDefinedTravelTime_in_min;
@@ -1010,6 +1023,8 @@ public:
 		NOX = 0;
 		CO = 0;
 		HC = 0;
+		PM = 0;
+		PM2_5 = 0;
 #endif
 		TotalTravelTime = 0;
 		TotalFlowCount = 0;
@@ -1332,6 +1347,9 @@ public:
 		TotalNOX  = 0;
 		TotalCO  = 0;
 		TotalHC  = 0;
+		TotalPM = 0;
+		TotalPM2_5 = 0;
+
 
 		CurrentSequenceNoForVechileDistanceAry = 0;
 		CycleSizeForVechileDistanceAry = 0;
@@ -1715,6 +1733,8 @@ return pow(((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y)),0.5);
 	float TotalNOX;
 	float TotalCO;
 	float TotalHC;
+	float TotalPM;
+	float TotalPM2_5;
 
 	std::vector<LaneVehicleCFData> m_VehicleDataVector;   
 
@@ -2248,7 +2268,8 @@ return pow(((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y)),0.5);
 		TotalNOX = 0;
 		TotalCO = 0;
 		TotalHC = 0;
-
+		TotalPM = 0;
+		TotalPM2_5 = 0;
 	}
 
 	void ResetUserDefinedTravelTime()
@@ -2699,6 +2720,10 @@ public:
 class VehicleSpeedProfileData
 {
 public:
+	VehicleSpeedProfileData()
+	{
+	Energy = CO2 =  NOX =  CO =  HC =  PM = PM2_5 = 0;
+	};
 	int FromNodeNumber;
 	int ToNodeNumber;
 	float Speed;
@@ -2707,7 +2732,7 @@ public:
 	float VSP;
 	VSP_BIN VSPBinNo;
 	SPEED_BIN SpeedBinNo;
-	float Energy,CO2,NOX,CO,HC;
+	float Energy, CO2, NOX, CO, HC, PM, PM2_5;
 	int TimeOnThisLinkInSecond;
 
 	CString GetSpeedBinNoString()
@@ -2932,7 +2957,7 @@ public:
 	bool m_bComplete;
 
 	bool m_bDetailedEmissionOutput;
-	float Energy,CO2,NOX,CO,HC;
+	float Energy, CO2, NOX, CO, HC, PM, PM2_5;
 
 	int m_DestinationZoneID_Updated; 
 	int m_attribute_update_time_in_min;
@@ -2940,7 +2965,7 @@ public:
 	int m_Age;
 	float m_VOT;        // range 0 to 255
 	float m_TollDollarCost;
-	float m_Emissions;
+
 	float m_MinCost;
 	float m_MeanTravelTime;
 	float m_TravelTimeVariance;
@@ -3023,7 +3048,7 @@ public:
 		m_EvacuationDestinationZone = 0;
 
 		m_Age = 0;
-		Energy = CO2 = NOX = CO = HC = 0;
+		Energy = CO2 = NOX = CO = HC = PM = PM2_5 = 0;
 		m_PrevSpeed = 0;
 		m_TimeToRetrieveInfo = -1;
 		m_EnrouteInformationUpdatingTimeIntervalInMin = -1;  // default value 
@@ -3032,7 +3057,6 @@ public:
 		m_NumberOfSamples =0;
 		m_VOT = DEFAULT_VOT;
 		m_TollDollarCost = 0;
-		m_Emissions = 0;
 
 		m_MinCost = 0;
 
@@ -3043,7 +3067,6 @@ public:
 		m_DemandType = 1;
 		m_VehicleType = 1;
 		m_DemandType = 0;
-		m_Emissions = 0;
 		m_ArrivalTime = 0;
 		//      m_FinalArrivalTime = 0;
 		m_bLoaded = false;
@@ -3080,7 +3103,6 @@ public:
 			m_TripFFTT = 0;
 			m_BufferWaitingTime = 0;
 			m_TollDollarCost = 0;
-			m_Emissions = 0;
 
 			Energy = 0;
 			CO2 = 0;
@@ -4124,7 +4146,7 @@ public:
 	float avg_travel_time_in_min, avg_distance_in_miles, avg_speed,avg_trip_time_in_min;
 
 
-	float Energy,CO2,NOX,CO,HC;
+	float Energy, CO2, NOX, CO, HC, PM, PM2_5;
 
 	NetworkSimulationResult()
 	{
@@ -4143,6 +4165,8 @@ public:
 		NOX = 0;
 		CO = 0;
 		HC = 0;
+		PM = 0;
+		PM2_5 = 0;
 	}
 };
 
@@ -4265,7 +4289,7 @@ typedef struct
 	int information_type;
 	float value_of_time;
 	float toll_cost_in_dollar;
-	float emissions;
+	float PM;
 	float distance_in_mile;
 	int number_of_nodes;
 	float Energy;
@@ -4278,7 +4302,7 @@ typedef struct
 	int version_no;
 
 	int day_no;
-	float reserverd_field2;
+	float PM2_5;
 	int number_of_VMS_response_links;
 
 } struct_VehicleInfo_Header;

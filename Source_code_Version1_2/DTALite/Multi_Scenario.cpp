@@ -123,6 +123,8 @@ void g_WriteUserDefinedMOE(CCSVWriter  &g_MultiScenarioSummaryStatFile, int day_
 			g_MultiScenarioSummaryStatFile.SetValueByFieldName("avg_NOX_" + moe_category_label, emission_data.AvgNOX);
 			g_MultiScenarioSummaryStatFile.SetValueByFieldName("avg_CO_" + moe_category_label, emission_data.AvgCO);
 			g_MultiScenarioSummaryStatFile.SetValueByFieldName("avg_HC_" + moe_category_label, emission_data.AvgHC);
+			g_MultiScenarioSummaryStatFile.SetValueByFieldName("avg_PM_" + moe_category_label, emission_data.AvgPM);
+			g_MultiScenarioSummaryStatFile.SetValueByFieldName("avg_PM2_5_" + moe_category_label, emission_data.AvgPM2_5);
 			g_MultiScenarioSummaryStatFile.SetValueByFieldName("avg_MilesPerGallon_" + moe_category_label, emission_data.AvgMilesPerGallon);
 
 
@@ -199,7 +201,7 @@ void g_MultiScenarioTrafficAssignment()
 	g_MultiScenarioSummaryStatFile.WriteTextString(",,distance=,miles");
 	g_MultiScenarioSummaryStatFile.WriteTextString(",,speed=,mph");
 	g_MultiScenarioSummaryStatFile.WriteTextString(",,energy=,1000 joule");
-	g_MultiScenarioSummaryStatFile.WriteTextString(",,CO2,NOX,CO,HC=,g");
+	g_MultiScenarioSummaryStatFile.WriteTextString(",,CO2,NOX,CO,HC,PM,PM2.5=,g");
 
 	int cl;
 
@@ -255,6 +257,8 @@ void g_MultiScenarioTrafficAssignment()
 			g_MultiScenarioSummaryStatFile.SetFieldName("avg_NOX_" + moe_category_label);
 			g_MultiScenarioSummaryStatFile.SetFieldName("avg_CO_" + moe_category_label);
 			g_MultiScenarioSummaryStatFile.SetFieldName("avg_HC_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_PM_" + moe_category_label);
+			g_MultiScenarioSummaryStatFile.SetFieldName("avg_PM2_5_" + moe_category_label);
 			g_MultiScenarioSummaryStatFile.SetFieldName("avg_MilesPerGallon_" + moe_category_label);
 
 			std::transform(moe_type.begin(), moe_type.end(), moe_type.begin(), ::tolower);

@@ -187,7 +187,7 @@ void g_OutputCurrentGlobalPathSet(int SimulationTimeInMin)
 				g_ODPathSetVector[OrgZoneSequentialNo][DestZoneSequentialNo][0].PathSet[PathNo].TotalDistance += pVehicle->m_Distance;
 				g_ODPathSetVector[OrgZoneSequentialNo][DestZoneSequentialNo][0].PathSet[PathNo].TotalFFTT += pVehicle->m_TripFFTT;
 				g_ODPathSetVector[OrgZoneSequentialNo][DestZoneSequentialNo][0].PathSet[PathNo].TotalTravelTime += (pVehicle->m_ArrivalTime - pVehicle->m_DepartureTime);
-				g_ODPathSetVector[OrgZoneSequentialNo][DestZoneSequentialNo][0].PathSet[PathNo].TotalEmissions += pVehicle->m_Emissions;
+				g_ODPathSetVector[OrgZoneSequentialNo][DestZoneSequentialNo][0].PathSet[PathNo].TotalEmissions += pVehicle->CO2;
 			}
 			else				           // if new path, // possible error
 			{

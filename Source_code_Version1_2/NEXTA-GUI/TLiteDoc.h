@@ -134,6 +134,9 @@ enum VEHICLE_Y_CLASSIFICATION {
 	CLS_total_NOx,
 	CLS_total_CO,
 	CLS_total_HC,
+	CLS_total_PM,
+	CLS_total_PM2_5,
+
 	CLS_total_gallon,
 
 	CLS_avg_Energy_per_mile,
@@ -141,6 +144,9 @@ enum VEHICLE_Y_CLASSIFICATION {
 	CLS_avg_Nox_per_mile,
 	CLS_avg_CO_per_mile,
 	CLS_avg_HC_per_mile,
+	CLS_avg_PM_per_mile,
+	CLS_avg_PM2_5_per_mile,
+
 	CLS_avg_mile_per_gallon,
 
 	// not used
@@ -150,6 +156,9 @@ enum VEHICLE_Y_CLASSIFICATION {
 	CLS_avg_Nox,
 	CLS_avg_CO,
 	CLS_avg_HC,
+	CLS_avg_PM,
+	CLS_avg_PM2_5,
+
 	CLS_avg_mile
 };
 enum LINK_BAND_WIDTH_MODE {LBW_number_of_lanes = 0, LBW_link_volume,LBW_number_of_marked_vehicles, LBW_congestion_duration};
@@ -285,7 +294,7 @@ public:
 		TotalTravelTimePerMileVariance = 0;
 
 		TotalCost = 0;
-		TotalEmissions = 0;
+		TotalPM= 0;
 
 		for(int i = 0; i< _TOTAL_NUMBER_OF_PROJECTS; i++)
 		{
@@ -334,7 +343,7 @@ public:
 
 	float TotalDistance;
 	float TotalCost;
-	float TotalEmissions;
+	float TotalPM;
 
 
 	int   TotalVehicleSizeVector[_TOTAL_NUMBER_OF_PROJECTS];
@@ -1294,7 +1303,6 @@ public:
 	int ReadAMSMovementCSVFile(LPCTSTR lpszFileName, int NodeNumber);
 	int ReadAMSSignalControlCSVFile(LPCTSTR lpszFileName);
 
-	void ReadVehicleCSVFile(LPCTSTR lpszFileName);
 	bool ReadVehicleBinFile(LPCTSTR lpszFileName,int version_number);
 	bool ReadAgentCSVFile(LPCTSTR lpszFileName, int version_number);
 	bool ReadTransitTripCSVFile(LPCTSTR lpszFileName, int version_number);
