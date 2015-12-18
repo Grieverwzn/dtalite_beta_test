@@ -2362,12 +2362,12 @@ void g_ReadInputFiles()
 
 	if (g_TrafficFlowModelFlag != tfm_BPR)  // if this is not BRP model, we require emission files 
 	{
+		// Xuesong Zhou to do: 
+		//ReadInputEmissionRateFile();
+		//ReadInputCycleAverageEmissionFactors();
 
-		ReadInputEmissionRateFile();
-		ReadInputCycleAverageEmissionFactors();
-
-		ReadFractionOfOperatingModeForBaseCycle();
-		SetupOperatingModeVector();
+		//ReadFractionOfOperatingModeForBaseCycle();
+		//SetupOperatingModeVector();
 	}
 
 
@@ -2468,7 +2468,17 @@ void g_ConvertDemandToVehicles()
 
 	DTAVehicle* pVehicle = 0;
 
-	int i = g_VehicleVector.size();
+	int i = 0;
+
+	int max_agent_id = 0;
+
+	for (int v = 0; v < g_VehicleVector.size(); v++)
+	{
+		if (max_agent_id < g_VehicleVector[v]->m_AgentID + 1)
+			max_agent_id = g_VehicleVector[v]->m_AgentID + 1;
+	}
+
+
 	while (kvhc != g_simple_vector_vehicles.end())
 	{
 		if (kvhc->m_OriginZoneID != kvhc->m_DestinationZoneID)    // only consider intra-zone traffic
@@ -2483,7 +2493,7 @@ void g_ConvertDemandToVehicles()
 
 			}
 
-			pVehicle->m_AgentID = i;
+			pVehicle->m_AgentID = max_agent_id+ i;
 			pVehicle->m_RandomSeed = pVehicle->m_AgentID;
 
 			if (pVehicle->m_AgentID >= 21)
@@ -2559,10 +2569,10 @@ void g_ConvertDemandToVehicles()
 			pVehicle->m_NodeSize = 0;  // initialize NodeSize as o
 			g_VehicleVector.push_back(pVehicle);
 			g_AddVehicleID2ListBasedonDepartureTime(pVehicle);
-			g_VehicleMap[i] = pVehicle;
+			g_VehicleMap[pVehicle->m_AgentID] = pVehicle;
 
 			int AssignmentInterval = g_FindAssignmentIntervalIndexFromTime(pVehicle->m_DepartureTime);
-			g_TDOVehicleArray[g_ZoneMap[pVehicle->m_OriginZoneID].m_ZoneSequentialNo][AssignmentInterval].VehicleArray.push_back(i);
+			g_TDOVehicleArray[g_ZoneMap[pVehicle->m_OriginZoneID].m_ZoneSequentialNo][AssignmentInterval].VehicleArray.push_back(pVehicle->m_AgentID);
 			i++;
 		}
 		kvhc++;
@@ -6392,7 +6402,6 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 					cout << "input agent file " << file_name << " is missing. Please check." << endl;
 					g_ProgramStop();
 				}
-				return;
 			}
 			else if (format_type.find("agent_bin") != string::npos)
 			{

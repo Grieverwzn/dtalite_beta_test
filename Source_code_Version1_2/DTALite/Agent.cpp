@@ -735,6 +735,19 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 				_proxy_ABM_log(0, "--step 9: read value_of_time = %d\n", VOT);
 
 
+				int dependency_agent_id = -1;
+				parser_agent.GetValueByFieldName("dependency_agent_id", dependency_agent_id);
+				float duration_in_min = -1;
+				parser_agent.GetValueByFieldNameRequired("duration_in_min", duration_in_min);
+
+				if (dependency_agent_id >= 0 && duration_in_min >= 0)
+				{
+					pVehicle->m_dependency_agent_id = dependency_agent_id;
+					pVehicle->m_duration_in_min = duration_in_min;
+				}
+
+
+
 				if (VOT >= 1)  // only with valid value
 					pVehicle->m_VOT = VOT;
 
@@ -798,7 +811,25 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 
 				//add vehicle data into memory
 				g_VehicleVector.push_back(pVehicle);
-				g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * 10].m_AgentIDVector.push_back(pVehicle->m_AgentID);
+
+				if (pVehicle->m_dependency_agent_id >= 0 && pVehicle->m_duration_in_min >= 0)
+				{
+					if (g_VehicleMap.find(pVehicle->m_dependency_agent_id) != g_VehicleMap.end())
+					{
+						g_VehicleMap[pVehicle->m_dependency_agent_id]->m_following_agent_id = pVehicle->m_AgentID;
+					}
+					else
+					{
+						cout << "dependency_agent_id =" << pVehicle->m_dependency_agent_id << "; duration_in_min = " << pVehicle->m_duration_in_min << ", which are incorrect in input agent files." << endl;
+						g_ProgramStop();
+
+					}
+
+				}else
+				{
+					g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * 10].m_AgentIDVector.push_back(pVehicle->m_AgentID);
+				}
+				
 				g_VehicleMap[pVehicle->m_AgentID] = pVehicle;
 				int AssignmentInterval = g_FindAssignmentIntervalIndexFromTime(pVehicle->m_DepartureTime);
 				ASSERT(pVehicle->m_OriginZoneID <= g_ODZoneNumberSize);

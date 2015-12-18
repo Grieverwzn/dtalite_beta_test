@@ -510,6 +510,7 @@ void g_AgentBasedPathAdjustmentWithRealTimeInfo(int ProcessID, int VehicleID , d
 				g_NodeVector[pVeh->m_DestinationNodeID].m_NodeNumber,
 				g_LinkVector[CurrentLinkID]->m_FromNodeNumber, g_LinkVector[CurrentLinkID]->m_ToNodeNumber);
 
+
 			node_id = g_LinkVector[pVeh->m_LinkAry[0].LinkNo]->m_FromNodeID;  //first node
 			_proxy_ABM_log(-1, "%d->", g_NodeVector[node_id].m_NodeNumber);
 

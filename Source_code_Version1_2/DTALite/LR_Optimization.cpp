@@ -277,7 +277,7 @@ void g_NetworkDesignKnapsackProblem(int iteration, bool bRebuildNetwork, bool bO
 
 	float total_road_traveling_cost = 0;
 
-	// collect the toll from the memory of all vehicles, regardless if a link is used or not by the path
+	// collect the toll from the memory of all vehicles
 
 	int UpperBoundObjectiveFunctionValue = 0;
 	std::map<int, DTAVehicle*>::iterator iterVM;
@@ -287,8 +287,10 @@ void g_NetworkDesignKnapsackProblem(int iteration, bool bRebuildNetwork, bool bO
 		DTAVehicle* pVehicle = iterVM->second;
 
 		if (pVehicle->m_bMeetTarget==false)
+		{
 			UpperBoundObjectiveFunctionValue++;
-
+			continue;
+		}
 		total_road_traveling_cost += pVehicle->m_MinCost;
 
 		if (pVehicle->m_NodeSize >= 2)  // with physical path in the network

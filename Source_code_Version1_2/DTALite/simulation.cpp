@@ -173,9 +173,19 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 
 	for (int vehicle_v = 0; vehicle_v < g_VehicleTDListMap[simulation_time_no].m_AgentIDVector.size(); vehicle_v++)
 	{
-		DTAVehicle* pVeh = g_VehicleMap[g_VehicleTDListMap[simulation_time_no].m_AgentIDVector[vehicle_v]];
+		int agent_id = g_VehicleTDListMap[simulation_time_no].m_AgentIDVector[vehicle_v];
+
+		DTAVehicle* pVeh;
+		if (g_VehicleMap.find(agent_id) == g_VehicleMap.end())
+		{
+			continue;
+
+		}
+		pVeh = g_VehicleMap[agent_id];
 		_proxy_simulation_log(1, simulation_time_no, CurrentTime, pVeh->m_AgentID,
 			"Step 0: Generate vehicle id from TDlistMap = %d\n", pVeh->m_AgentID);
+
+			
 
 		if (pVeh->m_bLoaded == false)  // not being loaded
 		{
@@ -1632,6 +1642,15 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 
 
 					g_VehicleMap[vehicle_id]->m_bComplete = true;
+
+					if (g_VehicleMap[vehicle_id]->m_following_agent_id >= 0)
+					{
+						int following_agent_id =  g_VehicleMap[vehicle_id]->m_following_agent_id;
+						int new_departure_time = g_VehicleMap[vehicle_id]->m_ArrivalTime + g_VehicleMap[following_agent_id]->m_duration_in_min;
+						g_VehicleMap[following_agent_id]->m_DepartureTime = new_departure_time;
+						g_VehicleTDListMap[new_departure_time * 10].m_AgentIDVector.push_back(following_agent_id);
+
+					}
 
 
 					// recalculate free-flow travel time 

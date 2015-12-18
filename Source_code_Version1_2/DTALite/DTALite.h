@@ -2927,6 +2927,9 @@ public:
 
 	double m_TimeToRetrieveInfo;
 	double m_EnrouteInformationUpdatingTimeIntervalInMin;
+	int m_following_agent_id;
+	int m_dependency_agent_id;
+	float m_duration_in_min;
 
 	bool m_bRadioMessageResponseFlag;
 
@@ -3019,6 +3022,10 @@ public:
 
 	DTAVehicle()
 	{
+		m_following_agent_id = -1;
+		m_dependency_agent_id = -1;
+		m_duration_in_min = -1;
+
 		m_ExternalTourID = -1;
 		m_transit_service_flag = false;
 		m_PCE = 1;
