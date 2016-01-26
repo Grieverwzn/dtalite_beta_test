@@ -424,7 +424,7 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 			start_time_value = -100;
 			//--------------------------------------//
 
-			if ((count + 1) % 1000 == 0 && bOutputLogFlag)
+			if ((count + 1) % 1000 == 0)
 			{
 				cout << "reading " << count + 1 << " records..." << endl;
 
@@ -499,10 +499,10 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 			if (g_ZoneMap.find(from_zone_id) == g_ZoneMap.end())
 			{
 				count_for_not_defined_zones++;
-				_proxy_ABM_log(0, "--step 4.1: from_zone_id = %d not defined, exit.\n", from_zone_id);
+				_proxy_ABM_log(0, "--step 4.1: from_zone_id = %d not defined, error.\n", from_zone_id);
 
 				cout << "--step 4.1: from_zone_id =" << from_zone_id << "not defined, exit" << endl;
-				g_ProgramStop();
+
 
 				continue;
 			}
@@ -510,10 +510,10 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 			if (g_ZoneMap.find(to_zone_id) == g_ZoneMap.end())
 			{
 				count_for_not_defined_zones++;
-				_proxy_ABM_log(0, "--step 4.1: to_zone_id=%d not defined, exit\n", to_zone_id);
+				_proxy_ABM_log(0, "--step 4.1: to_zone_id=%d not defined, error\n", to_zone_id);
 
 				cout << "--step 4.1: to_zone_id =" << to_zone_id << "not defined, exit" << endl;
-				g_ProgramStop();
+
 				continue;
 			}
 			// to do: update origin only when vehicle has not departed yet

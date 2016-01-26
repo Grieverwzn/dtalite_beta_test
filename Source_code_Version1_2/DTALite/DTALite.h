@@ -2019,7 +2019,47 @@ return pow(((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y)),0.5);
 	std::list<struc_vehicle_item> EntranceQueue;  //link-in queue  of each link
 	std::list<struc_vehicle_item> ExitQueue;      // link-out queue of each link
 
+	void WriteDataFromBufferToDisk(FILE * pFile)
+	{
+		fprintf(pFile, "%d,%d,%d,%d,%d,", this->m_FromNodeNumber, this->m_ToNodeNumber, LoadingBuffer.size(), EntranceQueue.size(), ExitQueue.size());
+		for (std::list<struc_vehicle_item>::iterator i = LoadingBuffer.begin(); i != LoadingBuffer.end(); ++i)
+		{
+			struc_vehicle_item vi = (*i);
 
+			fprintf(pFile, "%d;%d;%.1f;",
+				vi.veh_id,
+				vi.veh_next_node_number,
+				vi.event_time_stamp);
+		}
+
+		fprintf(pFile, ",");
+
+		for (std::list<struc_vehicle_item>::iterator i = EntranceQueue.begin(); i != EntranceQueue.end(); ++i)
+		{
+			struc_vehicle_item vi = (*i);
+
+			fprintf(pFile, "%d;%d;%.1f;",
+				vi.veh_id,
+				vi.veh_next_node_number,
+				vi.event_time_stamp);
+		}
+
+		fprintf(pFile, ",");
+
+		for (std::list<struc_vehicle_item>::iterator i = ExitQueue.begin(); i != ExitQueue.end(); ++i)
+		{
+			struc_vehicle_item vi = (*i);
+
+			fprintf(pFile, "%d;%d;%.1f;",
+				vi.veh_id,
+				vi.veh_next_node_number,
+				vi.event_time_stamp);
+		}
+
+		fprintf(pFile, ",");
+
+		fprintf(pFile, "\n");
+	}
 	// for left turn queues
 	std::list<struc_vehicle_item> LeftEntrance_Queue;  // left-turn in queue  of each link
 	std::list<struc_vehicle_item> LeftExit_Queue;      // left-turn out  queue of each link

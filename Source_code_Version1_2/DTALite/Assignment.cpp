@@ -369,7 +369,7 @@ float DTANetworkForSP::AgentBasedPathFindingAssignment(int zone, int departure_t
 		// +100 will disallow any departure switch, because the benchmark (experienced travel time - 100) is too low. 
 
 
-		float switching_rate = 0.05;   // default switching rate 
+			float switching_rate = 0.05;   // default switching rate 
 			switching_rate = 1.0f / (iteration + 1);
 
 		if (g_UEAssignmentMethod == analysis_day_to_day_learning_threshold_route_choice)
