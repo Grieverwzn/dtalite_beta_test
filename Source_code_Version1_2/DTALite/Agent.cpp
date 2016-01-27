@@ -16,6 +16,25 @@
 
 using namespace std;
 
+int g_FindNodeNumberWithCoordinate(double x, double y, double min_distance = 0.1)
+{
+	int NodeNumber = -1;
+	for (int i = 0; i < g_NodeVector.size(); i++)
+	{
+
+		double distance = sqrt((g_NodeVector[i].m_pt.x - x)*(g_NodeVector[i].m_pt.x - x) + (g_NodeVector[i].m_pt.y - y)*(g_NodeVector[i].m_pt.y - y));
+		if (distance <  min_distance)
+		{
+			min_distance = distance;
+			NodeNumber = g_NodeVector[i].m_NodeNumber;
+		}
+	}
+
+	return NodeNumber;
+
+}
+
+
 void g_AddVehicleID2ListBasedonDepartureTime(DTAVehicle * pVehicle)
 {
 
@@ -487,6 +506,41 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 			parser_agent.GetValueByFieldNameRequired("from_zone_id", from_zone_id);
 			parser_agent.GetValueByFieldNameRequired("to_zone_id", to_zone_id);
 
+			int origin_node_id = -1;
+			int origin_node_number = -1;
+
+			parser_agent.GetValueByFieldNameRequired("from_origin_node_id", origin_node_number);
+
+			int destination_node_id = -1;
+			int destination_node_number = -1;
+			parser_agent.GetValueByFieldNameRequired("to_destination_node_id", destination_node_number);
+
+
+			//add special condition:
+			if (from_zone_id == -1 && to_zone_id == -1 && origin_node_number == -1 && destination_node_number == -1)
+			{
+				double origin_node_x, origin_node_y, destination_node_x, destination_node_y;
+
+				parser_agent.GetValueByFieldName("origin_node_x", origin_node_x);
+				parser_agent.GetValueByFieldName("origin_node_y", origin_node_y);
+				parser_agent.GetValueByFieldName("destination_node_x", destination_node_x);
+				parser_agent.GetValueByFieldName("destination_node_y", destination_node_y);
+
+				origin_node_number = g_FindNodeNumberWithCoordinate(origin_node_x, origin_node_y);
+				destination_node_number = g_FindNodeNumberWithCoordinate(destination_node_x, destination_node_y);
+
+				if (origin_node_number < 0 || destination_node_number < 0)
+					continue;  //skip this record
+
+				from_zone_id = origin_node_number;
+
+				to_zone_id = destination_node_number;
+			}
+
+
+	
+
+
 			if (pVehicle->m_OriginZoneID == -1)  // new vehicle
 				pVehicle->m_OriginZoneID = from_zone_id;
 
@@ -532,20 +586,11 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 				_proxy_ABM_log(0, "--step 4.2: update to_zone_id = %d->%d \n", pVehicle->m_DestinationZoneID, to_zone_id);
 				pVehicle->m_DestinationZoneID = to_zone_id;
 			}
-			int origin_node_id = -1;
-			int origin_node_number = -1;
-
-			parser_agent.GetValueByFieldNameRequired("from_origin_node_id", origin_node_number);
 
 			if (g_NodeNametoIDMap.find(origin_node_number) != g_NodeNametoIDMap.end())  // convert node number to internal node id
 			{
 				origin_node_id = g_NodeNametoIDMap[origin_node_number];
 			}
-
-			int destination_node_id = -1;
-			int destination_node_number = -1;
-			parser_agent.GetValueByFieldNameRequired("to_destination_node_id", destination_node_number);
-
 			if (g_NodeNametoIDMap.find(destination_node_number) != g_NodeNametoIDMap.end()) // convert node number to internal node id
 			{
 				destination_node_id = g_NodeNametoIDMap[destination_node_number];

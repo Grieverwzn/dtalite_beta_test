@@ -2161,7 +2161,7 @@ void g_ReadInputFiles()
 			// step 12: reading/initialing agent file input
 			cout << "Step 12.2: Reading/Initializing agent trip file..." << endl;
 			//------------------------------------------------------------//
-			if (g_UEAssignmentMethod == analysis_vehicle_binary_file_based_scenario_evaluation)
+	/*		if (g_UEAssignmentMethod == analysis_vehicle_binary_file_based_scenario_evaluation)
 			{
 				g_ReadAgentBinFile("agent.bin", true);
 			}
@@ -2173,7 +2173,7 @@ void g_ReadInputFiles()
 			{
 				g_ReadAgentBinFile("agent.bin", false);
 			}
-			else
+			else*/
 			{  // this is the common mode for loading demand files using demand meta database. 
 				g_ReadDemandFileBasedOnMetaDatabase();
 			}

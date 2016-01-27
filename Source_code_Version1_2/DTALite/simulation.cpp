@@ -2044,22 +2044,22 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 			g_LogFile << " -- " << g_GetAppRunningTime() << endl;
 		}
 
-		bool memory_dump_buffer_flag = false;
-		if (memory_dump_buffer_flag ==0 && meso_simulation_time_interval_no >= 1 && meso_simulation_time_interval_no % 150 == 0) // every 150 min
-		{
-			CString FileName;
-			FileName.Format("memory_vehicle_in_link_buffer_interval%d.csv", meso_simulation_time_interval_no);
-			FILE * pFile = fopen(FileName, "w");
-			fprintf(pFile, "FromNode,ToNode,NumberOfElementsInLoadingBuffer,NumberOfElementsInEntranceQueue,NumberOfElementsInExitQue,LoadingBuffer,EntranceQueue,ExitQueue\n");
-			for (unsigned li = 0; li < g_LinkVector.size(); li++)  // for each link
-			{
-				DTALink* pLink = g_LinkVector[li];
+		//bool memory_dump_buffer_flag = false;
+		//if (memory_dump_buffer_flag ==0 && meso_simulation_time_interval_no >= 1 && meso_simulation_time_interval_no % 150 == 0) // every 150 min
+		//{
+		//	CString FileName;
+		//	FileName.Format("memory_vehicle_in_link_buffer_interval%d.csv", meso_simulation_time_interval_no);
+		//	FILE * pFile = fopen(FileName, "w");
+		//	fprintf(pFile, "FromNode,ToNode,NumberOfElementsInLoadingBuffer,NumberOfElementsInEntranceQueue,NumberOfElementsInExitQue,LoadingBuffer,EntranceQueue,ExitQueue\n");
+		//	for (unsigned li = 0; li < g_LinkVector.size(); li++)  // for each link
+		//	{
+		//		DTALink* pLink = g_LinkVector[li];
 
-				pLink->WriteDataFromBufferToDisk(pFile);
-			}
+		//		pLink->WriteDataFromBufferToDisk(pFile);
+		//	}
 
-			fclose(pFile);
-		}
+		//	fclose(pFile);
+		//}
 	}
 
 	// generate EndTimeOfPartialCongestion
