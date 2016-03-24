@@ -30,7 +30,6 @@
 #include "CSVParser.h"
 #include <string>
 #include "CorridorDataDlg.h"
-#include "Dlg_TDDemandProfile.h"
 
 using std::vector;
 using std::string;
@@ -352,13 +351,7 @@ void CCorridorDataDlg::OnBnClickedTraveltimereliability()
 
 void CCorridorDataDlg::OnBnClickedTimedependentdemand()
 {
-	CDlg_TDDemandProfile dlg;
-	dlg.m_pDoc = m_pDoc;
-	if(dlg.DoModal() ==IDOK)
-	{
-		// TODO: Place code here to handle when the dialog is
-		//  dismissed with OK
-	}
+	
 }
 
 void CCorridorDataDlg::OnBnClickedButtonCombineSegmentLeft()

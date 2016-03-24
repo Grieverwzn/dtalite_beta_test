@@ -42,7 +42,6 @@ public:
 	afx_msg void OnBnClickedButtonCopyVehicleFile();
 	int m_SimulationHorizon;
 	int m_agent_based_assignment_flag;
-	CListBox m_AssignmentMethod;
 	afx_msg void OnLbnSelchangeListDemandLoadingMode();
 	afx_msg void OnLbnSelchangeListRoutingMethod();
 	afx_msg void OnBnClickedOk2();
@@ -51,7 +50,6 @@ public:
 	afx_msg void OnBnClickedCheckEmissionData();
 	float m_DemandLoadingMultipler;
 	afx_msg void OnEnChangeEditDemandLoadingmultiplier();
-	CListBox m_Signal_Control_List;
 	afx_msg void OnLbnSelchangeListSignalControlRepresentation();
 	afx_msg void OnEnChangeEditNumberIterations3();
 	int m_NumberReportingDays;
@@ -61,7 +59,5 @@ public:
 	afx_msg void OnBnClickedConfig();
 	CString m_SimulatorName;
 	afx_msg void OnBnClickedButtonViewEditScenarioSetting();
-	CString m_msg_assignment;
-	CString m_msg_traffic_flow_model;
-	CString m_msg_signal_control;
+
 };

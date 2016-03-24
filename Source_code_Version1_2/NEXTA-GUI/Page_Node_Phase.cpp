@@ -74,7 +74,6 @@ void CPage_Node_Phase::DoDataExchange(CDataExchange* pDX)
 
 	DDX_Control(pDX, IDC_GRID_Phasing, m_PhasingGrid);
 	DDX_Check(pDX, IDC_EDIT_MODE, m_bPhasingDataEditMode);
-	DDX_Control(pDX, IDC_COMBO_Timing_Plan, m_ComboTimingPlan);
 	DDX_Text(pDX, IDC_EDIT_CURRENT_NODEID, m_CurrentNodeNumber);
 	DDX_Text(pDX, IDC_EDIT_CURRENT_NODENAME, m_CurrentNode_Name);
 	DDX_Text(pDX, IDC_MOVEMENT_MSG, m_MovementMsg);
@@ -229,7 +228,6 @@ BOOL CPage_Node_Phase::OnInitDialog()
 
 		CString TimingPlanStr;
 		TimingPlanStr.Format ("Plan %d: %s", i+1, m_pDoc->m_TimingPlanVector[i].timing_plan_name.c_str ());
-		m_ComboTimingPlan.AddString(TimingPlanStr);
 
 		if(i==0)
 		{
@@ -239,7 +237,6 @@ BOOL CPage_Node_Phase::OnInitDialog()
 
 	}
 
-	m_ComboTimingPlan.SetCurSel (0);
 
 
 	UpdatePhaseData();
@@ -1294,7 +1291,6 @@ void CPage_Node_Phase::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 void CPage_Node_Phase::OnCbnSelchangeComboTimingPlan()
 {
-	m_SelectedTimingPlanNo = m_ComboTimingPlan.GetCurSel ();
 
 }
 

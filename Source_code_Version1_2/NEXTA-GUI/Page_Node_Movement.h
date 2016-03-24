@@ -176,6 +176,6 @@ public:
 		return SelectedMovement;
 	}
 	afx_msg void OnBnClickedHideRightTurn();
-	CComboBox m_ComboTimingPlan;
 	afx_msg void OnCbnSelchangeComboTimingPlan2();
+	afx_msg void OnEnChangeEditCurrentNodename();
 };

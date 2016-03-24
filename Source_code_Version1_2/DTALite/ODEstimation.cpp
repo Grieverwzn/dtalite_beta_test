@@ -751,7 +751,7 @@ void ConstructPathArrayForEachODT_ODEstimation(int iteration,std::vector<PathArr
 				}
 
 				int arrival_time_in_hour = int(ArrivalTimeBasedonTravelTime/60);
-				if( pLink->SimultedHourlySpeed[arrival_time_in_hour] < pLink->m_SpeedLimit *0.15) // 15% of speed limit
+				if (arrival_time_in_hour <= 24 && pLink->SimultedHourlySpeed[arrival_time_in_hour] < pLink->m_SpeedLimit *0.15) // 15% of speed limit
 					number_of_links_with_extremely_heavy_congestion++;
 
 				ArrivalTimeBasedonTravelTime += pLink->GetTravelTimeByMin(0, ArrivalTimeBasedonTravelTime, g_FindAssignmentIntervalLengthInMinFromTime(ArrivalTimeBasedonTravelTime), g_TrafficFlowModelFlag);  // update travel time 
@@ -1098,7 +1098,7 @@ void ConstructPathArrayForEachODT_ODEstimation(int iteration,std::vector<PathArr
 
 
 
-void DTANetworkForSP::ZoneBasedPathAssignment_ODEstimation(int origin_zone, int AssignmentInterval, int iteration)
+void DTANetworkForSP::ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval_ODEstimation(int origin_zone, int AssignmentInterval, int iteration)
 // for vehicles starting from departure_time_begin to departure_time_end, assign them to shortest path using a proportion according to MSA or graident-based algorithms
 {
 
@@ -1561,10 +1561,10 @@ void g_UpdateLinkMOEDeviation_ODEstimation(NetworkLoadingOutput& output, int Ite
 
 void g_OutputODMEResults()
 {
-
+	cout << "OutputODMEResults()" << endl;
 	CCSVWriter validation_result_file;
 
-	validation_result_file.Open ("output_validation_results.csv");
+	validation_result_file.Open ("debug_validation_results.csv");
 
 	validation_result_file.SetFieldName ("name");
 	validation_result_file.SetFieldName ("tag");

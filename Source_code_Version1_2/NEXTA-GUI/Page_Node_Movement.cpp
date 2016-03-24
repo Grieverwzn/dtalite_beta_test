@@ -77,7 +77,6 @@ void CPage_Node_Movement::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_CURRENT_NODEID, m_CurrentNodeNumber);
 	DDX_Text(pDX, IDC_EDIT_CURRENT_NODENAME, m_CurrentNode_Name);
 	DDX_Check(pDX, IDC_HIDE_RIGHT_TURN, m_bHideRightTurnMovement);
-	DDX_Control(pDX, IDC_COMBO_Timing_Plan_2, m_ComboTimingPlan);
 }
 
 
@@ -91,6 +90,7 @@ BEGIN_MESSAGE_MAP(CPage_Node_Movement, CPropertyPage)
 	ON_WM_LBUTTONDBLCLK()
 	ON_BN_CLICKED(IDC_HIDE_RIGHT_TURN, &CPage_Node_Movement::OnBnClickedHideRightTurn)
 	ON_CBN_SELCHANGE(IDC_COMBO_Timing_Plan_2, &CPage_Node_Movement::OnCbnSelchangeComboTimingPlan2)
+	ON_EN_CHANGE(IDC_EDIT_CURRENT_NODENAME, &CPage_Node_Movement::OnEnChangeEditCurrentNodename)
 END_MESSAGE_MAP()
 
 
@@ -231,19 +231,9 @@ BOOL CPage_Node_Movement::OnInitDialog()
 	}
 
 
-	for(unsigned int i = 0; i < m_pDoc->m_TimingPlanVector.size(); i++)
-	{
-
-		DTA_Phasing_Data_Matrix element_current = m_pDoc->GetPhaseData(m_CurrentNodeNumber ,  m_pDoc->m_TimingPlanVector[i].timing_plan_name);
-
-		CString TimingPlanStr;
-		TimingPlanStr.Format ("Plan %d: %s", i+1, m_pDoc->m_TimingPlanVector[i].timing_plan_name.c_str ());
-		m_ComboTimingPlan.AddString(TimingPlanStr);
-	}
+	
 
 
-
-	m_ComboTimingPlan.SetCurSel (PlanNo);
 
 	UpdateData(0);
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -340,8 +330,8 @@ void CPage_Node_Movement::OnPaint()
 	GetClientRect(PlotRect);
 	m_PlotRect = PlotRect;
 
-	m_PlotRect.top += 35;
-	m_PlotRect.bottom -= 250;
+	m_PlotRect.top += 55;
+	m_PlotRect.bottom -= 290;
 	m_PlotRect.left += 50;
 	m_PlotRect.right -= 50;
 
@@ -889,10 +879,18 @@ void CPage_Node_Movement::OnBnClickedHideRightTurn()
 
 void CPage_Node_Movement::OnCbnSelchangeComboTimingPlan2()
 {
-	m_SelectedTimingPlanNo = m_ComboTimingPlan.GetCurSel ();
-
-	m_TimingPlanName = 	m_pDoc->m_TimingPlanVector[m_SelectedTimingPlanNo].timing_plan_name;
 
 	UpdateList();
 
+}
+
+
+void CPage_Node_Movement::OnEnChangeEditCurrentNodename()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CPropertyPage::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
 }

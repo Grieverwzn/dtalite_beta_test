@@ -34,7 +34,6 @@
 #include "DlgPathMOE.h"
 #include "DlgTrainInfo.h"
 #include "DlgFileLoading.h"
-#include "DlgCarFollowing.h"
 #include "MainFrm.h"
 #include "Shellapi.h"
 #include "DlgDefaultLinkProperties.h"

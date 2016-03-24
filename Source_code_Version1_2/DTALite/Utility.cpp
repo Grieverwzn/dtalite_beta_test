@@ -369,7 +369,7 @@ bool g_GetVehicleAttributes(int demand_type, int &VehicleType, int &InformationC
 		if(g_VehicleTypeVector.size() ==0)
 		{
 		
-			cout << "No vehicle type data. Please check file input_vehicle_type.csv." << endl;
+			cout << "No vehicle type data. Please check file optional_vehicle_type.csv." << endl;
 			g_ProgramStop();
 		
 		}

@@ -18,13 +18,10 @@ CDlgAssignmentSettings::CDlgAssignmentSettings(CWnd* pParent /*=NULL*/)
 	, m_DemandLoadingMultipler(0)
 	, m_NumberReportingDays(1)
 	, m_SimulatorName(_T(""))
-	, m_msg_assignment(_T(""))
-	, m_msg_traffic_flow_model(_T(""))
-	, m_msg_signal_control(_T(""))
 {
 	m_bModifiedFlag  = false;
 
-	m_SimulatorName = "DTALite";
+	m_SimulatorName = "DTALite.exe";
 
 
 }
@@ -40,17 +37,12 @@ void CDlgAssignmentSettings::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_Number_Iterations, m_NumberOfIterations);
 	DDV_MinMaxInt(pDX, m_NumberOfIterations, 1, 10000);
 	DDX_Control(pDX, IDC_LIST_DEMAND_LOADING_MODE, m_DemandLoadingModeList);
-	DDX_Control(pDX, IDC_LIST_Routing_METHOD, m_AssignmentMethod);
 	DDX_Control(pDX, IDC_LIST_SIMULATION_METHOD, m_SimulationMethodControl);
 
 	DDX_Control(pDX, IDC_LIST_DEMAND_LOADING_MODE2, m_NetworkDataList);
 	DDX_Text(pDX, IDC_EDIT_Demand_LoadingMultiplier, m_DemandLoadingMultipler);
-	DDX_Control(pDX, IDC_LIST_Signal_Control_Representation, m_Signal_Control_List);
 	DDX_Control(pDX, IDC_LIST_SCENARIO, m_ScenarioList);
-	DDX_Text(pDX, IDC_EDIT1, m_SimulatorName);
-	DDX_Text(pDX, IDC_EDIT_Assignment, m_msg_assignment);
-	DDX_Text(pDX, IDC_EDIT_Traffic_Flow_Model, m_msg_traffic_flow_model);
-	DDX_Text(pDX, IDC_EDIT_Signal_Control, m_msg_signal_control);
+
 }
 
 
@@ -103,10 +95,8 @@ BOOL CDlgAssignmentSettings::OnInitDialog()
 	str.Format("%d link types", m_pDoc->m_LinkTypeMap.size());
 	m_NetworkDataList.AddString(str);
 
-	m_SimulationMethodControl.AddString ("0. BPR Function");
 	m_SimulationMethodControl.AddString ("1. Point Queue Model");
-	m_SimulationMethodControl.AddString ("2. Spatial Queue Model");
-	m_SimulationMethodControl.AddString ("3. Newell's Kinematic Wave Model");
+	m_SimulationMethodControl.AddString ("2. Newell's Kinematic Wave Model");
 
 #ifndef _WIN64
 	m_SimulatorName = theApp.m_SimulatorString_32;
@@ -118,22 +108,7 @@ BOOL CDlgAssignmentSettings::OnInitDialog()
 
 	UpdateData(0);
 
-		m_SimulationMethodControl.SetCurSel(m_pDoc->m_traffic_flow_model);
-
-
-
-	m_Signal_Control_List.AddString ("0: Continuous Flow with Link Capacity Constraint");
-	m_Signal_Control_List.AddString("1: Cycle Length + Link-based Effective Green Time");
-	m_Signal_Control_List.AddString("2: HD Network with Spatial Capacity Constraint");
-	m_Signal_Control_List.SetCurSel(m_pDoc->m_signal_reresentation_model);
-
-	m_AssignmentMethod.AddString("0. Traffic Assignment");
-	m_AssignmentMethod.AddString("1. Trip Genenration (In Development)");
-	m_AssignmentMethod.AddString("2. Trip Distribution (In Development)");
-	m_AssignmentMethod.AddString("3. OD Demand Matrix Estimation");
-	m_AssignmentMethod.AddString("4. DTA+ABM Integration Mode");
-		
-	m_AssignmentMethod.SetCurSel(m_pDoc->m_traffic_analysis_method);
+		m_SimulationMethodControl.SetCurSel(m_pDoc->m_traffic_flow_model-1);
 
 	
 	m_DemandLoadingModeList.AddString("Demand Loading Time Period:");
@@ -262,20 +237,10 @@ void CDlgAssignmentSettings::UpdateScenarioFile()
 	if(m_pDoc->m_traffic_flow_model != m_SimulationMethodControl.GetCurSel())
 	{
 		m_bModifiedFlag = true;
-		m_pDoc->m_traffic_flow_model = m_SimulationMethodControl.GetCurSel();
+		m_pDoc->m_traffic_flow_model = m_SimulationMethodControl.GetCurSel()+1;
 	}
 	
-	if(m_pDoc->m_signal_reresentation_model != m_Signal_Control_List.GetCurSel())
-	{
-		m_bModifiedFlag = true;
-		m_pDoc->m_signal_reresentation_model = m_Signal_Control_List.GetCurSel();
-	}
-	
-	if(m_pDoc->m_traffic_analysis_method != m_AssignmentMethod.GetCurSel())
-	{
-		m_bModifiedFlag = true;
-		m_pDoc->m_traffic_analysis_method = m_AssignmentMethod.GetCurSel();
-	}
+
 
 	if(m_NumberOfIterations != m_pDoc->m_number_of_iterations)
 	{

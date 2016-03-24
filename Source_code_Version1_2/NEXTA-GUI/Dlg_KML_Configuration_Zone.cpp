@@ -202,20 +202,20 @@ BOOL CDlg_KML_Configuration_Zone::OnInitDialog()
 	m_List.AddString ("Total number of vehicles (origin)");
 	m_List.AddString ("Total number of vehicles (destination)");
 
-	m_List.AddString ("Total traveled distance (mile)(origin)");
-	m_List.AddString ("Total traveled distance  (mile) (destination)");
+	m_List.AddString ("Total traveled distance (origin)");
+	m_List.AddString ("Total traveled distance   (destination)");
 
 	m_List.AddString ("Total travel time (min) (origin)");
 	m_List.AddString ("Total travel time (min) (destination)");
 
-	m_List.AddString ("Avg distance (mile) (origin)");
-	m_List.AddString ("Avg distance (mile) (destination)");
+	m_List.AddString ("Avg distance  (origin)");
+	m_List.AddString ("Avg distance  (destination)");
 
 	m_List.AddString ("Avg travel time (min) (origin)");
 	m_List.AddString ("Avg travel time (min)(destination)");
 
-	m_List.AddString ("Avg speed (mph) (origin)");
-	m_List.AddString ("Avg speed (mph) (destination)");
+	m_List.AddString ("Avg speed (origin)");
+	m_List.AddString ("Avg speed (destination)");
 
 
 	m_List.SetCurSel (0);

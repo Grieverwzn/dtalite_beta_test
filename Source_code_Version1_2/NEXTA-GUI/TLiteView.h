@@ -53,11 +53,9 @@ enum link_text_display_mode
    {
    link_display_none = 0, 
    link_display_street_name, 
-   link_display_speed_limit_in_miles, 
-   link_display_length_in_miles, 
-   link_display_length_in_feet, 
+   link_display_speed_limit_, 
+   link_display_length_, 
    link_display_number_of_lanes, 
-   link_display_number_of_left_turn_lanes, 
    link_display_link_capacity_per_hour,
    link_display_lane_capacity_per_hour,
    link_display_total_link_volume,
@@ -68,18 +66,15 @@ enum link_text_display_mode
    link_display_link_id, 
    link_display_speed_sensor_id, 
    link_display_count_sensor_id, 
-   link_display_orientation_code,
-   link_display_loop_code,
    link_display_demand_type_code,
-
-   link_display_link_key, 
 
    link_display_from_id_to_id, 
 
 
    link_display_free_flow_travel_time_in_min, 
    link_display_free_flow_travel_time_in_hour, 
-
+   link_display_orientation_code,
+   link_display_loop_code,
 
    link_display_number_of_right_turn_lanes, 
 
@@ -150,7 +145,8 @@ enum link_text_display_mode
 
 	// reserve
 	link_display_total_assigned_link_volume,
-	link_display_total_incomplete_link_volume
+	link_display_total_incomplete_link_volume,
+	link_display_number_of_left_turn_lanes
 
 };
 enum movement_text_display_mode
@@ -205,11 +201,11 @@ enum node_display_mode
    node_display_node_number, 
    node_display_sequential_node_number, 
    node_display_zone_number, 
-   node_display_cycle_length_in_second, 
+   node_display_intersection_name,
+   node_display_control_type,
+   node_display_cycle_length_in_second,
    node_display_cycle_length_in_second_for_signal_only, 
    node_display_offset_in_second_for_signal_only, 
-   node_display_intersection_name, 
-   node_display_control_type,
    node_display_travel_time_from_origin
 
 };

@@ -182,9 +182,6 @@ BEGIN_MESSAGE_MAP(CTLiteView, CView)
 	ON_COMMAND(ID_EDIT_CREATESUBAREA, &CTLiteView::OnEditCreatesubarea)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_CREATESUBAREA, &CTLiteView::OnUpdateEditCreatesubarea)
 	ON_COMMAND(ID_TOOLS_REMOVENODESANDLINKSOUTSIDESUBAREA, &CTLiteView::OnToolsRemovenodesandlinksoutsidesubarea)
-	ON_COMMAND(ID_VIEW_SHOW, &CTLiteView::OnViewShowAVISensor)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_SHOW, &CTLiteView::OnUpdateViewShowAVISensor)
-	ON_COMMAND(ID_FILE_DATAEXCHANGEWITHGOOGLEFUSIONTABLES, &CTLiteView::OnFileDataexchangewithgooglefusiontables)
 	ON_COMMAND(ID_EDIT_DELETELINKSOUTSIDESUBAREA, &CTLiteView::OnEditDeletelinksoutsidesubarea)
 	ON_COMMAND(ID_EDIT_MOVENETWORKCOORDINATES, &CTLiteView::OnEditMovenetworkcoordinates)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_MOVENETWORKCOORDINATES, &CTLiteView::OnUpdateEditMovenetworkcoordinates)
@@ -195,9 +192,6 @@ BEGIN_MESSAGE_MAP(CTLiteView, CView)
 	ON_COMMAND(ID_NODE_DIRECTIONTOHEREANDRELIABILITYANALYSIS, &CTLiteView::OnNodeDirectiontohereandreliabilityanalysis)
 	ON_COMMAND(ID_LINK_INCREASEBANDWIDTH, &CTLiteView::OnLinkIncreasebandwidth)
 	ON_COMMAND(ID_LINK_DECREASEBANDWIDTH, &CTLiteView::OnLinkDecreasebandwidth)
-	ON_COMMAND(ID_LINK_SWICHTOLINE_BANDWIDTH_MODE, &CTLiteView::OnLinkSwichtolineBandwidthMode)
-	ON_COMMAND(ID_VIEW_TRANSITLAYER, &CTLiteView::OnViewTransitlayer)
-	ON_UPDATE_COMMAND_UI(ID_VIEW_TRANSITLAYER, &CTLiteView::OnUpdateViewTransitlayer)
 	ON_COMMAND(ID_NODE_MOVEMENTPROPERTIES, &CTLiteView::OnNodeMovementproperties)
 	ON_COMMAND(ID_LINK_LINEDISPLAYMODE, &CTLiteView::OnLinkLinedisplaymode)
 	ON_UPDATE_COMMAND_UI(ID_LINK_LINEDISPLAYMODE, &CTLiteView::OnUpdateLinkLinedisplaymode)
@@ -565,7 +559,7 @@ CTLiteView::CTLiteView()
 
 	m_bShowWalkLinksOnly = false;
 	m_MoveLayerNo = 0;
-	m_bShowCompleteTrajectory = true;
+	m_bShowCompleteTrajectory = false;
 	m_bShowAllCompleteTrajectory = false;
 	m_bShowTransitLinksOnly = false;
 	m_bShowWalkLinksOnly = false;
@@ -1625,22 +1619,11 @@ void CTLiteView::DrawObjects(CDC* pDC)
 				case link_display_demand_type_code:
 					str_text.Format("%s", (*iLink)->m_demand_type_code.c_str()); break;
 
-				case link_display_link_key: 
-					str_text.Format ("%s", (*iLink)->m_LinkKey); break;
-
-
-				case  link_display_speed_limit_in_miles:
+				case  link_display_speed_limit_:
 					str_text.Format ("%.1f",(*iLink)->m_SpeedLimit ); break;
-				case link_display_length_in_miles:
+				case link_display_length_:
 					str_text.Format ("%.3f",(*iLink)->m_Length  ); break;
-				case link_display_length_in_feet:
-
-					if(pDoc->m_bUseMileVsKMFlag)
-						str_text.Format ("%.0f",(*iLink)->m_Length*5280  );   // mile to feet
-					else			
-						str_text.Format ("%.0f",(*iLink)->m_Length*1000  );  // km to meter
-
-
+	
 					break;
 				case  link_display_free_flow_travel_time_in_min:
 					str_text.Format ("%.2f",(*iLink)->m_FreeFlowTravelTime   ); break;
@@ -3739,22 +3722,11 @@ void CTLiteView::DrawObjects(CDC* pDC)
 				case link_display_count_sensor_id: 
 					str_text.Format ("%s", (*iLink)->m_CountSensorID.c_str ()); break;
 
-				case link_display_link_key: 
-					str_text.Format ("%s", (*iLink)->m_LinkKey); break;
-
-				case  link_display_speed_limit_in_miles:
+			case  link_display_speed_limit_:
 					str_text.Format ("%.1f",(*iLink)->m_SpeedLimit ); break;
-				case link_display_length_in_miles:
+				case link_display_length_:
 					str_text.Format ("%.3f",(*iLink)->m_Length  ); break;
-				case link_display_length_in_feet:
-
-					if(pDoc->m_bUseMileVsKMFlag)
-						str_text.Format ("%.0f",(*iLink)->m_Length*5280  );   // mile to feet
-					else			
-						str_text.Format ("%.0f",(*iLink)->m_Length*1000  );  // km to meter
-
-
-					break;
+	
 				case  link_display_free_flow_travel_time_in_min:
 					str_text.Format ("%.2f",(*iLink)->m_FreeFlowTravelTime   ); break;
 				case  link_display_free_flow_travel_time_in_hour:
@@ -4653,7 +4625,7 @@ void CTLiteView::OnLButtonUp(UINT nFlags, CPoint point)
 					}
 
 					if(pDoc->m_bUseMileVsKMFlag)
-						element.Attribute = "Speed Limit (mph)";
+						element.Attribute = "Speed Limit";
 					else		
 						element.Attribute = "Speed Limit (kmph)";
 
@@ -4661,7 +4633,7 @@ void CTLiteView::OnLButtonUp(UINT nFlags, CPoint point)
 					pMainFrame->m_FeatureInfoVector.push_back (element);
 
 					if(pDoc->m_bUseMileVsKMFlag)
-						element.Attribute = "Length (mile)";
+						element.Attribute = "Length ";
 					else
 						element.Attribute = "Length (km)";
 
@@ -7840,6 +7812,7 @@ else
 
 		if(m_ShowNodeTextMode == node_display_travel_time_from_origin && pNode->m_DistanceToRoot > 0.00001 && pNode->m_DistanceToRoot < MAX_SPLABEL-1)  // check connectivity, overwrite with distance to the root
 			str_node_label.Format ("%4.1f",pNode->m_DistanceToRoot );
+
 
 		point.y -= tm.tmHeight / 2;
 

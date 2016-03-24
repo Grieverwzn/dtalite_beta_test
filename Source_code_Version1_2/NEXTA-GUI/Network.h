@@ -49,11 +49,11 @@ using namespace std;
 // NB	SB	EB	WB	NE	NW SE	SW
 enum DTA_EMISSION_TYPE
 {
-DTA_Energy,
 DTA_CO2,
 DTA_NOX,
 DTA_CO,
-DTA_HC
+DTA_HC,
+DTA_Energy
 };
 enum DTA_Direction
 {
@@ -1048,6 +1048,8 @@ public:
 			info_class_percentage[info_class] = 0;
 		}
 		info_class_percentage[0] = 1.0;
+
+		average_VOT = 10;
 	}
 
 	void SetDefaultVehicleTypeDistribution()
@@ -2018,12 +2020,12 @@ public:
 
 		bWorkzone = false;
 		bIncident = false;
-		bRampMeter = false;
+		bGenericTrafficControl = false;
 	}
 
 	bool bWorkzone;
 	bool bIncident;
-	bool bRampMeter;
+	bool bGenericTrafficControl;
 
 	float StartTime;
 	float EndTime;
@@ -2641,7 +2643,7 @@ float 	GetRampImpactedFlag(int DepartureTime = -1)
 		for(unsigned int il = 0; il< CapacityReductionVector.size(); il++)
 		{
 
-		if(CapacityReductionVector[il].bRampMeter)
+		if(CapacityReductionVector[il].bGenericTrafficControl)
 			{
 				if(DepartureTime<=-1 || (DepartureTime >= CapacityReductionVector[il].StartTime && DepartureTime<=CapacityReductionVector[il].EndTime ))
 						return CapacityReductionVector[il].ServiceFlowRate;

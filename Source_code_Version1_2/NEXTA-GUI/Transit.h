@@ -44,15 +44,15 @@ public:
 	}
 
 	int number_of_nearby_transfer_stations;
-	int stop_id;
-	int stop_code;
-	string stop_name;
+	int stop_id;  // node id
+	int stop_code; 
+	string stop_name;  // node name
 	string stop_desc;
 	int zone_id;
 	int location_type;
 	string direction;
-	string position;
-    GDPoint m_ShapePoint;
+	string position;  //string
+    GDPoint m_ShapePoint; //x,y
 
 	int mapped_node_id;
 
@@ -176,7 +176,7 @@ public:
 
 	std::map<int, PT_Route> m_PT_RouteMap;
 	std::map<int, PT_Trip> m_PT_TripMap;
-	std::map<int, PT_Stop> m_PT_StopMap;
+	std::map<int, PT_Stop> m_PT_StopMap;  // transit node layer
 
   	//bus stop schedule
 	std::vector<PT_StopTime> m_PT_StopTimeVector;

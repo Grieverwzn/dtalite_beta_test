@@ -230,6 +230,11 @@ bool PT_Network::ReadGTFFiles(GDRect network_rect)  // Google Transit files
 		{
 			PT_StopTime TransitStopTime;
 
+			if (parser.GetValueByFieldName("trip_id", TransitStopTime.trip_id) == false)
+				break;
+
+			TRACE("trip_id: %d\n", TransitStopTime.trip_id);
+
 			if(parser.GetValueByFieldName("stop_id",TransitStopTime.stop_id) == false)
 				break;	
 
@@ -251,12 +256,11 @@ bool PT_Network::ReadGTFFiles(GDRect network_rect)  // Google Transit files
 			sscanf(char_array,"%d:%d:%d", &hour,&min,&second);
 			TransitStopTime.departure_time =  hour*60+min;
 
-			if(parser.GetValueByFieldName("trip_id",TransitStopTime.trip_id) == false)
-				break; 
 
 
-			if(parser.GetValueByFieldName("stop_sequence",TransitStopTime.stop_sequence) == false)
-				break; 			
+
+/*			if(parser.GetValueByFieldName("stop_sequence",TransitStopTime.stop_sequence) == false)
+				break; 	*/		
 
 			/*
 			if(parser.GetValueByFieldName("drop_off_type",TransitStopTime.drop_off_type) == false)
@@ -297,10 +301,7 @@ bool PT_Network::ReadGTFFiles(GDRect network_rect)  // Google Transit files
 			//if(stop_times_count >=max_stop_times_record)  // for testing purposes
 			//	break;
 
-			if(m_PT_TripMap.find(TransitStopTime.trip_id) != m_PT_TripMap.end())
-			{
 				m_PT_TripMap[TransitStopTime.trip_id].m_PT_StopTimeVector .push_back(TransitStopTime);
-			}
 
 		}
 		parser.CloseCSVFile ();
@@ -363,7 +364,7 @@ bool CTLiteDoc::ReadTransitFiles(CString TransitDataProjectFolder)
 {
 
 	m_PT_network.m_ProjectDirectory = TransitDataProjectFolder;
-	m_PT_network.ReadGTFFiles(m_NetworkRect);
+	m_PT_network.ReadGTFFiles(m_NetworkRect);  // google transit feed files
 
 
 	m_TransitDataLoadingStatus.Format ("%d transit trips have been loaded.",m_PT_network.m_PT_TripMap.size() );
@@ -374,6 +375,199 @@ bool CTLiteDoc::ReadTransitFiles(CString TransitDataProjectFolder)
 	}
 	*/
 	return true;
+}
+
+
+void CTLiteDoc::OnTransitGeneratetransitspace()
+{
+	CWaitCursor ws;
+
+	FILE* st;
+	fopen_s(&st, m_PT_network.m_ProjectDirectory + "transit_network.tnp", "w");
+	fprintf(st, "transit network created by NEXTA");
+	fclose(st);
+	
+	fopen_s(&st, m_PT_network.m_ProjectDirectory + "input_node.csv", "w");
+	if (st == NULL)
+	{
+		AfxMessageBox("Error: File input_transit_node.csv cannot be opened.\nIt might be currently used and locked by EXCEL.");
+		return;
+	}
+	std::map<int, int> stop_id_map;
+
+	if (st != NULL)
+	{
+
+		fprintf(st, "name,node_id,x,y,geometry\n");
+
+		std::map<int, PT_Stop>::iterator iPT_StopMap;
+		for (iPT_StopMap = m_PT_network.m_PT_StopMap.begin(); iPT_StopMap != m_PT_network.m_PT_StopMap.end(); iPT_StopMap++)
+		{
+			fprintf(st, "%s,%d,%f,%f,\"<Point><coordinates>%f,%f</coordinates></Point>\"\n",
+				(*iPT_StopMap).second.stop_name.c_str(),
+				(*iPT_StopMap).second.stop_id,
+				(*iPT_StopMap).second.m_ShapePoint.x,
+				(*iPT_StopMap).second.m_ShapePoint.y,
+				(*iPT_StopMap).second.m_ShapePoint.x,
+				(*iPT_StopMap).second.m_ShapePoint.y
+				);
+
+			stop_id_map[(*iPT_StopMap).second.stop_id] = stop_id_map.size();
+		}
+		fclose(st);
+	}
+
+	fopen_s(&st, m_PT_network.m_ProjectDirectory + "input_link.csv", "w");
+	if (st == NULL)
+	{
+		AfxMessageBox("Error: File input_link.csv cannot be opened.\nIt might be currently used and locked by EXCEL.");
+		return;
+	}
+
+	std::map<CString, int> TransitLinkMap;
+
+	if (st != NULL)
+	{
+
+		fprintf(st, "name,from_node_id,to_node_id,direction,length,number_of_lanes,speed_limit,lane_capacity_in_vhc_per_hour,link_type,demand_type_code\n");
+
+		int count = 0;
+		std::map<int, int> RouteMap;
+
+		// step 1: for each trip
+		std::map<int, PT_Trip>::iterator iPT_TripMap;
+		for (iPT_TripMap = m_PT_network.m_PT_TripMap.begin(); iPT_TripMap != m_PT_network.m_PT_TripMap.end(); iPT_TripMap++)
+	{
+
+			// step 2: for each stop time pair
+			if ((*iPT_TripMap).second.m_PT_StopTimeVector.size() >= 2)
+			{
+			
+			for (int i = 0; i < (*iPT_TripMap).second.m_PT_StopTimeVector.size() - 1; i++)
+			{
+				int stopid_1 = (*iPT_TripMap).second.m_PT_StopTimeVector[i].stop_id;
+				int stopid_2 = (*iPT_TripMap).second.m_PT_StopTimeVector[i + 1].stop_id;
+
+
+				if (stop_id_map.find(stopid_1) != stop_id_map.end() && stop_id_map.find(stopid_2) != stop_id_map.end())
+				{
+
+					CString transit_link_key;
+					transit_link_key.Format("%d->%d", stopid_1, stopid_2);
+
+					if (TransitLinkMap.find(transit_link_key) == TransitLinkMap.end())  //find nothing
+					{ //not defined yet
+						// add a new link
+						//	fprintf(st, "name,from_node_id,to_node_id,direction,length,number_of_lanes,speed_limit,lane_capacity_in_vhc_per_hour,link_type,demand_type_code");
+
+						float link_length = g_CalculateP2PDistanceInMileFromLatitudeLongitude((*iPT_TripMap).second.m_PT_StopTimeVector[i].pt, 
+							(*iPT_TripMap).second.m_PT_StopTimeVector[i+1].pt);
+						fprintf(st, "%d,%d,%d,1,%.4f,1,40,1000,1,\n",
+							(*iPT_TripMap).second.trip_id,
+							stopid_1,
+							stopid_2,
+							link_length);
+
+						//define this link
+						TransitLinkMap[transit_link_key] = TransitLinkMap.size();
+					}//else do nothing, do not add link
+				}
+				else
+				{
+					TRACE("Missing transit link, stop id not defined!");
+				}
+			}
+			}
+
+			}  // for each trip
+		fclose(st);
+	}
+
+	//
+	fopen_s(&st, m_PT_network.m_ProjectDirectory + "input_transit_trip.csv", "w");
+	if (st == NULL)
+	{
+		AfxMessageBox("Error: File input_transit_trip.csv cannot be opened.\nIt might be currently used and locked by EXCEL.");
+		return;
+	}
+
+	if (st != NULL)
+	{
+
+		fprintf(st, "day_no,agent_id,agent_type,trip_id,route_id,route_id_short_name,origin_zone,destination_zone,schedule_departure_time,schedule_node_sequence,schedule_stop_time_sequence,path_node_sequence,path_time_sequence\n");
+
+		int count = 0;
+		std::map<int, int> RouteMap;
+
+		int agent_id = 1;
+
+		// step 1: for each trip
+		std::map<int, PT_Trip>::iterator iPT_TripMap;
+		for (iPT_TripMap = m_PT_network.m_PT_TripMap.begin(); iPT_TripMap != m_PT_network.m_PT_TripMap.end(); iPT_TripMap++)
+		{
+			fprintf(st, "0,%d,transit,%d,%d,%s,%d,%d,",
+				agent_id,
+				(*iPT_TripMap).second.trip_id,
+				(*iPT_TripMap).second.route_id,
+				(*iPT_TripMap).second.service_id.c_str(),
+				1,
+				2)
+				;
+
+			agent_id++;
+
+			// step 2: for each stop-time node
+			if ((*iPT_TripMap).second.m_PT_StopTimeVector.size() >= 2)
+			{
+				fprintf(st, "%d,", (*iPT_TripMap).second.m_PT_StopTimeVector[0].departure_time);
+
+				for (int i = 0; i < (*iPT_TripMap).second.m_PT_StopTimeVector.size(); i++)
+				{
+					fprintf(st, "%d;", (*iPT_TripMap).second.m_PT_StopTimeVector[i].stop_id);
+				}
+				fprintf(st, ",");
+			}
+
+			// step 2: for each stop-time time data
+			if ((*iPT_TripMap).second.m_PT_StopTimeVector.size() >= 2)
+			{
+				for (int i = 0; i < (*iPT_TripMap).second.m_PT_StopTimeVector.size(); i++)
+				{
+					fprintf(st, "%d;%d;", 
+						(*iPT_TripMap).second.m_PT_StopTimeVector[i].arrival_time,
+						(*iPT_TripMap).second.m_PT_StopTimeVector[i].departure_time);
+				}
+				fprintf(st, ",");
+			}
+
+			// step 3:path_node_sequence
+
+			if ((*iPT_TripMap).second.m_PT_StopTimeVector.size() >= 2)
+			{
+				for (int i = 0; i < (*iPT_TripMap).second.m_PT_StopTimeVector.size(); i++)
+				{
+					fprintf(st, "%d;", (*iPT_TripMap).second.m_PT_StopTimeVector[i].stop_id);
+				}
+				fprintf(st, ",");
+			}
+
+			// step 4: for each stop-time time data to generate path time seqeunce 
+			if ((*iPT_TripMap).second.m_PT_StopTimeVector.size() >= 2)
+			{
+				for (int i = 0; i < (*iPT_TripMap).second.m_PT_StopTimeVector.size(); i++)
+				{
+					fprintf(st, "%d;%d;",
+						(*iPT_TripMap).second.m_PT_StopTimeVector[i].arrival_time,
+						(*iPT_TripMap).second.m_PT_StopTimeVector[i].departure_time);
+				}
+				fprintf(st, ",");
+			}
+
+			fprintf(st, "\n");
+		}
+		fclose(st);
+	}
+
 }
 
 

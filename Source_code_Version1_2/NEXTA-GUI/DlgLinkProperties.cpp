@@ -64,20 +64,8 @@ void CDlgLinkProperties::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_STREET_NAME, StreetName);
 	DDV_MaxChars(pDX, StreetName, 100);
 
-	DDX_Text(pDX, IDC_EDIT6, m_BPR_Alpha);
-	DDX_Text(pDX, IDC_EDIT7, m_BPR_Beta);
-	DDX_Check(pDX, IDC_CHECK_UseDefaultData, m_bUpdateLinkAttributeBasedOnType);
-	DDX_Text(pDX, IDC_EDIT_NUMLANES_LEFT_TURN, m_NumLeftTurnLanes);
-	DDX_Text(pDX, IDC_EDIT_NUMLANES_RIGHT_TURN, m_NumRightTurnLanes);
-	DDX_Text(pDX, IDC_EDIT8, m_ModeCode);
-	DDX_Check(pDX, IDC_CHECK2, m_prohibited_u_turn);
-	DDX_Text(pDX, IDC_EDIT_LANELENGTH_LEFT_TURN, m_LeftTurnLength);
-	DDX_Text(pDX, IDC_EDIT_LANELENGTH_RIGHT_TURN, m_RightTurnLength);
 	DDX_Text(pDX, IDC_EDIT_JAM_DENSITY, m_KJam);
 	DDV_MinMaxDouble(pDX, m_KJam, 0, 10000);
-	DDX_Text(pDX, IDC_EDIT_Grade, m_Grade);
-	DDX_Text(pDX, IDC_EDIT_COUNT_SENSOR_ID, m_CountSensorID);
-	DDX_Text(pDX, IDC_EDIT_SPEED_SENSOR_ID, m_SpeedSensorID);
 }
 
 
@@ -131,22 +119,8 @@ BOOL CDlgLinkProperties::OnInitDialog()
 		}
 	}
 
-	if(m_pDoc->m_bUseMileVsKMFlag)
-	{
-		SetDlgItemTextA(IDC_STATIC_UNIT_LENGTH,"(mile)");
-		SetDlgItemTextA(IDC_STATIC_UNIT_LENGTH2,"(feet)");
-		SetDlgItemTextA(IDC_STATIC_UNIT_LENGTH3,"(feet)");
-		SetDlgItemTextA(IDC_STATIC_UNIT_SPEED_LIMIT,"(mph)");
-		SetDlgItemTextA(IDC_STATIC_UNIT_DENSITY,"(vhc/mile/ln)");
-	}else
-	{
-		SetDlgItemTextA(IDC_STATIC_UNIT_LENGTH,"(km)");
-		SetDlgItemTextA(IDC_STATIC_UNIT_LENGTH2,"(meter)");
-		SetDlgItemTextA(IDC_STATIC_UNIT_LENGTH3,"(meter)");
-		SetDlgItemTextA(IDC_STATIC_UNIT_SPEED_LIMIT,"(km/h)");
-		SetDlgItemTextA(IDC_STATIC_UNIT_DENSITY,"(vhc/km/ln)");
-		
-	}
+		SetDlgItemTextA(IDC_STATIC_UNIT_SPEED_LIMIT,"distance unit/hour");
+		SetDlgItemTextA(IDC_STATIC_UNIT_DENSITY,"(veh/distance/ln)");
 
 	EnableDataBasedOnLinkType();
 

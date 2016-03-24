@@ -469,7 +469,6 @@ extern float g_TotalDemandDeviation;
 extern float g_TotalMeasurementDeviation; 
 
 
-extern ofstream g_scenario_short_description;
 extern void OutputMovementMOEData(ofstream &output_MovementMOE_file);
 extern bool g_floating_point_value_less_than_or_eq_comparison(double value1, double value2);
 extern bool g_floating_point_value_less_than(double value1, double value2);
@@ -485,7 +484,7 @@ extern float g_GetRandomRatioForVehicleGeneration();
 extern struc_LinearRegressionResult LeastRegression(std::vector <SensorDataPoint> &DataVector, bool bSetYInterceptTo0 = true);
 extern std::string GetTimeClockString(int time);
 extern void g_ReadRealTimeSimulationSettingsFile();
-extern void g_BuildPathsForAgents(int iteration, bool bRebuildNetwork, bool bOutputLog,  int DemandLoadingStartTime, int DemandLoadingEndTime);
+extern void g_WithIterationPathBuildingForAllAgents(int iteration, bool bRebuildNetwork, bool bOutputLog,  int DemandLoadingStartTime, int DemandLoadingEndTime);
 extern void g_OptimizePathsForAgents(int iteration, bool bRebuildNetwork, bool bOutputLog, int DemandLoadingStartTime, int DemandLoadingEndTime);
 extern void g_GenerateUpperBoundFeasibleSolutionForAgents(int DemandLoadingStartTime, int DemandLoadingEndTime);
 extern void g_NetworkDesignKnapsackProblem(int iteration, bool bRebuildNetwork, bool bOutputLog, int DemandLoadingStartTime, int DemandLoadingEndTime);
@@ -521,10 +520,6 @@ extern void g_GenerateSimulationSummary(int iteration, bool NotConverged, int To
 extern void g_OutputSimulationStatistics(int Iteration);
 extern void g_NetworkDesignKnapsackProblem(int iteration, bool bRebuildNetwork, bool bOutputLog, int DemandLoadingStartTime, int DemandLoadingEndTime);
 extern int g_SystemOptimalStartingTimeinMin;
-extern int g_use_global_path_set_flag;
-extern void g_BuildGlobalPathSet();
-extern void g_OutputCurrentGlobalPathSet(int SimulationTimeInMin);
-extern void g_ExchangeVISSIM_RealTime_Link_Status(int meso_simulation_time_interval_no);
 extern void g_ReadAgentTagSettings();
 
 void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_sequence);

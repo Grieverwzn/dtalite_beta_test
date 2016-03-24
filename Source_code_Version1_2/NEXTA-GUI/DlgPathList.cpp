@@ -185,7 +185,7 @@ BOOL CDlgPathList::OnInitDialog()
 
 	_TCHAR *ColumnMOELabel[PATHDATACOLUMNSIZE] =
 	{
-		_T("No."),_T("From->To"),_T("Street Name"), _T("Length (ml)"), _T("Speed Limit"), _T("Free-flow Travel Time (min)"),_T("# of lanes"),_T("Lane Saturation Flow Rate"),_T("Lane Capacity"), _T("Link Type"), _T("Sensor Type"),  _T("Count") 
+		_T("No."),_T("From->To"),_T("Street Name"), _T("Length"), _T("Speed Limit"), _T("Free-flow Travel Time (min)"),_T("# of lanes"),_T("Lane Saturation Flow Rate"),_T("Lane Capacity"), _T("Link Type"), _T("Sensor Type"),  _T("Count") 
 	};
 
 
@@ -432,7 +432,7 @@ void CDlgPathList::OnPathDataExportCSV()
 	if(st!=NULL)
 	{
 		fprintf(st,"Summary\n");
-		fprintf(st,"path index,path_name,distance(mile),free_flow_travel_time(min),path_name,avg_simulated_travel_time(min),avg_sensor_travel_time(min),percentage_difference,avg_time-dependent_error(min),avg_time-dependent_percentage_error (%)\n");
+		fprintf(st,"path index,path_name,distance,free_flow_travel_time(min),path_name,avg_simulated_travel_time(min),avg_sensor_travel_time(min),percentage_difference,avg_time-dependent_error(min),avg_time-dependent_percentage_error (%)\n");
 		for(unsigned int p = 0; p < m_pDoc->m_PathDisplayList.size(); p++) // for each path
 		{
 
@@ -566,7 +566,7 @@ void CDlgPathList::OnPathDataExportCSV()
 			fprintf(st, ",\n");
 		} //for each path
 
-		fprintf(st, "\npath_id,link_sequence_no,from_node_id->to_node_id,from_node_id,to_node_id,name,length (ml),speed_limit,free-flow travel_time,# of lanes,Lane Saturation Flow Rate,Lane Capacity,Link Type\n");
+		fprintf(st, "\npath_id,link_sequence_no,from_node_id->to_node_id,from_node_id,to_node_id,name,length,speed_limit,free-flow travel_time,# of lanes,Lane Saturation Flow Rate,Lane Capacity,Link Type\n");
 
 		for(unsigned int p = 0; p < m_pDoc->m_PathDisplayList.size(); p++) // for each path
 		{
@@ -611,7 +611,7 @@ void CDlgPathList::OnPathDataExportCSV()
 			int previous_MOEAggregationIntervalInMin = g_MOEAggregationIntervalInMin;
 			g_MOEAggregationIntervalInMin = step_size;
 
-			fprintf(st,"path_id,link_sequence_no,from_node_id->to_node_id,name,length (ml),speed_limit,free-flow travel_time,# of lanes,Lane Saturation Flow Rate,Lane Capacity,Link Type\n");
+			fprintf(st,"path_id,link_sequence_no,from_node_id->to_node_id,name,length,speed_limit,free-flow travel_time,# of lanes,Lane Saturation Flow Rate,Lane Capacity,Link Type\n");
 
 			for(unsigned int p = 0; p < m_pDoc->m_PathDisplayList.size(); p++) // for each path
 			{
@@ -828,7 +828,7 @@ void CDlgPathList::OnPathDataExportCSV()
 			} 
 			// for each time
 
-			fprintf(st,"\nPath %d, %s,path engery per mile,",p+1,path_element.m_path_name .c_str ());
+			fprintf(st,"\nPath %d, %s,path engery per distance,",p+1,path_element.m_path_name .c_str ());
 
 			for(int t = m_TimeLeft ; t<m_TimeRight; t+= time_step)  // for each starting time
 			{
@@ -843,21 +843,21 @@ void CDlgPathList::OnPathDataExportCSV()
 				fprintf(st,"%.2f,", path_element.total_distance /max(0.01,path_element.m_TimeDependentEnergy [t]/1000/121.7));
 
 			} 
-			fprintf(st,"\nPath,,path CO2 per mile,");
+			fprintf(st,"\nPath,,path CO2 per distance,");
 
 			for(int t = m_TimeLeft ; t<m_TimeRight; t+= time_step)  // for each starting time
 			{
 				fprintf(st,"%.2f,", path_element.m_TimeDependentCO2 [t]/max(0.1,path_element.total_distance ));
 			} 
 
-			fprintf(st,"\nPath,,path NOx  per mile,");
+			fprintf(st,"\nPath,,path NOx  per distance,");
 
 			for(int t = m_TimeLeft ; t<m_TimeRight; t+= time_step)  // for each starting time
 			{
 				fprintf(st,"%.2f,", path_element.m_TimeDependentNOX [t]/max(0.1,path_element.total_distance ));
 			} 
 
-			fprintf(st,"\nPath,,path CO  per mile,");
+			fprintf(st,"\nPath,,path CO  per distance,");
 
 			for(int t = m_TimeLeft ; t<m_TimeRight; t+= time_step)  // for each starting time
 			{
@@ -865,7 +865,7 @@ void CDlgPathList::OnPathDataExportCSV()
 			} 
 
 
-			fprintf(st,"\nPath,,path HC  per mile,");
+			fprintf(st,"\nPath,,path HC  per distance,");
 
 			for(int t = m_TimeLeft ; t<m_TimeRight; t+= time_step)  // for each starting time
 			{
@@ -890,7 +890,7 @@ void CDlgPathList::OnPathDataExportCSV()
 void CDlgPathList::OnDataImportCsv()
 {
 	OnDataCleanallpaths();
-	m_pDoc->ReadInputPathCSVFile(m_pDoc->m_ProjectDirectory  + "input_path.csv");
+	m_pDoc->ReadInputPathCSVFile(m_pDoc->m_ProjectDirectory  + "optional_path.csv");
 
 	ReloadData();
 
@@ -967,7 +967,7 @@ void CDlgPathList::OnDataGeneratesampleinputpathcsv()
 	// calculate time-dependent travel time
 	if(m_pDoc->m_PathDisplayList.size()==0)
 	{
-		AfxMessageBox("To generate the file input_path.csv, Please first define one path by selecting the origin and destination nodes.", MB_ICONINFORMATION);
+		AfxMessageBox("To generate the file optional_path.csv, Please first define one path by selecting the origin and destination nodes.", MB_ICONINFORMATION);
 		return;
 	}
 
@@ -980,7 +980,7 @@ void CDlgPathList::OnDataGeneratesampleinputpathcsv()
 	}
 
 
-	m_pDoc->SaveInputPathCSVFile(m_pDoc->m_ProjectDirectory +"input_path.csv");
+	m_pDoc->SaveInputPathCSVFile(m_pDoc->m_ProjectDirectory +"optional_path.csv");
 
 }
 
@@ -2833,16 +2833,16 @@ void CDlgPathList::OnDataDeleteexistingpathsininputpathcsvfile()
 	{
 		OnDataCleanallpaths();
 
-		if( m_pDoc->SaveInputPathCSVFile (m_pDoc->m_ProjectDirectory + "input_path.csv"))
+		if( m_pDoc->SaveInputPathCSVFile (m_pDoc->m_ProjectDirectory + "optional_path.csv"))
 		{
-		AfxMessageBox("All paths in file input_path.csv have been deleted.",  MB_ICONINFORMATION );
+		AfxMessageBox("All paths in file optional_path.csv have been deleted.",  MB_ICONINFORMATION );
 		}
 	}
 }
 
 void CDlgPathList::OnDataViewinputpathfileinexcel()
 {
-	m_pDoc->OpenCSVFileInExcel (m_pDoc->m_ProjectDirectory + "input_path.csv");
+	m_pDoc->OpenCSVFileInExcel (m_pDoc->m_ProjectDirectory + "optional_path.csv");
 
 }
 
@@ -2918,15 +2918,13 @@ void CDlgPathList::GenerateDynamicMOEContour(DTA_EMISSION_TYPE emission_type )
 
 			switch(emission_type)
 			{
-			case DTA_Energy: emission_type_str = "Energy Use"; UnitStr = "miles per gallon";
+			case DTA_CO2:  emission_type_str = "CO2"; UnitStr = "kg/vehicle/distance unit";
 				break;
-			case DTA_CO2:  emission_type_str = "CO2"; UnitStr = "kg/vehicle/mile";
+			case DTA_NOX: emission_type_str = "NoX"; UnitStr = "g/vehicle/distance unit";
 				break;
-			case DTA_NOX: emission_type_str = "NoX"; UnitStr = "g/vehicle/mile";
+			case DTA_CO: emission_type_str = "CO"; UnitStr = "g/vehicle/distance unit";
 				break;
-			case DTA_CO: emission_type_str = "CO"; UnitStr = "g/vehicle/mile";
-				break;
-			case DTA_HC:  emission_type_str = "HC"; UnitStr = "g/vehicle/mile";
+			case DTA_HC:  emission_type_str = "HC"; UnitStr = "g/vehicle/distance unit";
 				break;
 			}
 

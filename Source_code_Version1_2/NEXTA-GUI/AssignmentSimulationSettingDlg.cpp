@@ -14,7 +14,7 @@ static LPTSTR Setting_Element[MAX_NUM_OF_SETTINGS] = { "Simulation", "Demand Met
 static LPTSTR Setting_FileName[MAX_NUM_OF_SETTINGS] = {"input_scenario_settings","input_demand_meta_data", "input_demand_type",
 														 "input_link_type", "input_node_control_type",
 														 "input_vehicle_type",
-														"input_vehicle_emission_rate", "input_VOT", "input_MOE_settings",
+														"optional_vehicle_emission_rate", "input_VOT", "input_MOE_settings",
 														};
 
 // CAssignmentSimulationSettingDlg dialog
@@ -67,19 +67,19 @@ BOOL CAssignmentSimulationSettingDlg::OnInitDialog()
 		}
 	}
 
-	m_SelectTab = 0;
-	p_SubTabs[m_SelectTab]->ShowWindow(SW_SHOW);
+	//m_SelectTab = 0;
+	//p_SubTabs[m_SelectTab]->ShowWindow(SW_SHOW);
 
-	for (int i=1;i<MAX_NUM_OF_SETTINGS;i++)
-	{
-		p_SubTabs[i]->ShowWindow(SW_HIDE);
-	}
+	//for (int i=1;i<MAX_NUM_OF_SETTINGS;i++)
+	//{
+	//	p_SubTabs[i]->ShowWindow(SW_HIDE);
+	//}
 
-	m_PrevTab = m_SelectTab;
+	//m_PrevTab = m_SelectTab;
 
-	m_TabCtrl.SetCurSel(m_SelectTab);
+	//m_TabCtrl.SetCurSel(m_SelectTab);
 
-	SetRectangle();
+	//SetRectangle();
 
 	return TRUE;
 }

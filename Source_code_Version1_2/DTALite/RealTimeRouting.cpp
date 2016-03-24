@@ -181,7 +181,7 @@ void DTANetworkForSP::AgentBasedPathAdjustment(
 		// step 3: use link travel time data in agent-based routing 
 
 
-		NodeSize = FindBestPathWithVOT(pVeh->m_OriginZoneID, StartingNodeID , pVeh->m_DepartureTime , pVeh->m_DestinationZoneID , pVeh->m_DestinationNodeID, pVeh->m_DemandType , pVeh->m_VOT, PathLinkList, TotalCost,bGeneralizedCostFlag, bDebugFlag);
+		NodeSize = FindBestPathWithVOTForSingleAgent(pVeh->m_OriginZoneID, StartingNodeID , pVeh->m_DepartureTime , pVeh->m_DestinationZoneID , pVeh->m_DestinationNodeID, pVeh->m_DemandType , pVeh->m_VOT, PathLinkList, TotalCost,bGeneralizedCostFlag, bDebugFlag);
 
 
 	if(pVeh->m_InformationType == info_en_route_and_pre_trip && pVeh->m_bLoaded == true )  // en route info
@@ -486,7 +486,7 @@ void g_AgentBasedPathAdjustmentWithRealTimeInfo(int ProcessID, int VehicleID , d
 		}
 		 
 		//calculate the shortest path based on prevailing travel time
-		PathNodeSize = g_PrevailingTimeNetwork_MP[ProcessID].FindBestPathWithVOT(pVeh->m_OriginZoneID, StartingNodeID, pVeh->m_DepartureTime, pVeh->m_DestinationZoneID, pVeh->m_DestinationNodeID, pVeh->m_DemandType, pVeh->m_VOT, PathLinkList, TotalCost, bGeneralizedCostFlag, bDebugFlag);
+		PathNodeSize = g_PrevailingTimeNetwork_MP[ProcessID].FindBestPathWithVOTForSingleAgent(pVeh->m_OriginZoneID, StartingNodeID, pVeh->m_DepartureTime, pVeh->m_DestinationZoneID, pVeh->m_DestinationNodeID, pVeh->m_DemandType, pVeh->m_VOT, PathLinkList, TotalCost, bGeneralizedCostFlag, bDebugFlag);
 
 		//count is the current node sequence number
 		int bSwitchFlag = 0;
@@ -547,30 +547,6 @@ void g_AgentBasedPathAdjustmentWithRealTimeInfo(int ProcessID, int VehicleID , d
 		if (PathNodeSize <= 1)
 			return;
 
-
-//			// add link to VMS respons link
-//#ifdef  _large_memory_usage_lr
-//			bool bLinkAdded = false;
-//			for(int i =0; i< pVeh->m_VMSResponseVector.size(); i++)
-//			{
-//				if(pVeh->m_VMSResponseVector[i].LinkNo == CurrentLinkID)
-//				{
-//					bLinkAdded = true;
-//					break;
-//				}
-//
-//			}
-//
-//			if(!bLinkAdded)
-//			{
-//				DTAVMSRespone vms;
-//				vms.LinkNo = CurrentLinkID;
-//				vms.ResponseTime = current_time;
-//				vms.SwitchFlag = bSwitchFlag;
-//				pVeh->m_VMSResponseVector.push_back (vms);
-//
-//			}
-//#endif
 
 		if( bSwitchFlag==0)  // no switching
 			return;
@@ -740,7 +716,7 @@ void g_OpenMPAgentBasedPathAdjustmentWithRealTimeInfo(int VehicleID, double curr
 	//int	processor_id = omp_get_thread_num( );  // starting from 0
 	int	processor_id = 0;  // starting from 0
 
-	NodeSize = g_PrevailingTimeNetwork_MP[processor_id].FindBestPathWithVOT(pVeh->m_OriginZoneID,
+	NodeSize = g_PrevailingTimeNetwork_MP[processor_id].FindBestPathWithVOTForSingleAgent(pVeh->m_OriginZoneID,
 		StartingNodeID, pVeh->m_DepartureTime,
 		pVeh->m_DestinationZoneID, pVeh->m_DestinationNodeID, 
 		pVeh->m_DemandType, pVeh->m_VOT, NewSubPathLinkList, TotalCost, bGeneralizedCostFlag, bDebugFlag);
@@ -1036,7 +1012,7 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 	//int	processor_id = omp_get_thread_num( );  // starting from 0
 	int	processor_id = 0;  // starting from 0
 
-	NodeSize = g_PrevailingTimeNetwork_MP[processor_id].FindBestPathWithVOT(pVeh->m_OriginZoneID, StartingNodeID, pVeh->m_DepartureTime, pVeh->m_DestinationZoneID, pVeh->m_DestinationNodeID, pVeh->m_DemandType, pVeh->m_VOT, NewSubPathLinkList, TotalCost, bGeneralizedCostFlag, bDebugFlag);
+	NodeSize = g_PrevailingTimeNetwork_MP[processor_id].FindBestPathWithVOTForSingleAgent(pVeh->m_OriginZoneID, StartingNodeID, pVeh->m_DepartureTime, pVeh->m_DestinationZoneID, pVeh->m_DestinationNodeID, pVeh->m_DemandType, pVeh->m_VOT, NewSubPathLinkList, TotalCost, bGeneralizedCostFlag, bDebugFlag);
 
 
 	// compare the newly calculated path and existing path
@@ -1147,7 +1123,7 @@ void g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(int VehicleID)
 	bool bGeneralizedCostFlag = false;
 	bool bDebugFlag = false;
 
-	int NodeSize = g_PrevailingTimeNetwork_MP[processor_id].FindBestPathWithVOT(pVeh->m_OriginZoneID, pVeh->m_OriginNodeID, 
+	int NodeSize = g_PrevailingTimeNetwork_MP[processor_id].FindBestPathWithVOTForSingleAgent(pVeh->m_OriginZoneID, pVeh->m_OriginNodeID, 
 		pVeh->m_DepartureTime, pVeh->m_DestinationZoneID, pVeh->m_DestinationNodeID, 
 		pVeh->m_DemandType, pVeh->m_VOT, PathLinkList, TotalCost, bGeneralizedCostFlag, bDebugFlag);
 
@@ -1234,14 +1210,12 @@ void g_ReadRealTimeSimulationSettingsFile()
 	int RT_Input_Update_Agent = g_GetPrivateProfileInt("ABM_integration", "RT_Input_Agent_Frequency_in_Seconds", 0, g_DTASettingFileName);
 	int RT_Input_Routing_Policy = g_GetPrivateProfileInt("ABM_integration", "RT_Input_Routing_Policy_Frequency_in_Seconds", 0, g_DTASettingFileName);
 
-	if (RT_Input_Routing_Policy > 0)
-		g_use_global_path_set_flag = 1;
 
 	int RT_Output_LinkMOE = g_GetPrivateProfileInt("ABM_integration", "RT_Output_LinkMOE_Frequency_in_Seconds", 0, g_DTASettingFileName);
 	_proxy_ABM_log(0, "-- output link MOE every %d (min)\n", RT_Output_LinkMOE / 60);
 
 	int RT_Output_PathMOE = 15 * 60;
-	int RT_Output_ODMOE = g_GetPrivateProfileInt("ABM_integration", "RT_Output_Routing_Policy_Frequency_in_Seconds", 0, g_DTASettingFileName);
+	int RT_Output_ODMOE = g_GetPrivateProfileInt("ABM_integration", "RT_Output_TDODMOE_in_Seconds", 0, g_DTASettingFileName);
 	int RT_Output_Complete_Agent = g_GetPrivateProfileInt("ABM_integration", "RT_Output_Complete_Agent_Frequency_in_Seconds", 0, g_DTASettingFileName);
 	int RT_Output_Tagged_Agent = g_GetPrivateProfileInt("ABM_integration", "RT_Output_Tagged_Agent_Frequency_in_Seconds", 0, g_DTASettingFileName);;
 	int RT_Input_DMS = -1;
@@ -1550,7 +1524,7 @@ void g_ExchangeRealTimeSimulationData(int day_no,int timestamp_in_second)
 
 
 			// use input link travel time 
-			g_BuildPathsForAgents(iteration, bRebuildNetwork, false, timestamp_in_second / 60, timestamp_in_second / 60 + 15);
+			g_WithIterationPathBuildingForAllAgents(iteration, bRebuildNetwork, false, timestamp_in_second / 60, timestamp_in_second / 60 + 15);
 
 			if (b_trip_file_ready)
 			{

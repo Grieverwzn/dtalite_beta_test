@@ -207,7 +207,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;gdal_i.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>C:\NEXTA_DTALite_SoftwareRelease\NEXTA_64.exe</OutputFile>
+      <OutputFile>C:\NEXTA_DTALite_SoftwareRelease\NEXTA.exe</OutputFile>
       <Version />
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -227,7 +227,6 @@
     <ClCompile Include="CSVParser.cpp" />
     <ClCompile Include="Dlg_BackgroundImageLocation.cpp" />
     <ClCompile Include="Dlg_DataImportWizard.cpp" />
-    <ClCompile Include="Dlg_DemandType.cpp" />
     <ClCompile Include="Dlg_DisplayConfiguration.cpp" />
     <ClCompile Include="Dlg_Find_Vehicle.cpp" />
     <ClCompile Include="Dlg_GIS_Setting_Config.cpp" />
@@ -251,7 +250,6 @@
     <ClCompile Include="Dlg_PricingConfiguration.cpp" />
     <ClCompile Include="Dlg_RealWorldWidth.cpp" />
     <ClCompile Include="Dlg_SignalDataExchange.cpp" />
-    <ClCompile Include="Dlg_TDDemandProfile.cpp" />
     <ClCompile Include="Dlg_TDMOE_Configuration.cpp" />
     <ClCompile Include="Dlg_TravelTimeReliability.cpp" />
     <ClCompile Include="Dlg_UnitTestingList.cpp" />
@@ -259,8 +257,6 @@
     <ClCompile Include="Dlg_VehEmissions.cpp" />
     <ClCompile Include="Dlg_VehicleClassification.cpp" />
     <ClCompile Include="DlgAssignmentSettings.cpp" />
-    <ClCompile Include="DlgCarFollowing.cpp" />
-    <ClCompile Include="DlgCarFollowingModelSettings.cpp" />
     <ClCompile Include="DlgDefaultLinkProperties.cpp" />
     <ClCompile Include="DlgFileLoading.cpp" />
     <ClCompile Include="DlgFindALink.cpp" />
@@ -366,6 +362,7 @@
     <ClInclude Include="Data-Interface\XLAutomation.h" />
     <ClInclude Include="Data-Interface\XLEzAutomation.h" />
     <ClInclude Include="Data-Interface\XLTestDataSource.h" />
+    <ClInclude Include="TSView.h" />
     <ClInclude Include="VISSIM_EXPORT\VISSIM_Export.h" />
     <ClInclude Include="RailNetwork\RailNetwork.h" />
     <ClInclude Include="BaseDialog.h" />
@@ -375,7 +372,6 @@
     <ClInclude Include="CSVParser.h" />
     <ClInclude Include="Dlg_BackgroundImageLocation.h" />
     <ClInclude Include="Dlg_DataImportWizard.h" />
-    <ClInclude Include="Dlg_DemandType.h" />
     <ClInclude Include="Dlg_DisplayConfiguration.h" />
     <ClInclude Include="Dlg_Find_Vehicle.h" />
     <ClInclude Include="Dlg_GIS_Setting_Config.h" />
@@ -400,7 +396,6 @@
     <ClInclude Include="Dlg_PricingConfiguration.h" />
     <ClInclude Include="Dlg_RealWorldWidth.h" />
     <ClInclude Include="Dlg_SignalDataExchange.h" />
-    <ClInclude Include="Dlg_TDDemandProfile.h" />
     <ClInclude Include="Dlg_TDMOE_Configuration.h" />
     <ClInclude Include="Dlg_TravelTimeReliability.h" />
     <ClInclude Include="Dlg_UnitTestingList.h" />
@@ -409,8 +404,6 @@
     <ClInclude Include="Dlg_VehEmissions.h" />
     <ClInclude Include="Dlg_VehicleClassification.h" />
     <ClInclude Include="DlgAssignmentSettings.h" />
-    <ClInclude Include="DlgCarFollowing.h" />
-    <ClInclude Include="DlgCarFollowingModelSettings.h" />
     <ClInclude Include="DlgDefaultLinkProperties.h" />
     <ClInclude Include="DlgFileLoading.h" />
     <ClInclude Include="DlgFindALink.h" />
@@ -458,7 +451,6 @@
     <ClInclude Include="TLiteDoc.h" />
     <ClInclude Include="TLiteView.h" />
     <ClInclude Include="Transit.h" />
-    <ClInclude Include="TSView.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="GridCtrl_src\CellRange.h" />
     <ClInclude Include="GridCtrl_src\GridCell.h" />

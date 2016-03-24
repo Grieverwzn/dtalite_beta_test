@@ -51,7 +51,7 @@ void g_WriteUserDefinedMOE(CCSVWriter  &g_MultiScenarioSummaryStatFile, int day_
 
 
 	CCSVParser parser_MOE_settings;
-	if (parser_MOE_settings.OpenCSVFile("input_MOE_settings.csv", false))
+	if (parser_MOE_settings.OpenCSVFile("optional_MOE_settings.csv", false))
 	{
 
 		
@@ -196,7 +196,7 @@ void g_MultiScenarioTrafficAssignment()
 	int NumberOfCriticalLinks = 3;
 	int NumberOfCriticalODPairs = 3;
 
-	g_MultiScenarioSummaryStatFile.Open("output_multi_scenario_results.csv");
+	g_MultiScenarioSummaryStatFile.Open("output_day_to_day_MOE.csv");
 	g_MultiScenarioSummaryStatFile.WriteTextString("Unit of output:");
 	g_MultiScenarioSummaryStatFile.WriteTextString(",,distance=,miles");
 	g_MultiScenarioSummaryStatFile.WriteTextString(",,speed=,mph");
@@ -215,7 +215,7 @@ void g_MultiScenarioTrafficAssignment()
 
 
 	CCSVParser parser_MOE_settings;
-	if (parser_MOE_settings.OpenCSVFile("input_MOE_settings.csv", false))
+	if (parser_MOE_settings.OpenCSVFile("optional_MOE_settings.csv", false))
 	{
 		while (parser_MOE_settings.ReadRecord())
 		{
@@ -445,30 +445,30 @@ void g_MultiScenarioTrafficAssignment()
 
 			if (g_UEAssignmentMethod == analysis_day_to_day_learning_threshold_route_choice)
 			{
-				if (parser_scenario.GetValueByFieldName("switching_percentage_iterations_1", g_LearningPercVector[1]) == false)
-					g_LearningPercVector[1] = g_LearningPercentage;
+				//if (parser_scenario.GetValueByFieldName("switching_percentage_iterations_1", g_LearningPercVector[1]) == false)
+				//	g_LearningPercVector[1] = g_LearningPercentage;
 
-				if (TotalUEIterationNumber >= 1000)
-				{
-					cout << "Too many iterations/days. Please contact the developer at xzhou99@gmail.com." << endl;
-					g_ProgramStop();
-				}
+				//if (TotalUEIterationNumber >= 1000)
+				//{
+				//	cout << "Too many iterations/days. Please contact the developer at xzhou99@gmail.com." << endl;
+				//	g_ProgramStop();
+				//}
 
-				for (int day = 2; day <= TotalUEIterationNumber; day++)
-				{
-					CString str_learning;
-					str_learning.Format("iteration_%d", day);
+				//for (int day = 2; day <= TotalUEIterationNumber; day++)
+				//{
+				//	CString str_learning;
+				//	str_learning.Format("iteration_%d", day);
 
-					string str = CString2StdString(str_learning);
-					if (parser_scenario.GetValueByFieldName(str, g_LearningPercVector[day]) == false)  // no data
-						g_LearningPercVector[day] = g_LearningPercentage;
+				//	string str = CString2StdString(str_learning);
+				//	if (parser_scenario.GetValueByFieldName(str, g_LearningPercVector[day]) == false)  // no data
+				//		g_LearningPercVector[day] = g_LearningPercentage;
 
-					if (g_LearningPercVector[day] > 100)
-						g_LearningPercVector[day] = 100;
+				//	if (g_LearningPercVector[day] > 100)
+				//		g_LearningPercVector[day] = 100;
 
-					if (g_LearningPercVector[day] < 0)
-						g_LearningPercVector[day] = 0;
-				}
+				//	if (g_LearningPercVector[day] < 0)
+				//		g_LearningPercVector[day] = 0;
+				//}
 
 
 
@@ -547,24 +547,14 @@ void g_MultiScenarioTrafficAssignment()
 			case analysis_LR_agent_based_system_optimization:
 				g_SummaryStatFile.WriteParameterValue("Assignment method", "Lagrangian-relaxation based system optimization.");
 				break;
-			case analysis_metro_sim:
-				g_SummaryStatFile.WriteParameterValue("Assignment method", "MetroSim.");
-				g_use_global_path_set_flag = 1;
-				break;
-			default:
-				g_SummaryStatFile.WriteParameterValue("Assignment method", "Unsupported");
-
-				cout << "Assignment method in input_scenario_settings.csv =  " << g_UEAssignmentMethod << " which is unsupported. Please check." << endl;
-
-				g_ProgramStop();
+		default:
+				g_UEAssignmentMethod = analysis_MSA; 
 
 			}
 
 
-			if (g_UEAssignmentMethod == analysis_ABM_integration)
-			{
-				g_ReadRealTimeSimulationSettingsFile();
-			}
+
+			g_ReadRealTimeSimulationSettingsFile();
 
 
 			if (g_UEAssignmentMethod == analysis_real_time_simulation)
@@ -694,7 +684,7 @@ void g_MultiScenarioTrafficAssignment()
 			cout << "Agent based dynamic traffic assignment... " << endl;
 
 
-			if (g_UEAssignmentMethod == analysis_LR_agent_based_system_optimization)  // 12
+			if (g_UEAssignmentMethod == analysis_LR_agent_based_system_optimization)  // 14
 			{
 				g_SummaryStatFile.WriteParameterValue("Routing method", "Lagrangian relaxation based, agent-based routing");
 				g_AgentBasedOptimization();
@@ -706,12 +696,12 @@ void g_MultiScenarioTrafficAssignment()
 				if (g_AgentBasedAssignmentFlag == 1)
 				{
 					g_SummaryStatFile.WriteParameterValue("Routing method", "Individual agent-based routing");
-					g_AgentBasedAssisnment();  // agent-based assignment
+					g_AgentBasedDynamicTrafficAssignmentSimulation();  // agent-based assignment
 				}
 				else
 				{
 					g_SummaryStatFile.WriteParameterValue("Assignment method", "Zone-based routing");
-					g_ZoneBasedDynamicTrafficAssignment(); // multi-iteration dynamic traffic assignment
+					g_ZoneBasedDynamicTrafficAssignmentSimulation(); // multi-iteration dynamic traffic assignment
 
 				}
 

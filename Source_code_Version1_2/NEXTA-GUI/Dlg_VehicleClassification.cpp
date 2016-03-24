@@ -109,6 +109,7 @@ BOOL CDlg_VehicleClassification::OnInitDialog()
 	m_ComboX.AddString("All Vehicles/Agents"); // 0;
 	m_ComboX.AddString("SOV, HOV, Truck");
 	m_ComboX.AddString ("--"); 
+	m_ComboX.AddString("5-min Departure Time Interval"); //2
 	m_ComboX.AddString("15-min Departure Time Interval"); //2
 	m_ComboX.AddString("30-min Departure Time Interval"); //2
 	m_ComboX.AddString("1-hour Departure Time Interval"); 
@@ -140,12 +141,12 @@ BOOL CDlg_VehicleClassification::OnInitDialog()
 	m_ComboY.AddString ("Number of Vehicles");
 	m_ComboY.AddString ("Cumulative Number of Vehicles");
 	m_ComboY.AddString ("Total Travel Time (min)"); 
-	m_ComboY.AddString ("Total Travel Distance (mile)"); 
+	m_ComboY.AddString ("Total Travel Distance "); 
 	m_ComboY.AddString ("--"); 
 	m_ComboY.AddString ("Avg Travel Time (min)"); 
-	m_ComboY.AddString ("Avg Travel Distance (mile)"); 
-	m_ComboY.AddString ("Avg Speed (mile/hour)"); 
-	m_ComboY.AddString ("Avg Travel Time Per Mile (min/mile)"); 
+	m_ComboY.AddString ("Avg Travel Distance "); 
+	m_ComboY.AddString ("Avg Speed (distance/hour)"); 
+	m_ComboY.AddString ("Avg Travel Time Per distance (min/distance)"); 
 	m_ComboY.AddString ("Travel Time Index: mean/FFTT"); 
 	m_ComboY.AddString ("--"); 
 	m_ComboY.AddString ("Avg Travel Time STD (min)"); 
@@ -158,10 +159,10 @@ BOOL CDlg_VehicleClassification::OnInitDialog()
 
 
 	m_ComboY.AddString ("--"); 
-	m_ComboY.AddString ("Travel Time Per Mile STD (min/mile)");
-	m_ComboY.AddString ("95th Percentile Travel Time Per Mile (min/mile)");
-	m_ComboY.AddString ("90th Percentile Travel Time Per Mile (min/mile)");
-	m_ComboY.AddString ("80th Percentile Travel Time Per Mile (min/mile)");
+	m_ComboY.AddString ("Travel Time Per Distance Unit STD");
+	m_ComboY.AddString ("95th Percentile Travel Time Per Distance Unit");
+	m_ComboY.AddString ("90th Percentile Travel Time Per Distance Unit");
+	m_ComboY.AddString ("80th Percentile Travel Time Per Distance Unit");
 	m_ComboY.AddString ("--"); 
 
 	m_ComboY.AddString ("Total Toll Revenue ($)");
@@ -185,15 +186,14 @@ BOOL CDlg_VehicleClassification::OnInitDialog()
 
 	m_ComboY.AddString ("Total Gallon");  
 
-	m_ComboY.AddString ("Avg Energy (KJ/vehicle/mile)");
-	m_ComboY.AddString ("Avg CO2 (g/vehicle/mile)");
-	m_ComboY.AddString ("Avg NOx (g/vehicle/mile)");
-	m_ComboY.AddString ("Avg CO (g/vehicle/mile)");
-	m_ComboY.AddString ("Avg HC (g/vehicle/mile)");
-	m_ComboY.AddString("Avg PM (g/vehicle/mile)");
-	m_ComboY.AddString("Avg PM2.5 (g/vehicle/mile)");
+	m_ComboY.AddString ("Avg Energy (KJ/vehicle/distance)");
+	m_ComboY.AddString ("Avg CO2 (g/vehicle/distance)");
+	m_ComboY.AddString ("Avg NOx (g/vehicle/distance)");
+	m_ComboY.AddString ("Avg CO (g/vehicle/distance)");
+	m_ComboY.AddString ("Avg HC (g/vehicle/distance)");
+	m_ComboY.AddString("Avg PM (g/vehicle/distance)");
+	m_ComboY.AddString("Avg PM2.5 (g/vehicle/distance)");
 
-	m_ComboY.AddString ("Avg Miles per Gallon");
 
 	m_ComboX.SetCurSel (m_XSelectionNo);
 	m_ComboY.SetCurSel (m_YSelectionNo);

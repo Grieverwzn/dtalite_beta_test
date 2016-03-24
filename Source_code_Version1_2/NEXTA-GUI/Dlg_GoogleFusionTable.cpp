@@ -419,7 +419,7 @@ void CDlg_GoogleFusionTable::OnBnClickedButtonUpload()
 	int record;
 	for( record = 0; record< m_pDoc->m_LinkSet.size(); record+=100)
 	{
-	GenerateInsertStrings(string(m_pDoc->m_ProjectDirectory.GetBuffer(0)) + "\\input_subarea_link.csv",value_vector,record);
+	GenerateInsertStrings(string(m_pDoc->m_ProjectDirectory.GetBuffer(0)) + "\\optional_subarea_link.csv",value_vector,record);
 	size_t n = 0;
 	string sql_str = "";
 	while(n < value_vector.size())
@@ -497,7 +497,7 @@ void CDlg_GoogleFusionTable::OnBnClickedButtonUpload()
 
 	for( record = 0; record< m_pDoc->m_NodeSet  .size(); record+=100)
 	{
-	GenerateInsertStrings(string(m_pDoc->m_ProjectDirectory.GetBuffer(0)) + "\\" + "input_subarea_node.csv",value_vector,record);
+	GenerateInsertStrings(string(m_pDoc->m_ProjectDirectory.GetBuffer(0)) + "\\" + "optional_subarea_node.csv",value_vector,record);
 	int n = 0;
 	string sql_str="";
 

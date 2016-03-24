@@ -959,8 +959,6 @@ void CDlg_ImportNetwork::OnBnClickedImport()
 					pLink->m_avg_simulated_speed = pLink->m_SpeedLimit ;
 					}
 					
-					pLink->m_LevelOfService  = m_pDoc->CString2StdString(rsLink.GetCString ("static_level_of_service"));
-					pLink->m_volume_over_capacity_ratio = rsLink.GetDouble ("static_volume_over_capacity_ratio",bExist,false);
 
 
 					pLink->m_Kjam = k_jam;

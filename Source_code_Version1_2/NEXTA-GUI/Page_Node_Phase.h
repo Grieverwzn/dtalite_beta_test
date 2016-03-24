@@ -173,7 +173,6 @@ public:
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
 
-	CComboBox m_ComboTimingPlan;
 	afx_msg void OnCbnSelchangeComboTimingPlan();
 	CString m_CurrentNode_Name;
 	CString m_MovementMsg;

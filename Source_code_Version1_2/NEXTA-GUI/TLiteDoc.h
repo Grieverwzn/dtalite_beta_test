@@ -56,25 +56,25 @@ enum layer_mode
 	layer_link,
 	layer_movement,
 	layer_zone,
-	layer_connector,
 	layer_ODMatrix,
 	layer_link_MOE,
 	layer_path, 
-	layer_subarea, 
 	layer_detector,
 	layer_workzone,
 	layer_incident,
 	layer_VMS,
-	layer_toll,
-	layer_ramp,
-	layer_vehicle_position,
-	layer_transit,
+	layer_toll, 
 	layer_grid,
 	layer_background_image,
 	layer_reference_line,
 	layer_transit_accessibility,
+	layer_transit,
+	layer_connector,
+	layer_ramp,
+	layer_vehicle_position,
+	layer_subarea
 };
-enum Network_Data_Settings {_NODE_DATA = 0,_LINK_DATA, _ZONE_DATA, _ACTIVITY_LOCATION_DATA,_MOVEMENT_DATA, _SENSOR_SPEED_DATA,_SENSOR_DATA,_SENSOR_TRAJECTORY_DATA,_MODEL_LINK_MOE_DATA,_MODEL_TRIP_DATA,_MODEL_TRAJECTORY_DATA, _SENSOR_DATA_SETTINGS,PHASING_DATA,_TIMING_PLAN_DATA,MAX_NUM_OF_NETWORK_DATA_FILES};
+enum Network_Data_Settings {_NODE_DATA = 0,_LINK_DATA, _ZONE_DATA, _ACTIVITY_LOCATION_DATA,_MOVEMENT_DATA, MAX_NUM_OF_NETWORK_DATA_FILES};
 enum Sensor_Network_Data_Settings {_SENSOR_LINK_DATA=0, _SENSOR_MOVEMENT_DATA,_CALIBRATION_RESULT_DATA,MAX_NUM_OF_SENSOR_NETWORK_DATA_FILES};
 enum Corridor_Data_Settings {_CORRIDOR_NODE_DATA = 0,_CORRIDOR_LINK_DATA, _CORRIDOR_SEGMENT_DATA, MAX_NUM_OF_CORRIDOR_DATA_FILES};
 enum GIS_IMPORT_Data_Settings {_GIS_IMPORT_NODE_DATA = 0,_GIS_IMPORT_LINK_DATA, _GIS_IMPORT_DEMAND_META_DATA,_GIS_IMPORT_GIS_LAYER_DATA, MAX_NUM_OF_GIS_IMPORT_DATA_FILES}; 
@@ -95,7 +95,7 @@ CLS_subarea_internal_to_internal_subtrip,
 CLS_subarea_boundary_to_bounary_subtrip};
 enum VEHICLE_X_CLASSIFICATION {CLS_all_vehicles=0,CLS_pricing_type,
 CLS_sep_1,
-CLS_time_interval_15_min,CLS_time_interval_30_min,CLS_time_interval_60_min,CLS_time_interval_2_hour,CLS_time_interval_4_hour,
+CLS_time_interval_5_min, CLS_time_interval_15_min, CLS_time_interval_30_min, CLS_time_interval_60_min, CLS_time_interval_2_hour, CLS_time_interval_4_hour,
 CLS_sep_2,
 CLS_distance_bin_0_2,CLS_distance_bin_1,CLS_distance_bin_2,CLS_distance_bin_5,CLS_distance_bin_10,
 CLS_sep_3,
@@ -848,6 +848,7 @@ public:
 	std::vector <int> m_LinkIDRecordVector;  // used to record if a unique link id has been used;
 	int FindUniqueLinkID();
 
+	void OnTransitGeneratetransitspace();
 	bool ReadTransitFiles(CString ProjectFolder);   // for road network
 	bool TransitTripMatching();
 
@@ -873,7 +874,7 @@ public:
 	void RecalculateLinkMOEFromVehicleTrajectoryFile();
 	bool ReadSubareaCSVFile(LPCTSTR lpszFileName);
 	void GenerateSubareaStatistics();
-	bool ReadVOTCSVFile(LPCTSTR lpszFileName);  
+	
 	bool ReadTemporalDemandProfileCSVFile(LPCTSTR lpszFileName);  
 	bool ReadVehicleTypeCSVFile(LPCTSTR lpszFileName);  
 	bool ReadDemandTypeCSVFile(LPCTSTR lpszFileName);
@@ -915,7 +916,7 @@ public:
 	int ReadVMSScenarioData(int RemoveLinkFromNodeNumber= -1, int RemoveLinkToNodeNumber= -1);
 	int ReadRadioMessageScenarioData(int RemoveLinkFromNodeNumber= -1, int RemoveLinkToNodeNumber= -1);
 	int ReadWorkZoneScenarioData(int RemoveLinkFromNodeNumber= -1, int RemoveLinkToNodeNumber= -1);
-	int ReadRampMeterScenarioData(int RemoveLinkFromNodeNumber= -1, int RemoveLinkToNodeNumber= -1);
+	int ReadTrafficControlScenarioData(int RemoveLinkFromNodeNumber= -1, int RemoveLinkToNodeNumber= -1);
 	int ReadIncidentScenarioData(int RemoveLinkFromNodeNumber= -1, int RemoveLinkToNodeNumber= -1);
 	int ReadLink_basedTollScenarioData();
 
@@ -924,7 +925,7 @@ public:
 	bool WriteRadioMessageScenarioData();
 	bool WriteIncidentScenarioData();
 	bool WriteWorkZoneScenarioData();
-	bool WriteRampMeterScenarioData();
+	bool WriteTrafficControlScenarioData();
 	bool WriteCapacityReductionScenarioDataFromSubareaLinks(CString Scenario_File_Name);
 
 	bool ReadNodeGeoFile(LPCTSTR lpszFileName); 
@@ -2892,6 +2893,7 @@ public:
 	afx_msg void OnTollAddbustoll();
 	afx_msg void OnTollAddbrttoll();
 	afx_msg void OnTollAddmetrotoll();
+	afx_msg void OnPathClearallpathdisplay();
 };
 extern std::list<CTLiteDoc*>	g_DocumentList;
 extern bool g_TestValidDocument(CTLiteDoc* pDoc);

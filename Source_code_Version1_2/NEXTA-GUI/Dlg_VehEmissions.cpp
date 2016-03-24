@@ -335,7 +335,7 @@ BOOL CDlg_VehPathAnalysis::OnInitDialog()
 			ColumnLabelVector.push_back ("Avg Distance");
 			ColumnLabelVector.push_back ("Avg Speed");
 			ColumnLabelVector.push_back ("TT STD");
-			ColumnLabelVector.push_back ("Travel Time Per Mile STD");
+			ColumnLabelVector.push_back ("Travel Time Per Distance STD");
 
 
 			if((*iDoc)-> m_bEmissionDataAvailable)
@@ -413,11 +413,11 @@ BOOL CDlg_VehPathAnalysis::OnInitDialog()
 	ColumnPathLabelVector.push_back ("Count");
 	ColumnPathLabelVector.push_back ("Percentage");
 	ColumnPathLabelVector.push_back ("Travel Time (min)");
-	ColumnPathLabelVector.push_back ("Distance (mile)");
-	ColumnPathLabelVector.push_back ("Speed (mph)");
+	ColumnPathLabelVector.push_back ("Distance");
+	ColumnPathLabelVector.push_back ("Speed");
 	ColumnPathLabelVector.push_back ("Toll Cost($)");
 	ColumnPathLabelVector.push_back ("Travel Time STD (min)");
-	ColumnPathLabelVector.push_back ("Travel Time Per Mile STD (min/mile)");
+	ColumnPathLabelVector.push_back ("Travel Time Per Mile STD (min/distance)");
 
 
 	if(m_pDoc-> m_bEmissionDataAvailable)

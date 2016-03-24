@@ -209,7 +209,6 @@ BOOL CAssignmentSimulationTabDlg::OnInitDialog()
 	AddColumn("ODME_max_percentage_deviation_wrt_hist_demand",70);
 	AddColumn("calibration_data_start_time_in_min",0);
 	AddColumn("calibration_data_end_time_in_min",1440);
-	AddColumn("routing_movement_delay_mode",0);
 	}
 
 	if(m_TabText.Find("Vehicle Type")!=-1)  //scenario settings

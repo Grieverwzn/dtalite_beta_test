@@ -81,7 +81,7 @@ CTLiteApp theApp;
 CTLiteApp::CTLiteApp()
 {
 	m_SimulatorString_32 = "DTALite_32.exe";
-	m_SimulatorString_64 = "DTALite_64.exe";
+	m_SimulatorString_64 = "DTALite.exe";
 
 	m_FreewayColor = RGB(030,144,255);
 	m_RampColor = RGB(160,032,240); 
@@ -243,22 +243,11 @@ BOOL CTLiteApp::InitInstance()
         //when the program starts. 
         //The template object below is a secondary template that can be activated in response to the New GLView Window menu item.
 
-
-		if(m_LanguageSupport  ==LANG_CN_SIMPLIFIED)
-		{
-			m_pTemplateTimeTableView = new CMultiDocTemplate(
-			IDR_TLiteTYPE5,
-			RUNTIME_CLASS(CTLiteDoc),
-			RUNTIME_CLASS(CChildFrame),
-			RUNTIME_CLASS(CTimeSpaceView));
-		}else
-		{
 			m_pTemplateTimeTableView = new CMultiDocTemplate(
 			IDR_TLiteTYPE1,
 			RUNTIME_CLASS(CTLiteDoc),
 			RUNTIME_CLASS(CChildFrame),
 			RUNTIME_CLASS(CTimeSpaceView));
-		}
 
         // create main MDI Frame window
         CMainFrame* pMainFrame = new CMainFrame;

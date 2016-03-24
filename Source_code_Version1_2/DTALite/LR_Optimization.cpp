@@ -1221,9 +1221,7 @@ int DTANetworkForSP::FindOptimalLinkPath_TDLabelCorrecting_DQ(int origin_zone, i
 			else
 			{// non- distance
 
-					float preceived_travel_time = m_LinkTDTimePerceptionErrorAry[ToLinkID] + m_LinkTDTimeAry[ToLinkID][link_entering_time_interval];
-					if (preceived_travel_time< m_LinkFFTTAry[ToLinkID] * 0.5)
-						preceived_travel_time< m_LinkFFTTAry[ToLinkID] * 0.5;
+					float preceived_travel_time =  m_LinkTDTimeAry[ToLinkID][link_entering_time_interval];
 
 					NewTime = LinkLabelTimeAry[FromLinkID] + preceived_travel_time + m_OutboundMovementDelayAry[FromLinkID][i];  // time-dependent travel times come from simulator
 
@@ -1360,7 +1358,7 @@ int DTANetworkForSP::FindOptimalLinkPath_TDLabelCorrecting_DQ(int origin_zone, i
 		//find shortest path without movement penality
 		g_ShortestPathWithMovementDelayFlag = false;
 
-		int number_of_nodes = FindBestPathWithVOT(origin_zone, origin, departure_time, destination_zone, destination, demand_type,
+		int number_of_nodes = FindBestPathWithVOTForSingleAgent(origin_zone, origin, departure_time, destination_zone, destination, demand_type,
 			VOT, PathLinkList, TotalCost, bGeneralizedCostFlag, debug_flag);
 		// check if the link(s) have the predecesssor
 

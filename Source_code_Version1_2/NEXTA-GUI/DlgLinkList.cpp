@@ -149,14 +149,12 @@ void CDlgLinkList::ReloadData()
 	m_Column_names.push_back ("To Node");
 
 	if(m_pDoc->m_bUseMileVsKMFlag )
-		m_Column_names.push_back ("Length (mi)");
-	else
-		m_Column_names.push_back ("Length (km)");
+		m_Column_names.push_back ("Length");
 
 	m_Column_names.push_back ("NumLanes");
 
 	if(m_pDoc->m_bUseMileVsKMFlag )
-		m_Column_names.push_back ("Speed Limit (mph)");
+		m_Column_names.push_back ("Speed Limit");
 	else
 		m_Column_names.push_back ("Speed Limit (km/h)");
 

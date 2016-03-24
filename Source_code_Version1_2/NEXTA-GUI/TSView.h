@@ -115,7 +115,7 @@ public:
 	}
 	float DetectorLocalY_Upstream;
 	float DetectorLocalY_Downstream;
-	float DetectorSpacing_in_miles;
+	float DetectorSpacing_;
 
 	std::vector<int> SpaceCountVector;  // space count between cumulative flow counts of two sensors
 	std::vector<int> SpaceScanCountVector;  // space-based scan count using image scanning
@@ -207,7 +207,7 @@ public:
 		UpstreamCumulativeFlowVector = detector1.CumulativeFlowVector;
 
 		DataCollectionTimeInterval_in_sec = data_collection_interval_in_sec;
-		DetectorSpacing_in_miles = detector_spacing_in_feet/5280;
+		DetectorSpacing_ = detector_spacing_in_feet/5280;
 	
 		int TimeInterval = min(detector1.CumulativeFlowVector.size(), detector2.CumulativeFlowVector.size());
 		{
@@ -218,7 +218,7 @@ public:
 		{
 
 		SpaceCountVector[t] = abs(detector1.CumulativeFlowVector [t] - detector2.CumulativeFlowVector [t]);
-		DensityVector[t] = abs(detector1.CumulativeFlowVector [t] - detector2.CumulativeFlowVector [t])/DetectorSpacing_in_miles;
+		DensityVector[t] = abs(detector1.CumulativeFlowVector [t] - detector2.CumulativeFlowVector [t])/DetectorSpacing_;
 		// approximation using mean
 		FlowVector[t] = (detector1.GetFlowCount(t) + detector2.GetFlowCount(t))/2 * (3600/DataCollectionTimeInterval_in_sec);  // per hour volume
 

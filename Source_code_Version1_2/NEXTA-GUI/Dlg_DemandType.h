@@ -35,7 +35,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	DECLARE_DHTML_EVENT_MAP()
 public:
-	CGridListCtrlEx m_DemandTypeGrid;
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnLvnItemchangedDemandtypelist(NMHDR *pNMHDR, LRESULT *pResult);
 };

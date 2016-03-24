@@ -12,7 +12,6 @@
 
 #include "DlgZoneToNodeMapping.h"
 #include "Dlg_ImportODDemand.h"
-#include "Dlg_TDDemandProfile.h"
 
 #include <map>
 #include <iostream>
@@ -34,22 +33,12 @@ BEGIN_MESSAGE_MAP(CDlgODDemandGridCtrl, CDialog)
 	ON_NOTIFY(GVN_ENDLABELEDIT, IDC_GRID_CTRL, &CDlgODDemandGridCtrl::OnGridEndEdit)
 	ON_BN_CLICKED(ID_GRID_SAVEQUIT, &CDlgODDemandGridCtrl::OnBnClickedGridSavequit)
 	ON_BN_CLICKED(ID_GRID_QUIT, &CDlgODDemandGridCtrl::OnBnClickedGridQuit)
-	ON_BN_CLICKED(IDC_BUTTON_CreateZones, &CDlgODDemandGridCtrl::OnBnClickedButtonCreatezones)
-	ON_BN_CLICKED(IDC_BUTTON_Edit_Zone_Node_Mapping, &CDlgODDemandGridCtrl::OnBnClickedButtonEditZoneNodeMapping)
 	ON_BN_CLICKED(IDC_BUTTON1, &CDlgODDemandGridCtrl::OnBnClickedButton1)
 	ON_BN_CLICKED(ID_GRID_SAVEQUIT2, &CDlgODDemandGridCtrl::OnBnClickedGridSavequit2)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_DemandTypeLIST, &CDlgODDemandGridCtrl::OnLvnItemchangedDemandtypelist)
 	ON_BN_CLICKED(ID_EDIT_META_DATABASE, &CDlgODDemandGridCtrl::OnBnClickedEditMetaDatabase)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_DemandTypeLIST2, &CDlgODDemandGridCtrl::OnLvnItemchangedDemandtypelist2)
 	ON_BN_CLICKED(ID_EDIT_META_DATABASE2, &CDlgODDemandGridCtrl::OnBnClickedEditMetaDatabase2)
-	ON_BN_CLICKED(ID_EDIT_VEHICLE_TYPE_FILE, &CDlgODDemandGridCtrl::OnBnClickedEditVehicleTypeFile)
-	ON_BN_CLICKED(ID_EDIT_VEHICLE_EMISSIONS_FILE, &CDlgODDemandGridCtrl::OnBnClickedEditVehicleEmissionsFile)
 	ON_BN_CLICKED(ID_EDIT_META_DATABASE3, &CDlgODDemandGridCtrl::OnBnClickedEditMetaDatabase3)
 	ON_NOTIFY(HDN_ITEMDBLCLICK, 0, &CDlgODDemandGridCtrl::OnHdnItemdblclickDemandtypelist)
-	ON_NOTIFY(LVN_LINKCLICK, IDC_DemandTypeLIST, &CDlgODDemandGridCtrl::OnLvnLinkClickedDemandtypelist)
-	ON_BN_CLICKED(IDC_BUTTON_RELOAD, &CDlgODDemandGridCtrl::OnBnClickedButtonReload)
-	ON_BN_CLICKED(IDC_BUTTON_EXPORT_MATRIX, &CDlgODDemandGridCtrl::OnBnClickedButtonExportMatrix)
-	ON_BN_CLICKED(IDC_BUTTON_EXPORT_COLUMN, &CDlgODDemandGridCtrl::OnBnClickedButtonExportColumn)
 END_MESSAGE_MAP()
 
 
@@ -71,7 +60,6 @@ void CDlgODDemandGridCtrl::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX,IDC_GRID_CTRL,m_ODMatrixGrid);
 	DDX_Control(pDX,IDC_DemandTypeLIST,m_DemandFileGrid);
-	DDX_Control(pDX,IDC_DemandTypeLIST2,m_DemandTypeGrid);
 }
 
 void CDlgODDemandGridCtrl::DisplayDemandTypeTable()
@@ -271,22 +259,7 @@ void CDlgODDemandGridCtrl::DisplayDemandTypeTable()
 	}
 
 	//Add Columns and set headers
-	for (size_t i=0;i<11;i++)
-	{
 
-			lvc.iSubItem = i;
-			lvc.pszText = _gColumnTypeLabel[i];
-			lvc.cx = 80;
-			if(i>=4)
-			lvc.cx = 120;
-
-			lvc.fmt = LVCFMT_LEFT;
-			m_DemandTypeGrid.InsertColumn(i,&lvc);
-	}
-
-		m_DemandTypeGrid.SetExtendedStyle(LVS_EX_AUTOSIZECOLUMNS | LVS_EX_FULLROWSELECT |LVS_EX_HEADERDRAGDROP);
-
-		m_DemandTypeGrid.SetColumnWidth(0, 80);
 
 
 
@@ -696,13 +669,6 @@ void CDlgODDemandGridCtrl::OnBnClickedButtonEditZoneNodeMapping()
 
 void CDlgODDemandGridCtrl::OnBnClickedButton1()
 {
-	CDlg_TDDemandProfile dlg;
-	dlg.m_pDoc = m_pDoc;
-	if(dlg.DoModal() ==IDOK)
-	{
-		// TODO: Place code here to handle when the dialog is
-		//  dismissed with OK
-	}
 
 }
 
@@ -757,95 +723,95 @@ void CDlgODDemandGridCtrl::LoadDemandMatrixFromDemandFile(int DemandFileSequence
 	CCSVParser parser;
 	if (parser.OpenCSVFile(meta_file_name))
 	{
-		int demand_file_seq_no=0;
-		while(parser.ReadRecord())
+		int demand_file_seq_no = 0;
+		while (parser.ReadRecord())
 		{
 			int file_sequence_no;
 			string file_name;
 			string format_type;
 			int number_of_lines_to_be_skipped = 0;
 			int subtotal_in_last_column = 0;
-			float loading_multiplier =1;
-			int start_time_in_min = 0; 
+			float loading_multiplier = 1;
+			int start_time_in_min = 0;
 			int end_time_in_min = 1440;
 			int number_of_demand_types = 0;
 			float local_demand_loading_multiplier = 1;
-			char demand_type_field_name[20] ;
-			int demand_type_code[20]={0};
+			char demand_type_field_name[20];
+			int demand_type_code[20] = { 0 };
 
 			int demand_format_flag = 0;
 
-			if(parser.GetValueByFieldName("file_sequence_no",file_sequence_no)==false)
+			if (parser.GetValueByFieldName("file_sequence_no", file_sequence_no) == false)
 				break;
 
-			if(file_sequence_no <=-1)  // skip negative sequence no 
+			if (file_sequence_no <= -1)  // skip negative sequence no 
 				continue;
 
 
-			parser.GetValueByFieldName("file_name",file_name);
+			parser.GetValueByFieldName("file_name", file_name);
 
-			SelectedFileName = file_name.c_str ();
+			SelectedFileName = file_name.c_str();
 			DemandFileNameVector.push_back(SelectedFileName);
 
-			parser.GetValueByFieldName("start_time_in_min",start_time_in_min);
-			parser.GetValueByFieldName("end_time_in_min",end_time_in_min);
+			parser.GetValueByFieldName("start_time_in_min", start_time_in_min);
+			parser.GetValueByFieldName("end_time_in_min", end_time_in_min);
 
 			// set DemandLoadingStartTimeInMin according the start time and end time of each record
-			if(DemandLoadingStartTimeInMin > start_time_in_min)
+			if (DemandLoadingStartTimeInMin > start_time_in_min)
 				DemandLoadingStartTimeInMin = start_time_in_min;
 
-			if(DemandLoadingEndTimeInMin < end_time_in_min)
+			if (DemandLoadingEndTimeInMin < end_time_in_min)
 				DemandLoadingEndTimeInMin = end_time_in_min;
 
-			parser.GetValueByFieldName("format_type",format_type);
+			parser.GetValueByFieldName("format_type", format_type);
 
 			{ // error checking
 
-				if (file_name.find ("AMS_OD_table.csv")!= string::npos && format_type.find("column")== string::npos)
+				if (file_name.find("AMS_OD_table.csv") != string::npos && format_type.find("column") == string::npos)
 				{
 					AfxMessageBox("Please specify column format for demand file AMS_OD_table.csv");
 				}
 
-				if (file_name.find ("demand.dat")!= string::npos && format_type.find("dynasmart")== string::npos)
+				if (file_name.find("demand.dat") != string::npos && format_type.find("dynasmart") == string::npos)
 				{
 					AfxMessageBox("Please specify dynasmart format for demand file demand.dat.");
 				}
 
-				if (file_name.find ("demand_HOV.dat")!= string::npos && format_type.find("dynasmart")== string::npos)
+				if (file_name.find("demand_HOV.dat") != string::npos && format_type.find("dynasmart") == string::npos)
 				{
 					AfxMessageBox("Please specify dynasmart format for file demand_HOV.dat.");
 				}
 
-				if (file_name.find ("demand_truck.dat")!= string::npos && format_type.find("dynasmart")== string::npos)
+				if (file_name.find("demand_truck.dat") != string::npos && format_type.find("dynasmart") == string::npos)
 				{
-					cout << "Please specify dynasmart format for demand_truck file demand.dat, other than " << format_type << endl; 			
+					cout << "Please specify dynasmart format for demand_truck file demand.dat, other than " << format_type << endl;
 				}
 
 			}
 
-			parser.GetValueByFieldName("number_of_lines_to_be_skipped",number_of_lines_to_be_skipped);
-			parser.GetValueByFieldName("subtotal_in_last_column",subtotal_in_last_column);
+			parser.GetValueByFieldName("number_of_lines_to_be_skipped", number_of_lines_to_be_skipped);
+			parser.GetValueByFieldName("subtotal_in_last_column", subtotal_in_last_column);
 
-			int apply_additional_time_dependent_profile =0;	
-			parser.GetValueByFieldName("apply_additional_time_dependent_profile",apply_additional_time_dependent_profile);
-			parser.GetValueByFieldName("loading_multiplier",local_demand_loading_multiplier);
+			int apply_additional_time_dependent_profile = 0;
+			parser.GetValueByFieldName("apply_additional_time_dependent_profile", apply_additional_time_dependent_profile);
+			parser.GetValueByFieldName("loading_multiplier", local_demand_loading_multiplier);
 
-			double time_dependent_ratio[MAX_TIME_INTERVAL_SIZE] = {0};
+			double time_dependent_ratio[MAX_TIME_INTERVAL_SIZE] = { 0 };
 
 			double total_ratio = 0;
-			if(apply_additional_time_dependent_profile==1)
+			if (apply_additional_time_dependent_profile == 1)
 			{
-				for(int time_index = start_time_in_min/15; time_index < end_time_in_min/15; time_index++)  // / 15 converts min to 15-min interval for demand patterns
+				for (int time_index = start_time_in_min / 15; time_index < end_time_in_min / 15; time_index++)  // / 15 converts min to 15-min interval for demand patterns
 				{
-					std::string time_stamp_str = m_pDoc->GetTimeStampStrFromIntervalNo (time_index,true);
+					std::string time_stamp_str = m_pDoc->GetTimeStampStrFromIntervalNo(time_index, true);
 
 					time_dependent_ratio[time_index] = 0;
-					parser.GetValueByFieldName(time_stamp_str,time_dependent_ratio[time_index]);
+					parser.GetValueByFieldName(time_stamp_str, time_dependent_ratio[time_index]);
 					total_ratio += time_dependent_ratio[time_index];
 				}
 
 
-				if( total_ratio < 0.001)
+				if (total_ratio < 0.001)
 				{
 					cout << "The total temporal ratio read from file input_temporal_demand_profile.csv is 0, which means no demand will be loaded. " << endl;
 					g_ProgramStop();
@@ -853,297 +819,247 @@ void CDlgODDemandGridCtrl::LoadDemandMatrixFromDemandFile(int DemandFileSequence
 
 			}
 
-			parser.GetValueByFieldName("number_of_demand_types",number_of_demand_types);
+			parser.GetValueByFieldName("number_of_demand_types", number_of_demand_types);
 
-			if(demand_file_seq_no != DemandFileSequenceNo)  // not the selected matrix 
+			if (demand_file_seq_no != DemandFileSequenceNo)  // not the selected matrix 
 			{
 
 				demand_file_seq_no++;
 				continue;
 			}
 
-			m_DemandTypeGrid.DeleteAllItems ();
 
-			for(int type = 1; type <= number_of_demand_types; type++)
-			{
-				sprintf(demand_type_field_name,"demand_type_%d",type);
-				parser.GetValueByFieldName(demand_type_field_name,demand_type_code[type]);
-				if(type>m_pDoc->m_DemandTypeVector.size())
-					continue;
 
-		DTADemandType elment = m_pDoc->m_DemandTypeVector[0];
 
-		if(demand_type_code[type] <= m_pDoc->m_DemandTypeVector.size())
-		{
-		elment = m_pDoc->m_DemandTypeVector[demand_type_code[type]-1];
+
+
+
 		}
+	}
+
+
+
+
+	//			bool bFileReady = false;
+	//			int i;
+
+	//			FILE* st;
+	//			fopen_s(&st,m_pDoc->m_ProjectDirectory + file_name.c_str (), "r");
+	//			if (st!=NULL)
+	//			{
+	//				char  str_line[2000]; // input string
+	//				int str_line_size;
+
+	//				// skip lines
+	//				for(int line_skip = 0 ;line_skip < number_of_lines_to_be_skipped;line_skip++)
+	//				{
+	//					g_read_a_line(st,str_line, str_line_size); //  skip the first line
+	//					cout << str_line << endl;
+	//				}
+
+	//				bFileReady = true;
+	//				int line_no = 0;
+
+	//				while(true)
+	//				{
+	//					int origin_zone = g_read_integer(st);
+
+	//					if(origin_zone <=0)
+	//					{
+
+	//						if(line_no==1 && !feof(st))  // read only one line, but has not reached the end of the line
+	//						{
+	//							AfxMessageBox("Error: Only one line has been read from file. Are there multiple columns of demand type in the file?");
+	//							return;
+
+	//						}
+	//						break;
+	//					}
+
+	//					int destination_zone = g_read_integer(st);
+	//					float number_of_vehicles ;
+
+
+	//					for(int type = 1; type <= number_of_demand_types; type++)
+	//					{
+
+	//						float demand_value = g_read_float(st);
+	//						if(m_pDoc->m_ZoneMap.find(origin_zone)!= m_pDoc->m_ZoneMap.end() && m_pDoc->m_ZoneMap.find(destination_zone)!= m_pDoc->m_ZoneMap.end())
+	//							SetODMatrx(origin_zone,destination_zone,demand_value);
+
+	//					}  // for each demand type
+	//					//if(line_no >= max_line_number)
+	//					//break;
+	//					line_no++;
+	//				}  // scan lines
+
+	//				fclose(st);
+	//			}else  //open file
+	//			{
+	//				AfxMessageBox("Error: The demand file cannot be opened.\n It might be currently used and locked by EXCEL.");
+	//			}
+
+	//		}else if (format_type.compare("matrix")== 0)
+	//		{
+	//			if (g_detect_if_a_file_is_column_format(m_pDoc->m_ProjectDirectory + file_name.c_str()) == true)
+	//			{
+	//				CString str;
+	//				str.Format("Demand input file %s looks to be based on column format but the format_type=matrix in input_demand_meta_data.csv.\nPlease check the demand file format, and change format_type=column in input_demand_meta_data.cv.", file_name.c_str());
+	//				AfxMessageBox(str);
+	//				return;
+	//			
+	//			}
+	//			bool bFileReady = false;
+	//			int i;
+
+	//			std::vector<int> zone_sequence_vector;
+
+	//			FILE* st;
+	//			fopen_s(&st,m_pDoc->m_ProjectDirectory+ file_name.c_str (), "r");
+	//			if (st!=NULL)
+	//			{
+	//				// read the first line
+	//				for(int dest = 1; dest <= m_pDoc->m_ODSize; dest++)
+	//				{
+	//					int zone_number = g_read_float(st);
+	//					zone_sequence_vector.push_back(zone_number);
+	//				}
+
+	//				int line_no = 0;
+	//				for(int origin_zone = 1; origin_zone <= m_pDoc->m_ODSize; origin_zone++)
+	//				{
+	//					int origin_zone_id = g_read_float(st); // read the origin zone number
+
+	//					for(int destination_zone = 1; destination_zone <= m_pDoc->m_ODSize; destination_zone++)
+	//					{
+	//						float number_of_vehicles =  g_read_float(st);
+
+	//						int destination_zone_id = zone_sequence_vector[destination_zone-1];
+	//						line_no++;
+
+	//							SetODMatrx(origin_zone_id,destination_zone_id,number_of_vehicles);
+	//					}
+	//					//
+	//					if(subtotal_in_last_column==1)
+	//						g_read_float(st); //read sub total value
 
+	//				}
 
-				// can be also enhanced to edit the real time information percentage
-		char text[100];
-		sprintf_s(text, "%d",elment.demand_type );
-		int Index = m_DemandTypeGrid.InsertItem(LVIF_TEXT,0,text , 0, 0, 0, NULL);
 
-		sprintf_s(text, "%s", elment.demand_type_name);
-		m_DemandTypeGrid.SetItemText(Index,1,text);
+	//				fclose(st);
+	//			}else  //open file
+	//			{
+	//				AfxMessageBox("Error: The demand file cannot be opened.\n It might be currently used and locked by EXCEL.");
 
-		sprintf_s(text, "%5.2f",elment.average_VOT);
-		m_DemandTypeGrid.SetItemText(Index,2,text);
+	//			}
 
-		switch(elment.pricing_type)
-		{
-		case 1: sprintf_s(text, "SOV"); break;
-		case 2: sprintf_s(text, "HOV"); break;
-		case 3: sprintf_s(text, "Truck"); break;
-		default: sprintf_s(text, "Intermodal");
-		}
-		m_DemandTypeGrid.SetItemText(Index,3,text);
-
-		sprintf_s(text, "%3.2f",elment.info_class_percentage[1]);
-		m_DemandTypeGrid.SetItemText(Index,4,text);
-
-		sprintf_s(text, "%3.2f",elment.info_class_percentage[2]);
-		m_DemandTypeGrid.SetItemText(Index,5,text);
-
-		for(int i=0; i< m_pDoc->m_VehicleTypeVector.size(); i++)
-			{
-		sprintf_s(text, "%3.2f",elment.vehicle_type_percentage[i]);
-		m_DemandTypeGrid.SetItemText(Index,6+i,text);
-			}
-
-
-			}
-
-
-			if(format_type.find("column")!= string::npos)
-			{
-
-				if(number_of_demand_types==0)
-				{
-					AfxMessageBox("number_of_demand_types = 0 in file input_demand_meta_data.csv. Please check.");
-					return;
-				}
-
-				bool bFileReady = false;
-				int i;
-
-				FILE* st;
-				fopen_s(&st,m_pDoc->m_ProjectDirectory + file_name.c_str (), "r");
-				if (st!=NULL)
-				{
-					char  str_line[2000]; // input string
-					int str_line_size;
-
-					// skip lines
-					for(int line_skip = 0 ;line_skip < number_of_lines_to_be_skipped;line_skip++)
-					{
-						g_read_a_line(st,str_line, str_line_size); //  skip the first line
-						cout << str_line << endl;
-					}
-
-					bFileReady = true;
-					int line_no = 0;
-
-					while(true)
-					{
-						int origin_zone = g_read_integer(st);
-
-						if(origin_zone <=0)
-						{
-
-							if(line_no==1 && !feof(st))  // read only one line, but has not reached the end of the line
-							{
-								AfxMessageBox("Error: Only one line has been read from file. Are there multiple columns of demand type in the file?");
-								return;
-
-							}
-							break;
-						}
-
-						int destination_zone = g_read_integer(st);
-						float number_of_vehicles ;
-
-
-						for(int type = 1; type <= number_of_demand_types; type++)
-						{
-
-							float demand_value = g_read_float(st);
-							if(m_pDoc->m_ZoneMap.find(origin_zone)!= m_pDoc->m_ZoneMap.end() && m_pDoc->m_ZoneMap.find(destination_zone)!= m_pDoc->m_ZoneMap.end())
-								SetODMatrx(origin_zone,destination_zone,demand_value);
-
-						}  // for each demand type
-						//if(line_no >= max_line_number)
-						//break;
-						line_no++;
-					}  // scan lines
-
-					fclose(st);
-				}else  //open file
-				{
-					AfxMessageBox("Error: The demand file cannot be opened.\n It might be currently used and locked by EXCEL.");
-				}
-
-			}else if (format_type.compare("matrix")== 0)
-			{
-				if (g_detect_if_a_file_is_column_format(m_pDoc->m_ProjectDirectory + file_name.c_str()) == true)
-				{
-					CString str;
-					str.Format("Demand input file %s looks to be based on column format but the format_type=matrix in input_demand_meta_data.csv.\nPlease check the demand file format, and change format_type=column in input_demand_meta_data.cv.", file_name.c_str());
-					AfxMessageBox(str);
-					return;
-				
-				}
-				bool bFileReady = false;
-				int i;
-
-				std::vector<int> zone_sequence_vector;
-
-				FILE* st;
-				fopen_s(&st,m_pDoc->m_ProjectDirectory+ file_name.c_str (), "r");
-				if (st!=NULL)
-				{
-					// read the first line
-					for(int dest = 1; dest <= m_pDoc->m_ODSize; dest++)
-					{
-						int zone_number = g_read_float(st);
-						zone_sequence_vector.push_back(zone_number);
-					}
-
-					int line_no = 0;
-					for(int origin_zone = 1; origin_zone <= m_pDoc->m_ODSize; origin_zone++)
-					{
-						int origin_zone_id = g_read_float(st); // read the origin zone number
-
-						for(int destination_zone = 1; destination_zone <= m_pDoc->m_ODSize; destination_zone++)
-						{
-							float number_of_vehicles =  g_read_float(st);
-
-							int destination_zone_id = zone_sequence_vector[destination_zone-1];
-							line_no++;
-
-								SetODMatrx(origin_zone_id,destination_zone_id,number_of_vehicles);
-						}
-						//
-						if(subtotal_in_last_column==1)
-							g_read_float(st); //read sub total value
-
-					}
-
-
-					fclose(st);
-				}else  //open file
-				{
-					AfxMessageBox("Error: The demand file cannot be opened.\n It might be currently used and locked by EXCEL.");
-
-				}
-
-			}else if(format_type.find("agent")!= string::npos)
-			{
-				AfxMessageBox("Please use Excel or text editor to open the agent csv file.");
-				return;
-			}else if(format_type.find("agent_bin")!= string::npos)
-			{
-				AfxMessageBox("Please use DTALite open the agent in file.");
-
-				return;
-			}else if (format_type.find("dynasmart")!= string::npos)
-			{
-				int type = 1;  // first demand type definition
-				if(demand_type_code[type]>=1)  // feasible demand type
-				{
-
-					bool bFileReady = false;
-					int i;
-
-					FILE* st;
-					fopen_s(&st,m_pDoc->m_ProjectDirectory+file_name.c_str (), "r");
-					if (st!=NULL)
-					{
-						int num_zones =  m_pDoc->m_ODSize;
-						int num_matrices = 0;
-
-						num_matrices = g_read_integer(st);
-						float demand_factor = g_read_float(st);
-
-						std::vector<int> TimeIntevalVector;
-						// Start times
-						int i;
-						for(i = 0; i < num_matrices; i++)
-						{
-							int start_time = g_read_float(st);
-							TimeIntevalVector.push_back(start_time);
-
-						}
-
-						int time_interval = 60; // min
-
-						if(TimeIntevalVector.size() >=2)
-							time_interval = TimeIntevalVector[1] - TimeIntevalVector[0];
-
-						// read the last value
-						int end_of_simulation_horizon = g_read_float(st);
-
-						TimeIntevalVector.push_back(end_of_simulation_horizon);
-
-						long line_no = 2;
-						float total_demand = 0;
-						i =0;
-						//		for(i = 0; i < num_matrices; i++)
-						{
-							// Find a line with non-blank values to start
-							// Origins
-							double DSP_start_time= g_read_float(st) + start_time_in_min; // start time
-							double DSP_end_time= DSP_start_time + time_interval; // end time
-
-							for(int origin_zone=1; origin_zone<= num_zones; origin_zone++)
-								for(int destination_zone=1; destination_zone<= num_zones; destination_zone++)
-								{
-									float number_of_vehicles = g_read_float(st);
-									SetODMatrx(origin_zone,destination_zone,number_of_vehicles);
-
-								}
-
-						} // time-dependent matrix
-						fclose(st);
-					}}else
-					{
-
-						AfxMessageBox("Error: The demand file cannot be opened.\n It might be currently used and locked by EXCEL.");
-
-						//
-					}
-
-			}
-
-			demand_file_seq_no++;
-		}  // for each meta data record
-
-	} // open csv file for parser
-		else if (m_pDoc->m_ZoneMap .size() > 0)
-		{  //default matrix data (not in file yet)
-
-			DemandFileNameVector.push_back ("input_demand.csv");
-
-				int line_no = 0;
-				std::map<int, DTAZone>	:: const_iterator itr;
-
-					for(itr = m_pDoc->m_ZoneMap.begin(); itr != m_pDoc->m_ZoneMap.end(); itr++)
-					{
-
-					std::map<int, DTAZone>	:: const_iterator itr_to_zone_id;
-
-						int index = 0;
-						for(itr_to_zone_id =m_pDoc-> m_ZoneMap.begin(); itr_to_zone_id != m_pDoc->m_ZoneMap.end(); itr_to_zone_id++)
-						{
-
-							float value =m_pDoc-> GetODDemandValue(1,itr->first,itr_to_zone_id->first );
-							
-							SetODMatrx(itr->first,itr_to_zone_id->first,value);
-			
-						}
-					}
-		}
-	// cout << "Total demand volume = " << total_demand_in_demand_file << endl;
+	//		}else if(format_type.find("agent")!= string::npos)
+	//		{
+	//			AfxMessageBox("Please use Excel or text editor to open the agent csv file.");
+	//			return;
+	//		}else if(format_type.find("agent_bin")!= string::npos)
+	//		{
+	//			AfxMessageBox("Please use DTALite open the agent in file.");
+
+	//			return;
+	//		}else if (format_type.find("dynasmart")!= string::npos)
+	//		{
+	//			int type = 1;  // first demand type definition
+	//			if(demand_type_code[type]>=1)  // feasible demand type
+	//			{
+
+	//				bool bFileReady = false;
+	//				int i;
+
+	//				FILE* st;
+	//				fopen_s(&st,m_pDoc->m_ProjectDirectory+file_name.c_str (), "r");
+	//				if (st!=NULL)
+	//				{
+	//					int num_zones =  m_pDoc->m_ODSize;
+	//					int num_matrices = 0;
+
+	//					num_matrices = g_read_integer(st);
+	//					float demand_factor = g_read_float(st);
+
+	//					std::vector<int> TimeIntevalVector;
+	//					// Start times
+	//					int i;
+	//					for(i = 0; i < num_matrices; i++)
+	//					{
+	//						int start_time = g_read_float(st);
+	//						TimeIntevalVector.push_back(start_time);
+
+	//					}
+
+	//					int time_interval = 60; // min
+
+	//					if(TimeIntevalVector.size() >=2)
+	//						time_interval = TimeIntevalVector[1] - TimeIntevalVector[0];
+
+	//					// read the last value
+	//					int end_of_simulation_horizon = g_read_float(st);
+
+	//					TimeIntevalVector.push_back(end_of_simulation_horizon);
+
+	//					long line_no = 2;
+	//					float total_demand = 0;
+	//					i =0;
+	//					//		for(i = 0; i < num_matrices; i++)
+	//					{
+	//						// Find a line with non-blank values to start
+	//						// Origins
+	//						double DSP_start_time= g_read_float(st) + start_time_in_min; // start time
+	//						double DSP_end_time= DSP_start_time + time_interval; // end time
+
+	//						for(int origin_zone=1; origin_zone<= num_zones; origin_zone++)
+	//							for(int destination_zone=1; destination_zone<= num_zones; destination_zone++)
+	//							{
+	//								float number_of_vehicles = g_read_float(st);
+	//								SetODMatrx(origin_zone,destination_zone,number_of_vehicles);
+
+	//							}
+
+	//					} // time-dependent matrix
+	//					fclose(st);
+	//				}}else
+	//				{
+
+	//					AfxMessageBox("Error: The demand file cannot be opened.\n It might be currently used and locked by EXCEL.");
+
+	//					//
+	//				}
+
+	//		}
+
+	//		demand_file_seq_no++;
+	//	}  // for each meta data record
+
+	//} // open csv file for parser
+	//	else if (m_pDoc->m_ZoneMap .size() > 0)
+	//	{  //default matrix data (not in file yet)
+
+	//		DemandFileNameVector.push_back ("input_demand.csv");
+
+	//			int line_no = 0;
+	//			std::map<int, DTAZone>	:: const_iterator itr;
+
+	//				for(itr = m_pDoc->m_ZoneMap.begin(); itr != m_pDoc->m_ZoneMap.end(); itr++)
+	//				{
+
+	//				std::map<int, DTAZone>	:: const_iterator itr_to_zone_id;
+
+	//					int index = 0;
+	//					for(itr_to_zone_id =m_pDoc-> m_ZoneMap.begin(); itr_to_zone_id != m_pDoc->m_ZoneMap.end(); itr_to_zone_id++)
+	//					{
+
+	//						float value =m_pDoc-> GetODDemandValue(1,itr->first,itr_to_zone_id->first );
+	//						
+	//						SetODMatrx(itr->first,itr_to_zone_id->first,value);
+	//		
+	//					}
+	//				}
+	//	}
+	//// cout << "Total demand volume = " << total_demand_in_demand_file << endl;
 
 	// create vehicle heres...
 	return;
@@ -1172,7 +1088,7 @@ void CDlgODDemandGridCtrl::OnBnClickedEditVehicleTypeFile()
 void CDlgODDemandGridCtrl::OnBnClickedEditVehicleEmissionsFile()
 {
 	char file_name[_MAX_PATH];
-	sprintf(file_name,"%s\\input_vehicle_emission_rate.csv",m_pDoc->m_ProjectDirectory);
+	sprintf(file_name,"%s\\optional_vehicle_emission_rate.csv",m_pDoc->m_ProjectDirectory);
 	m_pDoc->OpenCSVFileInExcel (file_name);
 }
 

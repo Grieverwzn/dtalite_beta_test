@@ -79,8 +79,7 @@ BOOL CDlg_TDMOE_Configuration::OnInitDialog()
 	
 	}
 	m_List.AddString ("Number of lanes");
-	m_List.AddString ("Speed limit (mph)");
-	m_List.AddString ("Speed limit (kmph)");
+	m_List.AddString ("Speed limit");
 	m_List.AddString ("Link capacity per hour");
 	m_List.AddString ("Lane capacity per hour");
 

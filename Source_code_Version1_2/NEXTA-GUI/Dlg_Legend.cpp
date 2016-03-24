@@ -49,7 +49,6 @@ BOOL CDlg_Legend::OnInitDialog()
 {
 	CBaseDialog::OnInitDialog();
 
-	m_ComboBox_EmissionType.AddString ("Energy");
 	m_ComboBox_EmissionType.AddString ("CO2");
 	m_ComboBox_EmissionType.AddString ("NOx");
 	m_ComboBox_EmissionType.AddString ("CO");
@@ -191,7 +190,7 @@ void CDlg_Legend::DrawObjects(CDC* pDC)
 	{
 	case MOE_volume: SetWindowText("Link Volume"); break;
 	case MOE_speed: SetWindowText("% of Speed Limit"); break;
-	case MOE_density: SetWindowText("Density (vhc/mile/ln)"); break;
+	case MOE_density: SetWindowText("Density (vhc/distance/ln)"); break;
 	case MOE_reliability: SetWindowText("Variability Ratio"); break;
 	case MOE_impact: SetWindowText("Queue Duration and Congestion Age"); break;
 	case MOE_bottleneck: SetWindowText("Bottleneck Charts and Congestion Age"); break;
@@ -199,12 +198,11 @@ void CDlg_Legend::DrawObjects(CDC* pDC)
 
 		switch (m_pDoc->m_EmissionType )
 		{
-		case  DTA_Energy:  SetWindowText("Avg Miles Per Gallon"); break;	 
-		case  DTA_CO2:  SetWindowText("Avg CO2 (kg) Per Vehicle Per Mile"); break;	 
-		case  DTA_NOX:  SetWindowText("Avg NOx (g) Per Vehicle Per Mile"); break;	 
-		case  DTA_CO:  SetWindowText("Avg CO (g) Per Vehicle Per Mile"); break;	 
-		case  DTA_HC:  SetWindowText("Avg HC (g) Per Vehicle Per Mile"); break;	 
-		default:  SetWindowText("Avg Energy (KJ) Per Vehicle Per Mile"); 
+		case  DTA_CO2:  SetWindowText("Avg CO2 (kg) Per Vehicle Per Distance Unit"); break;	 
+		case  DTA_NOX:  SetWindowText("Avg NOx (g) Per Vehicle Per Distance Unit"); break;	 
+		case  DTA_CO:  SetWindowText("Avg CO (g) Per Vehicle Per Distance Unit"); break;	 
+		case  DTA_HC:  SetWindowText("Avg HC (g) Per Vehicle Per Distance Unit"); break;	 
+		default:  SetWindowText("Avg Energy (KJ) Per Vehicle Per Distance Unit"); 
 		}
 
 

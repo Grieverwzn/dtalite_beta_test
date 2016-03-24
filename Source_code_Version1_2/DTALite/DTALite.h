@@ -70,8 +70,7 @@ analysis_integration_with_AGENT_PLUS,
 analysis_system_optimal,
 analysis_gap_function_MSA_step_size,
 analysis_LR_agent_based_system_optimization,
-analysis_metro_sim_13, 
-analysis_metro_sim
+
 };
 
 extern e_traffic_flow_model g_TrafficFlowModelFlag;
@@ -867,6 +866,7 @@ public:
 		m_SignalOffset_In_Second = 0;
 		m_ControlType = 0;
 		m_ZoneID = 0;
+		m_ABMZoneID = 0; // for ABM output
 		m_TotalCapacity = 0;
 
 		m_bOriginFlag = false;
@@ -894,6 +894,7 @@ public:
 	int m_NodeID;
 	int m_NodeNumber;
 	int m_ZoneID;  // If ZoneID > 0 --> centriod,  otherwise a physical node.
+	int m_ABMZoneID;
 	int m_ControlType; // Type:
 	int m_SignalOffset_In_Second;
 	int m_CycleLength_In_Second;
@@ -3024,6 +3025,24 @@ public:
 	float m_capacity;
 	//------------------------------------------------//
 
+	float GetLinkTravelTime(int link_sequence_no)
+	{
+		
+		if (link_sequence_no >= this->m_NodeSize - 1)
+			return 0;
+
+		float TravelTime = 0;
+		if (link_sequence_no >= 1)
+		{
+			TravelTime =m_LinkAry[link_sequence_no].AbsArrivalTimeOnDSN -m_LinkAry[link_sequence_no - 1].AbsArrivalTimeOnDSN;
+		}
+		else if (link_sequence_no == 0)
+		{
+			TravelTime = m_LinkAry[link_sequence_no].AbsArrivalTimeOnDSN - m_DepartureTime;
+		
+		}
+	return TravelTime;
+	}
 
 	//void StorePath(int DayNo)
 	//{
@@ -3477,7 +3496,6 @@ public:
 	int* m_ToIDAry;
 
 	float** m_LinkTDTimeAry;
-	float* m_LinkTDTimePerceptionErrorAry;
 
 	float** m_LinkTDTransitTimeAry;
 
@@ -3590,7 +3608,6 @@ public:
 		m_LinkTDDistanceAry = new float[m_LinkSize];
 		m_LinkFFTTAry  = new float[m_LinkSize];
 
-		m_LinkTDTimePerceptionErrorAry = new float[m_LinkSize];
 
 	//	cout <<"start to allocate time-dependent network memory " << endl;
 
@@ -3718,7 +3735,6 @@ public:
 
 
 		
-		if(m_LinkTDTimePerceptionErrorAry) delete m_LinkTDTimePerceptionErrorAry;
 
 
 
@@ -3799,7 +3815,6 @@ public:
 
 
 	void BuildNetworkBasedOnZoneCentriod(int DayNo,int ZoneID);
-	void BuildHistoricalInfoNetwork(int CurZoneID, int CurrentTime, float Perception_error_ratio);
 	void BuildTravelerInfoNetwork(int DayNo,int CurrentTime, float Perception_error_ratio);
 	void BuildPhysicalNetwork(int DayNo, int CurZoneID, e_traffic_flow_model TraffcModelFlag, bool bUseCurrentInformation = false, double CurrentTime = 0);
 	void InitializeTDLinkCost();
@@ -3812,26 +3827,25 @@ public:
 	bool TDLabelCorrecting_DoubleQueue_PerDemandType_Movement(int CurZoneID, int origin, int departure_time, int demand_type, float VOT, bool bDistanceCost, bool debug_flag);   // Pointer to previous node (node)
 
 	//movement based shortest path
-	int FindBestPathWithVOT_Movement(int origin_zone, int origin, int departure_time, int destination_zone, int destination, int demand_type, float VOT, int PathLinkList[MAX_NODE_SIZE_IN_A_PATH], float &TotalCost, bool bGeneralizedCostFlag, bool debug_flag, float PerceptionErrorRatio = 0);
+	int FindBestPathWithVOTForSingleAgent_Movement(int origin_zone, int origin, int departure_time, int destination_zone, int destination, int demand_type, float VOT, int PathLinkList[MAX_NODE_SIZE_IN_A_PATH], float &TotalCost, bool bGeneralizedCostFlag, bool debug_flag, float PerceptionErrorRatio = 0);
 
 	int FindOptimalNodePath_TDLabelCorrecting_DQ(int origin_zone, int origin, int departure_time, int destination_zone, int destination, int demand_type, float VOT, int PathLinkList[MAX_NODE_SIZE_IN_A_PATH], float &TotalCost, bool bGeneralizedCostFlag, float TargetTravelTime, float &OptimialTravelTimeInMin, bool bDebugFlag = false);
 	int FindOptimalLinkPath_TDLabelCorrecting_DQ(int origin_zone, int origin, int departure_time, int destination_zone, int destination, int demand_type, float VOT, int PathLinkList[MAX_NODE_SIZE_IN_A_PATH], float &TotalCost, bool bGeneralizedCostFlag, float TargetTravelTime, float &OptimialTravelTimeInMin, bool bDebugFlag = false);
 	int  FindOptimalSolution(int origin, int departure_time, int destination, int PathLinkList[MAX_NODE_SIZE_IN_A_PATH], float TargetTravelTime, float &TotalCost, float &OptimialTravelTimeInMin);  // the last pointer is used to get the node array;
-	int  FindBestPathWithVOT(int origin_zone, int origin, int departure_time, int destination_zone, int destination, int demand_type, float VOT, int PathLinkList[MAX_NODE_SIZE_IN_A_PATH], float &TotalCost, bool bGeneralizedCostFlag, bool bDebugFlag = false, float PerceptionErrorRatio = 0);
+	int  FindBestPathWithVOTForSingleAgent(int origin_zone, int origin, int departure_time, int destination_zone, int destination, int demand_type, float VOT, int PathLinkList[MAX_NODE_SIZE_IN_A_PATH], float &TotalCost, bool bGeneralizedCostFlag, bool bDebugFlag = false, float PerceptionErrorRatio = 0);
 	int  FindBestSystemOptimalPathWithVOT(int origin_zone, int origin, int departure_time, int destination_zone, int destination, int demand_type, float VOT, int PathLinkList[MAX_NODE_SIZE_IN_A_PATH], float &TotalCost, bool bGeneralizedCostFlag, bool ResponseToRadioMessage = false, bool bDebugFlag = false);
 	int  FindOptimalLinkPathSolution(int origin_zone, int origin, int departure_time, int destination_zone, int destination, int demand_type, float VOT, int PathLinkList[MAX_NODE_SIZE_IN_A_PATH], float &TotalCost, bool bGeneralizedCostFlag, bool ResponseToRadioMessage = false, bool bDebugFlag = false);
 
 
-	void ZoneBasedPathAssignment(int zone,int departure_time_begin, int departure_time_end, int iteration,bool debug_flag);
-	float AgentBasedPathFindingAssignment(int zone,int departure_time_begin, int departure_time_end, int iteration);
+	void ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval(int zone,int departure_time_begin, int departure_time_end, int iteration,bool debug_flag);
+	float AgentBasedPathFindingForEachZoneAndDepartureTimeInterval(int zone,int departure_time_begin, int departure_time_end, int iteration);
 	
 	float AgentBasedPathOptimization(int zone, int departure_time_begin, int departure_time_end, int iteration);
 	float AgentBasedUpperBoundSolutionGeneration(int zone, int departure_time_begin, int departure_time_end, int iteration);
 
 	
 	
-	void ZoneBasedPathAssignment_ODEstimation(int zone, int AssignmentInterval, int iteration);
-	void HistInfoZoneBasedPathAssignment(int zone,int departure_time_begin, int departure_time_end);
+	void ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval_ODEstimation(int zone, int AssignmentInterval, int iteration);
 	void AgentBasedVMSPathAdjustment(int VehicleID , double current_time);
 
 	void AgentBasedPathAdjustment(int DayNo, int zone,int departure_time_begin, double current_time);
@@ -4073,6 +4087,7 @@ public:
 		AvgDelay = 0;
 		AvgTTI = 0;
 		AvgDistance = 0;
+		AvgCO = 0;
 		NumberofVehiclesCompleteTrips = 0;
 		NumberofVehiclesGenerated = 0;
 		SwitchPercentage = 0;
@@ -4092,6 +4107,9 @@ public:
 	double AvgDelay;
 	double AvgTTI;
 	double AvgDistance;
+
+	double AvgCO;
+
 	int   NumberofVehiclesCompleteTrips;
 	int   NumberofVehiclesGenerated;
 	double SwitchPercentage;
@@ -4190,7 +4208,7 @@ public:
 	int number_of_vehicles;
 	int number_of_vehicles_DemandType[MAX_DEMAND_TYPE_SIZE];
 
-	float avg_travel_time_in_min, avg_distance_in_miles, avg_speed,avg_trip_time_in_min;
+	float avg_travel_time_in_min, avg_distance_s, avg_speed,avg_trip_time_in_min;
 
 
 	float Energy, CO2, NOX, CO, HC, PM, PM2_5;
@@ -4205,7 +4223,7 @@ public:
 		}
 		avg_trip_time_in_min = 0;
 		avg_travel_time_in_min = 0;
-		avg_distance_in_miles = 0;
+		avg_distance_s = 0;
 
 		Energy = 0;
 		CO2 = 0;
@@ -4337,7 +4355,7 @@ typedef struct
 	float value_of_time;
 	float toll_cost_in_dollar;
 	float PM;
-	float distance_in_mile;
+	float distance_;
 	int number_of_nodes;
 	float Energy;
 	float CO2;
@@ -4472,7 +4490,6 @@ bool OutputTripFile(char fname_trip[_MAX_PATH], int output_mode);
 void OutputODMOEData(ofstream &output_ODMOE_file,int cut_off_volume = 1, int arrival_time_window_begin_time_in_min =0 );
 void OutputTimeDependentODMOEData(ofstream &output_ODMOE_file,int department_time_intreval = 60, int end_time_in_min = 1440, int cut_off_volume = 1 );
 void OutputEmissionData();
-void OutputTimeDependentPathMOEData(ofstream &output_PathMOE_file,int DemandLoadingStartTimeInMin, int DemandLoadingEndTimeInMin, int cut_off_volume = 50);
 void g_OutputTimeDependentRoutingPolicyData(ofstream &output_PathMOE_file,int DemandLoadingStartTimeInMin, int DemandLoadingEndTimeInMin, int cut_off_volume = 50);
 void OutputAssignmentMOEData(char fname[_MAX_PATH], int Iteration,bool bStartWithEmpty);
 
@@ -4493,18 +4510,16 @@ int g_GetRandomInteger_SingleProcessorMode(float Value);
 int g_GetRandomInteger_From_FloatingPointValue_BasedOnLinkIDAndTimeStamp(float Value, int LinkID);
 
 void g_ReadDTALiteAgentBinFile(string file_name);
-void g_ReadDSPVehicleFile(string file_name);
 bool g_ReadAgentBinFile(string file_name, bool b_with_updated_demand_type_info = false);
 void g_ReadInputLinkTravelTime();
 bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag);
-bool g_ReadTRANSIMSTripFile(string file_name, bool bOutputLogFlag);
 
 void g_ReadDemandFile();
 void g_ReadDemandFileBasedOnUserSettings();
 
-void g_ZoneBasedDynamicTrafficAssignment();
+void g_ZoneBasedDynamicTrafficAssignmentSimulation();
 void g_ZoneBasedPeriodBasedDynamicTrafficAssignment();
-void g_AgentBasedAssisnment();
+void g_AgentBasedDynamicTrafficAssignmentSimulation();
 void g_AgentBasedOptimization();
 
 void g_ShortestPathDataMemoryAllocation() ;
@@ -4515,8 +4530,6 @@ void g_MultiDayTrafficAssisnment();
 void OutputMultipleDaysVehicleTrajectoryData(char fname[_MAX_PATH]);
 int g_OutputSimulationSummary(float& AvgTravelTime, float& AvgDistance, float& AvgSpeed,float& AvgCost, EmissionStatisticsData &emission_data,
 							  int InformationClass, int DemandType, int VehicleType, int DepartureTimeInterval);
-void g_DynamicTraffcAssignmentWithinInnerLoop(int iteration, bool NotConverged, int TotalNumOfVehiclesGenerated);
-void InnerLoopAssignment(int zone,int departure_time_begin, int departure_time_end, int inner_iteration);
 
 void g_OutputLinkMOESummary(ofstream &LinkMOESummaryFile, int cut_off_volume=0);
 void g_ExportLink3DLayerToKMLFiles(CString file_name, CString GISTypeString, int ColorCode, bool no_curve_flag, float height_ratio = 1);
@@ -4543,7 +4556,6 @@ extern bool g_bVehicleAttributeUpdatingFlag;
 extern int g_information_updating_interval_of_VMS_in_min;
 
 
-extern void ConstructPathArrayForEachODT(PathArrayForEachODT *, int, int); // construct path array for each ODT
 extern void ConstructPathArrayForEachODT_ODEstimation(int,std::vector<PathArrayForEachODT> PathArray, int, int); // construct path array for each ODT
 extern void g_UpdateLinkMOEDeviation_ODEstimation(NetworkLoadingOutput& output, int Iteration);
 extern void g_OutputODMEResults();
@@ -4601,7 +4613,6 @@ extern ofstream g_AssignmentLogFile;
 extern ofstream g_NetworkDesignLogFile;
 extern ofstream g_EstimationLogFile;
 extern float g_LearningPercVector[1000];
-void g_DTALiteMain();
 void g_DTALiteMultiScenarioMain();
 
 extern int g_InitializeLogFiles();
@@ -4626,7 +4637,7 @@ void ReadVMSScenarioFile(string FileName,int scenario_no=0);
 void ReadLinkTollScenarioFile(string FileName,int scenario_no=0);
 void ReadRadioMessageScenarioFile(string FileName,int scenario_no=0);
 void ReadWorkZoneScenarioFile(string FileName,int scenario_no=0);
-void ReadRampMeterScenarioFile(string FileName,int scenario_no=0);
+void ReadGenericTrafficControlScenarioFile(string FileName,int scenario_no=0);
 
 
 void ReadEvacuationScenarioFile(string FileName,int scenario_no=0);
