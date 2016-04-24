@@ -106,16 +106,34 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 		{
 			// reset statistics for departure-time-based travel time collection
 
-			if (CurrentTime >= 65)
-				TRACE("");
 
 			for (unsigned li = 0; li < g_LinkVector.size(); li++)
 			{
 				DTALink * pLink = g_LinkVector[li];
 
+				if (CurrentTime >= 430 && pLink->m_FromNodeNumber == 5 && pLink->m_ToNodeNumber == 6)
+					TRACE("");
 
 				// weighting average
 				float weight = 0.5;
+
+				if (pLink->m_FromNodeNumber == 14 && pLink->m_ToNodeNumber == 15)
+				{
+					TRACE("current time %f; prevailing time = %f\n", CurrentTime, pLink->m_prevailing_travel_time);
+				}
+				double total_delay_in_queue = 0;
+					for (std::list<struc_vehicle_item>::iterator i = pLink->ExitQueue.begin(); i != pLink->ExitQueue.end(); ++i)
+					{
+
+						struc_vehicle_item vi = (*i);
+
+						double existing_delay = max(0, CurrentTime - vi.event_time_stamp);
+						total_delay_in_queue += existing_delay;
+
+					}
+
+					pLink->m_prevailing_travel_time = pLink->m_FreeFlowTravelTime + total_delay_in_queue / max(1, pLink->ExitQueue.size());
+
 
 				pLink->m_prevailing_travel_time =
 					(1 - weight)*	pLink->m_prevailing_travel_time
@@ -124,10 +142,7 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 
 				ASSERT(pLink->m_prevailing_travel_time <= 9000);
 
-				if (pLink->m_FromNodeNumber == 5 && pLink->m_ToNodeNumber == 6)
-				{
-					TRACE("current time %f; prevailing time = %f\n", CurrentTime, pLink->m_prevailing_travel_time);
-				}
+
 
 				g_LinkVector[li]->departure_count = 0;
 				g_LinkVector[li]->total_departure_based_travel_time = 0;
@@ -1017,6 +1032,11 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 
 			int vehicle_out_count = pLink->LinkOutCapacity;
 
+			if (pLink->m_External_link_outflow_capacity >= 0 && vehicle_out_count < pLink->m_External_link_outflow_capacity)
+			{
+				vehicle_out_count = pLink->m_External_link_outflow_capacity;
+			}
+
 			//pre-calculate the number of vehicles can be sent out based on PCE
 			// LinkOutCapacity is based on PCE
 
@@ -1518,7 +1538,15 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 							pLink->m_LinkMOEAry[t_link_arrival_time].TotalFlowCount += 1;
 						}
 
+						if (pVehicle->m_AgentID == 1 )
+						{
+							TRACE("%d->%d; prevailing time = %f\n", pLink->m_FromNodeNumber && pLink->m_ToNodeNumber, pLink->m_prevailing_travel_time);
+						}
 
+						if (TravelTime>2)
+						{
+							TRACE("current time %f; prevailing time = %f\n", CurrentTime, pLink->m_prevailing_travel_time);
+						}
 
 						pLink->departure_count += 1;
 						pLink->total_departure_based_travel_time += TravelTime;
@@ -2029,7 +2057,36 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 	g_SimululationReadyToEnd = g_PlanningHorizon;
 
 	int micro_simulation_time_interval_no = 0; // use 0.1 min as simulation time interval
+											   //copy vehicle id list at departure time		
+	meso_simulation_time_interval_no = 0;
+	for (time = g_DemandLoadingStartTimeInMin; time < min(g_PlanningHorizon, g_SimululationReadyToEnd); meso_simulation_time_interval_no++)  // the simulation time clock is advanced by 0.1 seconds		
+	{
+		time = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no*g_DTASimulationInterval;
+		int time_int = time * 10;
+		if (g_VehicleTDListMap.find(time_int) != g_VehicleTDListMap.end())
+		{
+			g_VehicleTDListMap[time_int].m_AgentIDVector.clear();  // reset second dimensional vector		
+		}
+	}
+	g_VehicleTDListMap.clear();
+	int number_of_agents = 0;
+	meso_simulation_time_interval_no = 0;
+	for (time = g_DemandLoadingStartTimeInMin; time < min(g_PlanningHorizon, g_SimululationReadyToEnd); meso_simulation_time_interval_no++)  // the simulation time clock is advanced by 0.1 seconds		
+	{
+		time = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no*g_DTASimulationInterval;
+		int time_int = time * 10;
+		if (g_OriginalVehicleTDListMap.find(time_int) != g_OriginalVehicleTDListMap.end())
+		{
+			for (int s = 0; s < g_OriginalVehicleTDListMap[time_int].m_AgentIDVector.size(); s++)
+			{
+				g_VehicleTDListMap[time_int].m_AgentIDVector.push_back(g_OriginalVehicleTDListMap[time_int].m_AgentIDVector[s]);  // copy vector		
+				number_of_agents++;
+			}
+		}
 
+
+	}
+	meso_simulation_time_interval_no = 0;
 
 	for (time = g_DemandLoadingStartTimeInMin; time < min(g_PlanningHorizon, g_SimululationReadyToEnd); meso_simulation_time_interval_no++)  // the simulation time clock is advanced by 0.1 seconds
 	{

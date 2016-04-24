@@ -206,7 +206,6 @@ void g_MultiScenarioTrafficAssignment()
 	int cl;
 
 	g_MultiScenarioSummaryStatFile.SetFieldName("scenario_no");
-	g_MultiScenarioSummaryStatFile.SetFieldName("demand_multiplier");
 	g_MultiScenarioSummaryStatFile.SetFieldName("scenario_name");
 	g_MultiScenarioSummaryStatFile.SetFieldName("scenario_data");
 	g_MultiScenarioSummaryStatFile.SetFieldName("number_of_iterations");
@@ -315,8 +314,6 @@ void g_MultiScenarioTrafficAssignment()
 		g_ODEstimationFlag = 0; 			// no OD estimation
 
 		int max_scenarios = 50000;
-		//Read DTALite Settings first
-		g_ReadDTALiteSettings();
 
 		while (parser_scenario.ReadRecord())
 		{
@@ -354,7 +351,7 @@ void g_MultiScenarioTrafficAssignment()
 
 			g_NumberOfIterations = TotalUEIterationNumber - 1;			// 0+1 iterations
 
-			int traffic_flow_model = 3;
+			int traffic_flow_model = 1;
 			if (parser_scenario.GetValueByFieldNameWithPrintOut("traffic_flow_model", traffic_flow_model) == false)
 			{
 				cout << "Field traffic_flow_model cannot be found in file input_scenario_settings.csv. Please check." << endl;
@@ -659,14 +656,6 @@ void g_MultiScenarioTrafficAssignment()
 			}
 
 
-
-
-
-			if (parser_scenario.GetValueByFieldNameWithPrintOut("demand_multiplier", g_DemandGlobalMultiplier) == false)
-			{
-				cout << "Field demand_multiplier cannot be found in file input_scenario_settings.csv. Please check." << endl;
-				g_ProgramStop();
-			}
 
 			string File_Link_Based_Toll, File_Incident, File_MessageSign, File_WorkZone;
 

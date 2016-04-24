@@ -1299,41 +1299,22 @@ void g_GenerateSimulationSummary(int iteration, bool NotConverged, int TotalNumO
 
 	}
 
-	int time_dependent_skim_file_output = g_GetPrivateProfileInt("ABM_integeration", "time_dependent_skim_file_output", 0, g_DTASettingFileName);
+	int day_by_day_MOE_output = g_GetPrivateProfileInt("ABM_integration", "day_by_day_output", 0, g_DTASettingFileName);
+	int day_by_day_MOE_output_starting_iteration = g_GetPrivateProfileInt("ABM_integration", "day_by_day_output_starting_iteration", 100, g_DTASettingFileName);
 
-	if (time_dependent_skim_file_output > 0)
+	if (day_by_day_MOE_output > 0 && iteration+1 > day_by_day_MOE_output_starting_iteration )
 	{
 		//
 		std::string skim_file_name;
 		int day = iteration + 1;
 
-		CString day_str;
-		day_str.Format("%d", day);
-
-		for (int demand_type = 1; demand_type <= g_DemandTypeVector.size(); demand_type++)
-			g_AgentBasedAccessibilityMatrixGeneration(true, demand_type, 0);
-
-		cout << "outputing link time-dependent MOE and trajectory data under skim outputting mode ..." << endl;
-		g_OutputMOEData(iteration);
+		cout << "outputing day by day time-dependent MOE ..." << endl;
+		g_OutputMOEData(iteration, true);
 
 	}
 
 
-	int time_dependent_HOV_skim_file_output = g_GetPrivateProfileInt("ABM_integeration", "time_dependent_HOV_skim_file_output", 0, g_DTASettingFileName);
 
-	if (time_dependent_HOV_skim_file_output > 0)
-	{
-		//
-		std::string skim_file_name;
-		int day = iteration + 1;
-
-		CString day_str;
-		day_str.Format("%d", day);
-
-
-		for (int demand_type = 1; demand_type <= g_DemandTypeVector.size(); demand_type++)
-			g_AgentBasedAccessibilityMatrixGeneration(true, 2, 0);
-	}
 	int day_no = iteration + 1;
 
 	g_SummaryStatFile.SetValueByFieldName("Iteration #", day_no);  // iteration from 0

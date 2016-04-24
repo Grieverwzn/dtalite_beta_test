@@ -181,6 +181,7 @@ std::vector<DTAVehicle*>		g_VehicleVector;
 
 std::map<int, DTAVehicle*> g_VehicleMap;
 std::map<int, DTAVehListPerTimeInterval> g_VehicleTDListMap;
+std::map<int, DTAVehListPerTimeInterval> g_OriginalVehicleTDListMap;  // used to keep the copy of vehicle id list per simulation interval, we copy 
 
 
 std::vector< DemandType> g_DemandTypeVector;
@@ -263,7 +264,7 @@ float g_RelativeTravelTimePercentageDifferenceForSwitching = 15;  // min
 
 
 int g_RandomizedCapacityMode = 0;
-double g_CapacityLoadingFactor = 1.0;
+double g_DemandCapacityScalingFactor = 1.0;
 int g_StochasticCapacityMode = 0;
 int g_UseRandomCapacityMode = 0;
 float g_MinimumInFlowRatio = 0.1f;
@@ -357,6 +358,9 @@ CTime g_AppStartTime;
 CTime g_AppLastIterationStartTime;
 
 int g_AssignmentIntervalIndex[MAX_TIME_INTERVAL_SIZE] = { 0 };   // internal index for memory block
+int g_AssignmentIntervalOutputFlag[MAX_TIME_INTERVAL_SIZE] = { 0 };   // internal index for memory block
+
+
 int g_AssignmentIntervalStartTimeInMin[MAX_TIME_INTERVAL_SIZE] = { 0 };
 int g_AssignmentIntervalEndTimeInMin[MAX_TIME_INTERVAL_SIZE] = { 0 };
 
@@ -904,7 +908,7 @@ void g_ReadInputFiles()
 	GetPrivateProfileString("input_file", "link_data", "input_link.csv", InputLinkFileName, _MAX_PATH, g_DTASettingFileName);
 
 
-	int AllowExtremelyLowCapacityFlag = g_GetPrivateProfileInt("input_checking", "allow_extremely_low_capacity", 1, g_DTASettingFileName);
+	int AllowExtremelyLowCapacityFlag = 1; // g_GetPrivateProfileInt("input_checking", "allow_extremely_low_capacity", 1, g_DTASettingFileName);
 	//	g_ProhibitUTurnOnFeewayLinkFlag = g_GetPrivateProfileInt("shortest_path", "prohibit_u_turn_on_freeway_link", 1, g_DTASettingFileName);	
 
 
@@ -1113,8 +1117,8 @@ void g_ReadInputFiles()
 			KCritical = capacity / max(10, speed_at_capacity); // e.g. 1500 vehicles/hour/lane / 30 mph = 50 vehicles /mile/lane
 
 
-			if (g_CapacityLoadingFactor < 0.999 || g_CapacityLoadingFactor > 1.001)
-				capacity *= g_CapacityLoadingFactor;
+			if (g_DemandCapacityScalingFactor < 0.999 || g_DemandCapacityScalingFactor > 1.001)
+				capacity *= g_DemandCapacityScalingFactor;
 
 
 			int SaturationFlowRate;
@@ -1175,8 +1179,8 @@ void g_ReadInputFiles()
 					K_jam = 180 / g_ratio_mile_to_km;
 			}
 
-			if (g_CapacityLoadingFactor < 0.999 || g_CapacityLoadingFactor > 1.001)
-				K_jam *= g_CapacityLoadingFactor;
+			if (g_DemandCapacityScalingFactor < 0.999 || g_DemandCapacityScalingFactor > 1.001)
+				K_jam *= g_DemandCapacityScalingFactor;
 
 			if (!parser_link.GetValueByFieldName("wave_speed", wave_speed_in_mph))
 			{
@@ -2183,7 +2187,7 @@ void g_ReadInputFiles()
 			}
 			else*/
 			{  // this is the common mode for loading demand files using demand meta database. 
-				g_ReadDemandFileBasedOnMetaDatabase();
+				g_ReadDemandFileBasedOnDemandFileList();
 			}
 
 
@@ -2280,7 +2284,7 @@ void g_ReadInputFiles()
 
 
 
-	g_WritePrivateProfileInt("output", "simulation_data_horizon_in_min", g_PlanningHorizon, g_DTASettingFileName);
+//	g_WritePrivateProfileInt("output", "simulation_data_horizon_in_min", g_PlanningHorizon, g_DTASettingFileName);
 	// 
 	g_NetworkMOEAry.clear();
 
@@ -2398,6 +2402,16 @@ int CreateVehicles(int origin_zone, int destination_zone, float number_of_vehicl
 
 	for (int i = 0; i < number_of_vehicles_generated; i++)
 	{
+
+		if (g_DemandCapacityScalingFactor < 0.999 && g_DemandCapacityScalingFactor >= 0.0001)  // valid ratio global
+		{
+			double random_ratio = g_GetRandomRatio();
+
+			if (random_ratio > g_DemandCapacityScalingFactor)
+				continue; // skip reading 
+		}
+
+
 		DTA_vhc_simple vhc;
 		vhc.m_OriginZoneID = origin_zone;
 		vhc.m_DestinationZoneID = destination_zone;
@@ -2873,8 +2887,8 @@ void ReadWorkZoneScenarioFile(string FileName, int scenario_no)
 				}
 
 
-				cs.StartTime = g_read_integer(st);
-				cs.EndTime = g_read_integer(st);
+				cs.StartTime = g_read_float(st);
+				cs.EndTime = g_read_float(st);
 
 				if (cs.StartTime >= cs.EndTime)
 				{
@@ -3675,11 +3689,9 @@ void ReadRadioMessageScenarioFile(string FileName, int scenario_no)
 }
 void g_ReadScenarioInputFiles(int scenario_no)
 {
-	ReadIncidentScenarioFile("Scenario_Incident.csv", scenario_no);
 	ReadLinkTollScenarioFile("Scenario_Link_Based_Toll.csv", scenario_no);
 	ReadWorkZoneScenarioFile("Scenario_Work_Zone.csv", scenario_no);
 
-	ReadGenericTrafficControlScenarioFile("Scenario_Generic_Traffic_Control.csv", scenario_no);
 	if (g_ODEstimationFlag == false)
 	{
 		ReadVMSScenarioFile("Scenario_Dynamic_Message_Sign.csv", scenario_no);
@@ -3941,7 +3953,7 @@ void OutputRealTimeLinkMOEData(std::string fname, int current_time_in_min, int o
 						time,
 						travel_time,
 						travel_time - pLink->m_FreeFlowTravelTime,
-						LinkInFlow*60.0 / pLink->m_OutflowNumLanes,  /*per lane*/
+						LinkInFlow*60.0 / max(1,pLink->m_OutflowNumLanes),  /*per lane*/
 						LinkInFlow*60.0,  /*per link hourly */
 						(pLink->m_LinkMOEAry[time].CumulativeArrivalCount - pLink->m_LinkMOEAry[time].CumulativeDepartureCount) / pLink->m_Length / max(1, pLink->m_OutflowNumLanes),  /*density*/
 						pLink->m_Length / max(0.1, travel_time)*60.0,
@@ -4158,30 +4170,30 @@ void g_ReadDTALiteSettings()
 	if (g_AdjLinkSize < 30)
 		g_AdjLinkSize = 30;
 
-	g_AggregationTimetInterval = g_GetPrivateProfileInt("shortest_path", "travel_time_aggregation_interval_in_min", 15, g_DTASettingFileName);
+	g_AggregationTimetInterval = 15; // g_GetPrivateProfileInt("shortest_path", "travel_time_aggregation_interval_in_min", 15, g_DTASettingFileName);
 
 	if (g_AggregationTimetInterval < 1)
 		g_AggregationTimetInterval = 1;
 
-	g_settings.AdditionalYellowTimeForSignals = g_GetPrivateProfileInt("simulation", "additional_amber_time_per_link_per_cycle", 4, g_DTASettingFileName);
+	g_settings.AdditionalYellowTimeForSignals = 4; // g_GetPrivateProfileInt("simulation", "additional_amber_time_per_link_per_cycle", 4, g_DTASettingFileName);
 	//	g_settings.IteraitonNoStartSignalOptimization = g_GetPrivateProfileInt("signal_optimization", "starting_iteration_no", 1, g_DTASettingFileName);
 	//	g_settings.IteraitonStepSizeSignalOptimization = g_GetPrivateProfileInt("signal_optimization", "number_of_iterations_per_optimization", 5, g_DTASettingFileName);
 	//	g_settings.DefaultCycleTimeSignalOptimization = g_GetPrivateProfileInt("signal_optimization", "default_cycle_time_in_sec", 60, g_DTASettingFileName);
 
-	g_UseDefaultLaneCapacityFlag = g_GetPrivateProfileInt("simulation", "use_default_lane_capacity", 0, g_DTASettingFileName);
+	g_UseDefaultLaneCapacityFlag = 0; // g_GetPrivateProfileInt("simulation", "use_default_lane_capacity", 0, g_DTASettingFileName);
 	//	g_UseFreevalRampMergeModelFlag = g_GetPrivateProfileInt("simulation", "use_freeval_merge_model", 0, g_DTASettingFileName);	
-	g_OutputLinkCapacityFlag = g_GetPrivateProfileInt("simulation", "output_link_capacity_file", 0, g_DTASettingFileName);
-	g_OutputLinkCapacityStarting_Time = g_GetPrivateProfileInt("simulation", "output_link_capacity_start_time_in_min", 0, g_DTASettingFileName);
-	g_OutputLinkCapacityEnding_Time = g_GetPrivateProfileInt("simulation", "output_link_capacity_end_time_in_min", 300, g_DTASettingFileName);
+	g_OutputLinkCapacityFlag = 0;  //g_GetPrivateProfileInt("simulation", "output_link_capacity_file", 0, g_DTASettingFileName);
+	g_OutputLinkCapacityStarting_Time = 0; // g_GetPrivateProfileInt("simulation", "output_link_capacity_start_time_in_min", 0, g_DTASettingFileName);
+	g_OutputLinkCapacityEnding_Time = 0; // g_GetPrivateProfileInt("simulation", "output_link_capacity_end_time_in_min", 300, g_DTASettingFileName);
 	g_settings.use_point_queue_model_for_on_ramps = g_GetPrivateProfileInt("simulation", "use_point_queue_for_on_ramps", 1, g_DTASettingFileName);
 	g_settings.use_point_queue_model_for_off_ramps = g_GetPrivateProfileInt("simulation", "use_point_queue_for_off_ramps", 1, g_DTASettingFileName);
 
-	g_settings.use_mile_or_km_as_length_unit = g_GetPrivateProfileInt("simulation", "use_mile_or_km_as_length_unit", 1, g_DTASettingFileName);
+	g_settings.use_mile_or_km_as_length_unit = 1; // g_GetPrivateProfileInt("simulation", "use_mile_or_km_as_length_unit", 1, g_DTASettingFileName);
 
 	g_EmissionDataOutputFlag = g_GetPrivateProfileInt("emission", "output_emission_data", 1, g_DTASettingFileName);
 
 	g_OutputEmissionOperatingModeData = g_GetPrivateProfileInt("emission", "output_opreating_mode_data", 0, g_DTASettingFileName);
-	g_use_routing_policy_from_external_input = g_GetPrivateProfileInt("assignment", "use_routing_policy_from_external_input", 0, g_DTASettingFileName);
+	g_use_routing_policy_from_external_input = 0; // g_GetPrivateProfileInt("assignment", "use_routing_policy_from_external_input", 0, g_DTASettingFileName);
 
 	if (g_use_routing_policy_from_external_input == 1)
 		g_output_routing_policy_file = 1;
@@ -4206,24 +4218,24 @@ void g_ReadDTALiteSettings()
 	g_ParallelComputingMode = 1;
 
 
-	g_RandomizedCapacityMode = g_GetPrivateProfileInt("simulation", "ramdomized_capacity", 0, g_DTASettingFileName);
-	g_CapacityLoadingFactor = g_GetPrivateProfileInt("simulation", "capcaity_loading_factor", 1, g_DTASettingFileName);
+	g_RandomizedCapacityMode = 0; // g_GetPrivateProfileInt("simulation", "ramdomized_capacity", 0, g_DTASettingFileName);
+	g_DemandCapacityScalingFactor = g_GetPrivateProfileFloat("simulation", "demand_capcaity_scaling_factor", 1.0, g_DTASettingFileName);
 
-	g_StochasticCapacityMode = g_GetPrivateProfileInt("simulation", "stochatic_capacity_mode", 1, g_DTASettingFileName);
+	g_StochasticCapacityMode = 0; // g_GetPrivateProfileInt("simulation", "stochatic_capacity_mode", 1, g_DTASettingFileName);
 
 	g_MergeNodeModelFlag = 0;
 	//	g_MergeNodeModelFlag = g_GetPrivateProfileInt("simulation", "merge_node_model", 0, g_DTASettingFileName);	
-	g_FIFOConditionAcrossDifferentMovementFlag = g_GetPrivateProfileInt("simulation", "first_in_first_out_condition_across_different_movements", 0, g_DTASettingFileName);
-	g_MinimumInFlowRatio = g_GetPrivateProfileFloat("simulation", "minimum_link_in_flow_ratio", 0.00f, g_DTASettingFileName);
-	g_RelaxInFlowConstraintAfterDemandLoadingTime = g_GetPrivateProfileFloat("simulation", "use_point_queue_model_x_min_after_demand_loading_period", 60.0f, g_DTASettingFileName);
-	g_MaxDensityRatioForVehicleLoading = g_GetPrivateProfileFloat("simulation", "max_density_ratio_for_loading_vehicles", 0.8f, g_DTASettingFileName);
+	g_FIFOConditionAcrossDifferentMovementFlag = 0; // g_GetPrivateProfileInt("simulation", "first_in_first_out_condition_across_different_movements", 0, g_DTASettingFileName);
+	g_MinimumInFlowRatio = 0; // g_GetPrivateProfileFloat("simulation", "minimum_link_in_flow_ratio", 0.00f, g_DTASettingFileName);
+	g_RelaxInFlowConstraintAfterDemandLoadingTime = 60; // g_GetPrivateProfileFloat("simulation", "use_point_queue_model_x_min_after_demand_loading_period", 60.0f, g_DTASettingFileName);
+	g_MaxDensityRatioForVehicleLoading = 0.8; // g_GetPrivateProfileFloat("simulation", "max_density_ratio_for_loading_vehicles", 0.8f, g_DTASettingFileName);
 	g_DefaultSaturationFlowRate_in_vehphpl = g_GetPrivateProfileFloat("simulation", "default_saturation_flow_rate_in_vehphpl", 1800, g_DTASettingFileName);
 
-	g_AgentBasedAssignmentFlag = g_GetPrivateProfileInt("assignment", "agent_based_assignment", 0, g_DTASettingFileName);
+	g_AgentBasedAssignmentFlag =  g_GetPrivateProfileInt("assignment", "agent_based_assignment", 0, g_DTASettingFileName);
 	g_AggregationTimetInterval = g_GetPrivateProfileInt("assignment", "aggregation_time_interval_in_min", 15, g_DTASettingFileName);
 
 	g_ConvergencyRelativeGapThreshold_in_perc = g_GetPrivateProfileFloat("assignment", "convergency_relative_gap_threshold_percentage", 5, g_DTASettingFileName);
-	g_UpdatedDemandPrintOutThreshold = g_GetPrivateProfileFloat("estimation", "updated_demand_print_out_threshold", 5, g_DTASettingFileName);
+	g_UpdatedDemandPrintOutThreshold = 5; // g_GetPrivateProfileFloat("estimation", "updated_demand_print_out_threshold", 5, g_DTASettingFileName);
 
 	//g_StartIterationsForOutputPath = g_GetPrivateProfileInt("output", "start_iteration_output_path", g_NumberOfIterations, g_DTASettingFileName);	
 	//g_EndIterationsForOutputPath = g_GetPrivateProfileInt("output", "end_iteration_output_path", g_NumberOfIterations, g_DTASettingFileName);	
@@ -4236,8 +4248,8 @@ void g_ReadDTALiteSettings()
 
 	g_StartIterationsForOutputPath = g_EndIterationsForOutputPath = g_NumberOfIterations - 1;
 
-	g_DepartureTimeChoiceEarlyDelayPenalty = g_GetPrivateProfileFloat("assignment", "departure_time_choice_early_delay_penalty", 0.969387755f, g_DTASettingFileName); // default is non learning
-	g_DepartureTimeChoiceLateDelayPenalty = g_GetPrivateProfileFloat("assignment", "departure_time_choice_late_delay_penalty", 1.306122449f, g_DTASettingFileName); // default is non learning
+	g_DepartureTimeChoiceEarlyDelayPenalty = 0; // g_GetPrivateProfileFloat("assignment", "departure_time_choice_early_delay_penalty", 0.969387755f, g_DTASettingFileName); // default is non learning
+	g_DepartureTimeChoiceLateDelayPenalty = 0; // g_GetPrivateProfileFloat("assignment", "departure_time_choice_late_delay_penalty", 1.306122449f, g_DTASettingFileName); // default is non learning
 
 	g_TravelTimeDifferenceForSwitching = g_GetPrivateProfileFloat("assignment", "travel_time_difference_for_switching_in_min", 1, g_DTASettingFileName);
 	g_RelativeTravelTimePercentageDifferenceForSwitching = g_GetPrivateProfileFloat("assignment",
@@ -4251,23 +4263,23 @@ void g_ReadDTALiteSettings()
 
 	g_DetermineDemandLoadingPeriod();
 
-	g_start_iteration_for_MOEoutput = g_GetPrivateProfileInt("output", "start_iteration_for_MOE", -1, g_DTASettingFileName);
+	g_start_iteration_for_MOEoutput = -1; // g_GetPrivateProfileInt("output", "start_iteration_for_MOE", -1, g_DTASettingFileName);
 
 
 
 
-	g_SystemOptimalStartingTimeinMin = g_GetPrivateProfileInt("system_optimal_assignment", "re_routing_start_time_in_min", 0, g_DTASettingFileName);
+	g_SystemOptimalStartingTimeinMin = 0; // g_GetPrivateProfileInt("system_optimal_assignment", "re_routing_start_time_in_min", 0, g_DTASettingFileName);
 
-	g_VMSPerceptionErrorRatio = g_GetPrivateProfileFloat("traveler_information", "coefficient_of_variation_of_VMS_perception_error", 0.05f, g_DTASettingFileName);
-	g_information_updating_interval_in_min = g_GetPrivateProfileInt("traveler_information", "information_updating_interval_in_min", 5, g_DTASettingFileName);
+	g_VMSPerceptionErrorRatio = 0.05;// g_GetPrivateProfileFloat("traveler_information", "coefficient_of_variation_of_VMS_perception_error", 0.05f, g_DTASettingFileName);
+	g_information_updating_interval_in_min = 5; // g_GetPrivateProfileInt("traveler_information", "information_updating_interval_in_min", 5, g_DTASettingFileName);
 
-	g_output_OD_path_MOE_file = g_GetPrivateProfileInt("output", "OD_path_MOE_file", 0, g_DTASettingFileName);
-	g_output_OD_TD_path_MOE_file = g_GetPrivateProfileInt("output", "OD_path_MOE_file", 0, g_DTASettingFileName);
+	g_output_OD_path_MOE_file = 0; // = g_GetPrivateProfileInt("output", "OD_path_MOE_file", 0, g_DTASettingFileName);
+	g_output_OD_TD_path_MOE_file = 0;  // g_GetPrivateProfileInt("output", "OD_path_MOE_file", 0, g_DTASettingFileName);
 
-	g_output_OD_path_MOE_cutoff_volume = g_GetPrivateProfileInt("output", "OD_path_MOE_cutoff_volume", 1, g_DTASettingFileName);
+	g_output_OD_path_MOE_cutoff_volume = 1;// g_GetPrivateProfileInt("output", "OD_path_MOE_cutoff_volume", 1, g_DTASettingFileName);
 
-	g_NetworkDesignOptimalLinkSize = g_GetPrivateProfileInt("network_design", "number_of_links_to_be_built", 1, g_DTASettingFileName);
-	g_NetworkDesignTravelTimeBudget = g_GetPrivateProfileInt("network_design", "travel_time_budget_in_min", 12, g_DTASettingFileName);
+	g_NetworkDesignOptimalLinkSize = 0;// g_GetPrivateProfileInt("network_design", "number_of_links_to_be_built", 1, g_DTASettingFileName);
+	g_NetworkDesignTravelTimeBudget = 0; // g_GetPrivateProfileInt("network_design", "travel_time_budget_in_min", 12, g_DTASettingFileName);
 
 	if (g_UEAssignmentMethod == analysis_LR_agent_based_system_optimization)  // 12
 	{
@@ -4304,7 +4316,7 @@ void g_ReadDTALiteSettings()
 void g_FreeMemory(bool exit_flag = true)
 {
 	cout << "Free memory... " << endl;
-
+	return;
 	// Free pointers
 	// ask the operating system to free the memory  after the program complete
 	exit(0);
@@ -4464,6 +4476,8 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 	g_AppStartTime = CTime::GetCurrentTime();
 	g_AppLastIterationStartTime = g_AppStartTime;
 
+	//Read DTALite Settings first
+	g_ReadDTALiteSettings();
 
 	g_DTALiteMultiScenarioMain();
 
@@ -4852,7 +4866,7 @@ void g_DetermineDemandLoadingPeriod()
 	g_DemandLoadingEndTimeInMin = 0;
 
 	CCSVParser parser0;
-	if (parser0.OpenCSVFile("input_demand_meta_data.csv"))
+	if (parser0.OpenCSVFile("input_demand_file_list.csv"))
 	{
 		int i = 0;
 
@@ -4891,24 +4905,24 @@ void g_DetermineDemandLoadingPeriod()
 
 			if (start_time_in_min == -1)  // skip negative sequence no 
 			{
-				cout << "Please provide start_time_in_min in file input_demand_meta_data.csv" << endl;
+				cout << "Please provide start_time_in_min in file input_demand_file_list.csv" << endl;
 				g_ProgramStop();
 			}
 			if (end_time_in_min == -1)  // skip negative sequence no 
 			{
-				cout << "Please provide end_time_in_min in file input_demand_meta_data.csv" << endl;
+				cout << "Please provide end_time_in_min in file input_demand_file_list.csv" << endl;
 				g_ProgramStop();
 			}
 
 			if (end_time_in_min > 2880)
 			{
-				cout << "end_time_in_min should be less than 2880 min in input_demand_meta_data.csv" << endl;
+				cout << "end_time_in_min should be less than 2880 min in input_demand_file_list.csv" << endl;
 				g_ProgramStop();
 			}
 
 			if (start_time_in_min < 0)
 			{
-				cout << "start_time_in_min should be greater than 0 min in input_demand_meta_data.csv" << endl;
+				cout << "start_time_in_min should be greater than 0 min in input_demand_file_list.csv" << endl;
 				g_ProgramStop();
 			}
 
@@ -4940,7 +4954,7 @@ void g_DetermineDemandLoadingPeriod()
 		g_PlanningHorizon = g_DemandLoadingEndTimeInMin + 300;
 	}
 }
-void g_ReadDemandFileBasedOnMetaDatabase()
+void g_ReadDemandFileBasedOnDemandFileList()
 {
 
 	float total_demand_in_demand_file = 0;
@@ -4962,7 +4976,7 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 
 
 	//step 3:
-	if (parser.OpenCSVFile("input_demand_meta_data.csv"))
+	if (parser.OpenCSVFile("input_demand_file_list.csv"))
 	{
 		int i = 0;
 
@@ -5000,13 +5014,13 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 
 			if (end_time_in_min > 2880)
 			{
-				cout << "end_time_in_min should be less than 2880 min in input_demand_meta_data.csv" << endl;
+				cout << "end_time_in_min should be less than 2880 min in input_demand_file_list.csv" << endl;
 				g_ProgramStop();
 			}
 
 			if (start_time_in_min < 0)
 			{
-				cout << "start_time_in_min should be greater than 0 min in input_demand_meta_data.csv" << endl;
+				cout << "start_time_in_min should be greater than 0 min in input_demand_file_list.csv" << endl;
 				g_ProgramStop();
 			}
 			if (file_name.length() == 0)  // no file name input
@@ -5017,7 +5031,7 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 			parser.GetValueByFieldNameWithPrintOut("format_type", format_type);
 			if (format_type.find("null") != string::npos)  // skip negative sequence no 
 			{
-				cout << "Please provide format_type in file input_demand_meta_data.csv" << endl;
+				cout << "Please provide format_type in file input_demand_file_list.csv" << endl;
 				g_ProgramStop();
 			}
 
@@ -5103,7 +5117,7 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 
 				if (demand_type <= 0)
 				{
-					cout << "Missing input: no value has been specified for field " << demand_type_field_name << " in file " << file_name << " in demand meta file input_demand_meta_data.csv. " << endl;
+					cout << "Missing input: no value has been specified for field " << demand_type_field_name << " in file " << file_name << " in demand meta file input_demand_file_list.csv. " << endl;
 					g_ProgramStop();
 
 				}
@@ -5122,7 +5136,7 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 
 				if (number_of_demand_types == 0)
 				{
-					cout << "number_of_demand_types = 0 in file input_demand_meta_data.csv. Please check." << endl;
+					cout << "number_of_demand_types = 0 in file input_demand_file_list.csv. Please check." << endl;
 					g_ProgramStop();
 				}
 
@@ -5165,7 +5179,7 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 
 					if (number_of_values != 2 + number_of_demand_types + demand_type_in_3rd_column + subtotal_in_last_column) // 2: origin, destination (demand type),  values for each demand type, subtotal
 					{
-						cout << "There are " << number_of_values << " values() per line in file " << file_name << "," << endl << "but " << number_of_demand_types << " demand type(s) are defined in file input_demand_meta_data.csv. " << endl << "Please check file input_demand_meta_data.csv." << endl;
+						cout << "There are " << number_of_values << " values() per line in file " << file_name << "," << endl << "but " << number_of_demand_types << " demand type(s) are defined in file input_demand_file_list.csv. " << endl << "Please check file input_demand_file_list.csv." << endl;
 						g_ProgramStop();
 
 					}
@@ -5289,7 +5303,7 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 							}
 							else if (type != 0)  // if demand type == 0 then we will skip this value. By doing so, we can reading only one demand type per record with demand-type specific departure time loading profile. e.g. truck vs. HOV
 							{
-								cout << "demand type " << type << " in file input_demand_meta_data has not been defined. Please check." << endl;
+								cout << "demand type " << type << " in file input_demand_file_list has not been defined. Please check." << endl;
 								g_ProgramStop();
 
 							}
@@ -5330,7 +5344,7 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 
 				if (number_of_demand_types == 0)
 				{
-					cout << "number_of_demand_types = 0 in file input_demand_meta_data.csv. Please check." << endl;
+					cout << "number_of_demand_types = 0 in file input_demand_file_list.csv. Please check." << endl;
 					g_ProgramStop();
 				}
 
@@ -5463,7 +5477,7 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 								}
 								else if (type != 0)  // if demand type == 0 then we will skip this value. By doing so, we can reading only one demand type per record with demand-type specific departure time loading profile. e.g. truck vs. HOV
 								{
-									cout << "demand type " << type << " in file input_demand_meta_data has not been defined. Please check." << endl;
+									cout << "demand type " << type << " in file input_demand_file_list has not been defined. Please check." << endl;
 									g_ProgramStop();
 
 								}
@@ -5503,7 +5517,7 @@ void g_ReadDemandFileBasedOnMetaDatabase()
 				if (g_detect_if_a_file_is_column_format(file_name.c_str()) == true)
 				{
 					CString str;
-					str.Format("Demand input file %s looks to be based on column format,\nbut format_type=matrix in input_demand_meta_data.csv.\nPlease check the demand file format, and change format_type=column in input_demand_meta_data.cv.\nClick any key to exit.", file_name.c_str());
+					str.Format("Demand input file %s looks to be based on column format,\nbut format_type=matrix in input_demand_file_list.csv.\nPlease check the demand file format, and change format_type=column in input_demand_file_list.cv.\nClick any key to exit.", file_name.c_str());
 					cout << str;
 
 					getchar();
@@ -5943,6 +5957,7 @@ void g_ReadAssignmentPeriodSettings()
 	for (int t = 0; t < MAX_TIME_INTERVAL_SIZE; t++)
 	{
 		g_AssignmentIntervalIndex[t] = 0;   // if we have file input, then we need to set the interval index to 0 for all intervals
+		g_AssignmentIntervalOutputFlag[t] = 0;
 	}
 
 	for (int index = 0; index < g_NumberOfSPCalculationPeriods; index++)
@@ -5952,9 +5967,6 @@ void g_ReadAssignmentPeriodSettings()
 		g_AssignmentIntervalEndTimeInMin[index] = g_DemandLoadingStartTimeInMin + (index + 1) * g_AggregationTimetInterval;
 	}
 
-	CCSVParser parser;
-	if (parser.OpenCSVFile("input_assignment_interval_settings.csv",false), false)
-	{
 
 		for (int t = 0; t < MAX_TIME_INTERVAL_SIZE; t++)
 		{
@@ -5962,45 +5974,46 @@ void g_ReadAssignmentPeriodSettings()
 		}
 
 		g_AssignmentIntervalIndex[int(g_DemandLoadingStartTimeInMin / 15)] = 0;
+		g_AssignmentIntervalOutputFlag[int(g_DemandLoadingStartTimeInMin / 15)] = 1;
 		int index_counter = 0;
-		int i = 0;
 
 		g_AssignmentIntervalStartTimeInMin[0] = g_DemandLoadingStartTimeInMin;
 
-		while (parser.ReadRecord())
-		{
-			int period_start_flag = 0;
-			parser.GetValueByFieldName("period_start_flag", period_start_flag);
 
 			int index = 0;
-			std::string start_time;
-
-			parser.GetValueByFieldName("index", index);
-
-			parser.GetValueByFieldName("start_time", start_time);
 
 
-			if (i * 15 >= g_DemandLoadingStartTimeInMin && i * 15 < g_PlanningHorizon)
+			for (int i = 0; i < MAX_TIME_INTERVAL_SIZE; i++)
 			{
 
-				if (period_start_flag == 1 && i * 15 != g_DemandLoadingStartTimeInMin)   // if see 1, increaese the index counter by 1, if we are at the boundary of interval then there is no need to swtich to next time interval
-				{
-					index_counter++;
+				if (i * 15 >= g_DemandLoadingStartTimeInMin && i * 15 < g_PlanningHorizon)
+				{ 
+					CString time_string;
 
-					g_AssignmentIntervalEndTimeInMin[index_counter - 1] = i * 15;
-					g_AssignmentIntervalStartTimeInMin[index_counter] = i * 15;
+					int hour = i / 4;
+					int min = (i - hour * 4) * 15;
+
+					if (hour<10)
+						time_string.Format("'0%d:%02d", hour, min);
+					else
+						time_string.Format("'%2d:%02d", hour, min);
+
+					int period_start_flag  = g_GetPrivateProfileInt("skim_output", time_string, 1, g_DTASettingFileName);
+					g_AssignmentIntervalOutputFlag[i] = period_start_flag;
+					if (period_start_flag == 1 && i * 15 != g_DemandLoadingStartTimeInMin)   // if see 1, increaese the index counter by 1, if we are at the boundary of interval then there is no need to swtich to next time interval
+					{
+						index_counter++;
+
+						g_AssignmentIntervalEndTimeInMin[index_counter - 1] = i * 15;
+						g_AssignmentIntervalStartTimeInMin[index_counter] = i * 15;
+					}
+
+					g_AssignmentIntervalIndex[i] = index_counter;
+
 				}
 
-				g_AssignmentIntervalIndex[i] = index_counter;
-
-
-
+				i++;
 			}
-
-
-			i++;
-		}
-
 
 		g_AssignmentIntervalEndTimeInMin[index_counter] = g_DemandLoadingEndTimeInMin;  // close the last time interval with the end time 
 
@@ -6009,16 +6022,7 @@ void g_ReadAssignmentPeriodSettings()
 		g_SummaryStatFile.WriteParameterValue("User Defined Assignment Intervals=", g_NumberOfSPCalculationPeriods);
 
 
-
-
-	}
-	else
-	{
-		//g_SummaryStatFile.WriteParameterValue("Default Assignment Intervals=", g_NumberOfSPCalculationPeriods);
-
-	}
-
-	//for (int ti = 0; ti < g_NumberOfSPCalculationPeriods; ti++)
+		//for (int ti = 0; ti < g_NumberOfSPCalculationPeriods; ti++)
 	//{
 	//	CString analysis_interval_str;
 	//	analysis_interval_str.Format("No.%d", ti + 1);

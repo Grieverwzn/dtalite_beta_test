@@ -50,7 +50,7 @@ using namespace std;
 
 
 enum e_traffic_information_class { info_hist_based_on_routing_policy = 0, learning_from_hist_travel_time, info_pre_trip, info_en_route_and_pre_trip, info_personalized_info, info_eco_so, _max_info_type};
-enum e_traffic_flow_model { tfm_BPR =0, tfm_point_queue, tfm_spatial_queue, tfm_newells_model, trm_car_following};
+enum e_traffic_flow_model { tfm_BPR =0, tfm_point_queue, tfm_newells_model, tfm_spatial_queue, trm_car_following};
 enum e_demand_loading_mode { demand_matrix_file_mode = 0, vehicle_binary_file_mode, real_time_demand_matrix_file_mode, accessibility_demand_mode};
 enum e_signal_representation_model {signal_model_continuous_flow = 0,  signal_model_link_effective_green_time, signal_model_spatial_queue };
 
@@ -152,6 +152,7 @@ bool g_GetVehicleAttributes(int demand_type, int &VehicleType, int &InformationC
 string GetLinkStringID(int FromNodeName, int ToNodeName);
 
 extern int g_AssignmentIntervalIndex[MAX_TIME_INTERVAL_SIZE];   // internal index for memory block
+extern int g_AssignmentIntervalOutputFlag[MAX_TIME_INTERVAL_SIZE];   
 extern int g_AssignmentIntervalStartTimeInMin[MAX_TIME_INTERVAL_SIZE];
 extern int g_AssignmentIntervalEndTimeInMin[MAX_TIME_INTERVAL_SIZE];
 extern int g_NumberOfSPCalculationPeriods;
@@ -1164,8 +1165,8 @@ class CapacityReduction
 public:
 	int StartDayNo;
 	int EndDayNo;
-	int StartTime;  // use integer
-	int EndTime;    // use integer
+	float StartTime;  
+	float EndTime;    
 	float LaneClosureRatio;
 	float SpeedLimit;
 };
@@ -1312,7 +1313,7 @@ class DTALink
 public:
 	DTALink(int TimeSize)  // TimeSize's unit: per min
 	{
-
+		m_External_link_outflow_capacity = -1;  // no value
 		m_NetworkDesignSequenceNo = -1;
 		m_NetworkDesignFlag = 0;
 		m_NetworkDesignBuildCapacity = 0;
@@ -1504,7 +1505,7 @@ public:
 		return (float)NumLanes;
 
 	}
-	float GetNumberOfLanes(int DayNo=0, int Time=0, bool OutputFlowFlag = false, bool bConsiderIncident = true)  // with lane closure
+	float GetNumberOfLanes(int DayNo=0, double Time=0, bool OutputFlowFlag = false, bool bConsiderIncident = true)  // with lane closure
 	{
 
 		int NumLanes = m_OutflowNumLanes;
@@ -1535,7 +1536,7 @@ public:
 
 	}
 
-	float GetNumberOfLanes_ImpactedByWorkZoneConditions(int DayNo=0, int Time=-1, bool OutputFlowFlag = false)  // with lane closure
+	float GetNumberOfLanes_ImpactedByWorkZoneConditions(int DayNo=0, double Time=-1, bool OutputFlowFlag = false)  // with lane closure
 	{
 
 		int NumLanes = m_OutflowNumLanes;
@@ -1662,6 +1663,8 @@ public:
 	float	m_Length;  // in miles
 	float   m_VehicleSpaceCapacity; // in vehicles
 	int	m_OutflowNumLanes;
+
+	float m_External_link_outflow_capacity;
 
 	int m_Orginal_OutflowNumLanes;
 	int m_Orginal_InflowNumLane;
@@ -4479,7 +4482,7 @@ void OutputLinkMOEData(std::string fname, int Iteration, bool bStartWithEmpty);
 
 void OutputRealTimeLinkMOEData(std::string fname,int current_time_in_min, int output_MOE_aggregation_time_interval_in_min, bool bTravelTimeOnly = true);
 
-void g_UpdateRealTimeLinkAttributes(std::string fname,int current_time_in_min, int update_MOE_aggregation_time_interval_in_min);
+void g_UpdateRealTimeLinkAttributes();
 
 bool g_ReadRealTimeLinkAttributeData(int current_time_in_second);
 bool g_ReadRealTimeTripData(int current_time_in_minute, bool b_InitialLoadingFlag);
@@ -4572,9 +4575,9 @@ extern CString g_GetTimeStampString(int time_stamp_in_mine);
 extern void g_FreeMemoryForVehicleVector();
 
 void g_AgentBasedShortestPathGeneration();
-void g_AgentBasedAccessibilityMatrixGeneration(bool bTimeDependentFlag, int DemandType, double CurrentTime);
-void g_AccessibilityMatrixGenerationForAllDemandTypes(string file_name, bool bTimeDependentFlag, double CurrentTime);
-void g_AgentBasedAccessibilityMatrixGenerationExtendedSingleFile(string file_name, double CurrentTime);
+void g_AgentBasedSkimMatrixGeneration(bool bTimeDependentFlag, int DemandType, double CurrentTime);
+void g_SkimMatrixGenerationForAllDemandTypes(string file_name, bool bTimeDependentFlag, double CurrentTime);
+void g_AgentBasedSkimMatrixGenerationExtendedSingleFile(string file_name, double CurrentTime);
 
 extern bool g_ReadLinkMeasurementFile();
 //extern void g_ReadObservedLinkMOEData(DTANetworkForSP* pPhysicalNetwork);

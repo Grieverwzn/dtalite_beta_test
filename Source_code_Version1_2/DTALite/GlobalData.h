@@ -46,6 +46,7 @@ extern std::vector<DTAVehicle*>		g_VehicleVector;
 extern std::map<int, DTAVehicle*> g_VehicleMap;
 
 extern std::map<int, DTAVehListPerTimeInterval> g_VehicleTDListMap;
+extern std::map<int, DTAVehListPerTimeInterval> g_OriginalVehicleTDListMap;
 
 extern std::vector<DemandType> g_DemandTypeVector;
 extern std::map<int, DTALinkType> g_LinkTypeMap;
@@ -412,7 +413,7 @@ extern float g_RelativeTravelTimePercentageDifferenceForSwitching; // percentage
 
 
 extern int g_RandomizedCapacityMode ;
-extern double g_CapacityLoadingFactor ;
+extern double g_DemandCapacityScalingFactor ;
 extern int g_StochasticCapacityMode;
 extern int g_UseFreevalRampMergeModelFlag;
 extern int g_OutputLinkCapacityFlag;
@@ -474,7 +475,7 @@ extern bool g_floating_point_value_less_than_or_eq_comparison(double value1, dou
 extern bool g_floating_point_value_less_than(double value1, double value2);
 extern string GetMovementStringID(int FromNodeName, int ToNodeName, int DestNodeName);
 extern void g_DetermineDemandLoadingPeriod();
-extern void g_ReadDemandFileBasedOnMetaDatabase();
+extern void g_ReadDemandFileBasedOnDemandFileList();
 extern void g_ReadAMSMovementData();
 extern void g_ReadAMSSignalData();
 extern void g_ReadAssignmentPeriodSettings();
@@ -525,7 +526,7 @@ extern void g_ReadAgentTagSettings();
 void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_sequence);
 void g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(int VehicleID);
 
-extern std::string g_CreateFileName(std::string common_file_name, bool Day2DayOutputFlag, int iteration);
+extern std::string g_CreateFileName(std::string common_file_name, bool Day2DayOutputFlag, int iteration, bool with_CSV);
 
 
 

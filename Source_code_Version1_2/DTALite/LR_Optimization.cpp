@@ -475,8 +475,8 @@ void g_OptimizePathsForAgents(int iteration, bool bRebuildNetwork, bool bOutputL
 
 		bool Day2DayOutputFlag = false; 
 		int iteration = 0;
-		OutputVehicleTrajectoryData(g_CreateFileName("output_agent", Day2DayOutputFlag, iteration+1),
-			g_CreateFileName("output_trip", Day2DayOutputFlag, iteration), iteration, true, false);
+		OutputVehicleTrajectoryData(g_CreateFileName("output_agent", Day2DayOutputFlag, iteration+1, true),
+			g_CreateFileName("output_trip", Day2DayOutputFlag, iteration,true), iteration, true, true);
 
 	}
 }

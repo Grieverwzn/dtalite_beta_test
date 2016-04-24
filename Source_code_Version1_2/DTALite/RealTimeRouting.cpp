@@ -1206,8 +1206,8 @@ void g_ReadRealTimeSimulationSettingsFile()
 	int start_time_in_second = g_DemandLoadingStartTimeInMin * 60;
 	int end_time_in_second = g_DemandLoadingEndTimeInMin * 60;
 
-	int RT_Input_LinkAttribute = g_GetPrivateProfileInt("ABM_integration", "RT_Input_LinkAttribute_Frequency_in_Seconds", 0, g_DTASettingFileName);
 	int RT_Input_Update_Agent = g_GetPrivateProfileInt("ABM_integration", "RT_Input_Agent_Frequency_in_Seconds", 0, g_DTASettingFileName);
+	int RT_Input_LinkAttribute = RT_Input_Update_Agent;
 	int RT_Input_Routing_Policy = g_GetPrivateProfileInt("ABM_integration", "RT_Input_Routing_Policy_Frequency_in_Seconds", 0, g_DTASettingFileName);
 
 
@@ -1437,6 +1437,7 @@ void g_ExchangeRealTimeSimulationData(int day_no,int timestamp_in_second)
 
 			sprintf(fname_trip, "%s", g_RealTimeSimulationSettingsMap[timestamp_in_second].output_tag_agent_file.c_str());
 			g_ReadAgentTagSettings();
+
 			int output_mode = 1;
 			bool FileOutput = OutputTripFile(fname_trip, output_mode);
 
@@ -1459,48 +1460,12 @@ void g_ExchangeRealTimeSimulationData(int day_no,int timestamp_in_second)
 	{
 		int timestamp_in_min = timestamp_in_second / 60;
 
-		g_AccessibilityMatrixGenerationForAllDemandTypes(g_RealTimeSimulationSettingsMap[timestamp_in_second].output_od_moe_file,
+		g_SkimMatrixGenerationForAllDemandTypes(g_RealTimeSimulationSettingsMap[timestamp_in_second].output_od_moe_file,
 			false, timestamp_in_min);
 	}
 
-	if (g_RealTimeSimulationSettingsMap[timestamp_in_second].update_TD_link_attribute_file.size() >= 1)
-	{
-		// wait for update_TD_link_attribute_file;
-		cout << "time clock =" << timestamp_in_second << " sec, wait for file " << g_RealTimeSimulationSettingsMap[timestamp_in_second].update_TD_link_attribute_file << endl;
-
-		while (1)
-		{
-
-			CCSVParser parser_link_TD_attribute;
-			if (parser_link_TD_attribute.OpenCSVFile(g_RealTimeSimulationSettingsMap[timestamp_in_second].update_TD_link_attribute_file, false))
-			{
-				// updating file exists.
-				parser_link_TD_attribute.CloseCSVFile();
-				_proxy_ABM_log(0, "reading input link attribute file %s\n", g_RealTimeSimulationSettingsMap[timestamp_in_second].update_TD_link_attribute_file.c_str());
-
-				g_UpdateRealTimeLinkAttributes(
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].update_TD_link_attribute_file,
-					timestamp_in_second,
-					g_RealTimeSimulationSettingsMap[timestamp_in_second].update_attribute_aggregation_time_interval_in_min);
-
-				cout << "File " << g_RealTimeSimulationSettingsMap[timestamp_in_second].update_TD_link_attribute_file << " has been read. Continue" << endl;
-				g_LogFile << "File " << g_RealTimeSimulationSettingsMap[timestamp_in_second].update_TD_link_attribute_file << " has been read. Continue" << endl;
-
-				break;
-			}
-			else
-			{
-
-				cout << "wait for 5 seconds... " << endl;
-
-				Sleep(5000); // wait for 5 second
-
-			}
-
-
-		}
-
-	}  // with input_TD_travel_time_file
+	
+		  // with input_TD_travel_time_file
 
 
 	if (g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file.size() >= 1)
@@ -1514,6 +1479,8 @@ void g_ExchangeRealTimeSimulationData(int day_no,int timestamp_in_second)
 			_proxy_ABM_log(0, "reading input update agent file %s\n", g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file.c_str());
 
 			bool b_trip_file_ready = g_ReadTripCSVFile(g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file.c_str(), false);
+
+			g_UpdateRealTimeLinkAttributes();
 
 			int iteration = 0;
 
@@ -1641,105 +1608,8 @@ void g_RealTimeDynamicToll(int day_no, int timestamp_in_min)
 	}
 }
 
-void g_UpdateRealTimeLinkAttributes(std::string fname,int current_time_in_min, int update_MOE_aggregation_time_interval_in_min)
+void g_UpdateRealTimeLinkAttributes()
 {
-	CCSVParser parser_RTUpdateLinkAttribute;
-	if (parser_RTUpdateLinkAttribute.OpenCSVFile(fname, false))
-	{
-
-		int record_count = 0;
-
-		g_LogFile << "update link attribute using file " << fname << endl;
-
-		while (parser_RTUpdateLinkAttribute.ReadRecord())
-		{
-			int from_node_id = 0;
-			int to_node_id = 0;
-			int start_time_in_second = 0;
-			int end_time_in_second = 0;
-
-			parser_RTUpdateLinkAttribute.GetValueByFieldName("from_node_id", from_node_id);
-			parser_RTUpdateLinkAttribute.GetValueByFieldName("to_node_id", to_node_id);
-
-			if (from_node_id == 0 || to_node_id == 0)
-				break;
-
-			_proxy_ABM_log(0, "-- update attribute for link %d ->%d\n", from_node_id, to_node_id);
-
-			//parser_RTUpdateLinkAttribute.GetValueByFieldName("start_time_in_second", start_time_in_second);
-			//parser_RTUpdateLinkAttribute.GetValueByFieldName("end_time_in_second", end_time_in_second);
-
-			float travel_time = -1;
-
-			parser_RTUpdateLinkAttribute.GetValueByFieldName("travel_time_in_min", travel_time);
-
-			if (g_LinkMap.find(GetLinkStringID(from_node_id, to_node_id)) == g_LinkMap.end())
-			{
-				cout << "Link " << from_node_id << "-> " << to_node_id << " of file" << fname << " has not been defined in input_link.csv. Please check.";
-				g_ProgramStop();
-			}
-
-			DTALink* pLink = g_LinkMap[GetLinkStringID(from_node_id, to_node_id)];
-
-			if (pLink != NULL)
-			{
-				//link_inflow_capacity, link_outflow_capacity, link_storage_capacity, speed_limit, pricing_demand_type%d
-
-				float link_inflow_capacity, link_outflow_capacity, link_storage_capacity, speed_limit;
-				//if (parser_RTUpdateLinkAttribute.GetValueByFieldName("link_inflow_capacity", link_inflow_capacity) == true)
-				//{
-				//	// update numnber of lanes, so the link in flow capacity is updated. 
-				//	pLink->m_OutflowNumLanes = link_inflow_capacity / 1800;
-				//}
-
-				if (parser_RTUpdateLinkAttribute.GetValueByFieldName("link_outflow_capacity", link_outflow_capacity) == true)
-				{
-					// update numnber of lanes, so the link in flow capacity is updated. 
-					pLink->m_OutflowNumLanes = link_outflow_capacity / max(1, pLink->GetHourlyPerLaneCapacity(current_time_in_min*60));
-			
-					_proxy_ABM_log(0, "-- update outflow capacity for link %d ->%d: %f\n", from_node_id, to_node_id, link_outflow_capacity);
-
-				}
-
-				if (parser_RTUpdateLinkAttribute.GetValueByFieldName("link_storage_capacity", link_storage_capacity) == true)
-				{
-					// update numnber of lanes, so the link in flow capacity is updated. 
-					pLink->m_VehicleSpaceCapacity = max(1, link_storage_capacity);
-					_proxy_ABM_log(0, "-- update link_storage_capacity for link %d ->%d: %f\n", from_node_id, to_node_id, link_storage_capacity);
-				}
-
-				if (parser_RTUpdateLinkAttribute.GetValueByFieldName("speed_limit", speed_limit) == true)
-				{
-					// update numnber of lanes, so the link in flow capacity is updated. 
-					pLink->m_SpeedLimit = max(1, speed_limit);
-					pLink->m_FreeFlowTravelTime = pLink->m_Length / max(0.1, pLink->m_SpeedLimit)*60.0f;
-					_proxy_ABM_log(0, "-- update speed_limit for link %d ->%d: %f (FFTT= %f)\n", from_node_id, to_node_id, speed_limit, pLink->m_FreeFlowTravelTime);
-
-				}
-
-				for (int i = 1; i < MAX_DEMAND_TYPE_SIZE; i++)
-				{
-					char field_name[_MAX_PATH];
-					sprintf(field_name, "demand_type%d", i);
-
-					float pricing_rate = 0;
-					if (parser_RTUpdateLinkAttribute.GetValueByFieldName(field_name, pricing_rate) == true)
-					{
-						// update numnber of lanes, so the link in flow capacity is updated. 
-						pLink->RealTimePricingRate[i] = pricing_rate;
-						_proxy_ABM_log(0, "-- update pricing rate for demand_type = %d for link %d ->%d: %f\n", 
-							i, from_node_id, to_node_id, pricing_rate);
-					}
-
-				}
-
-				g_LogFile << "update link attribute using file " << fname << endl;
-
-			}
-			else
-			{
-				_proxy_ABM_log(0, "-- error: link %d ->%d has not been defined ", from_node_id, to_node_id);
-			}
-		}
-	}
+	// read scenario file
+	g_ReadScenarioInputFiles(0);
 }

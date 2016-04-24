@@ -504,7 +504,10 @@ void DTANetworkForSP::UpdateCurrentTravelTime(int DayNo, double CurrentTime)  //
 
 			int link_entering_time_interval = g_FindAssignmentIntervalIndexFromTime(t);
 
-
+			if (pLink->m_FromNodeNumber = 4 && pLink->m_ToNodeNumber == 5)
+			{
+				TRACE("");
+			}
 			m_LinkTDTimeAry[pLink->m_LinkNo][link_entering_time_interval] = AvgTravelTime;
 
 			// copy pricing type dependent link toll values

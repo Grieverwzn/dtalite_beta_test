@@ -858,6 +858,7 @@ void g_FreeMemoryForVehicleVector()
 	g_VehicleVector.clear();
 	g_VehicleMap.clear();
 	g_VehicleTDListMap.clear();
+	g_OriginalVehicleTDListMap.clear();
 	cout << "Complete. " << endl;
 }
 CString g_GetTimeStampString(int time_stamp_in_min)

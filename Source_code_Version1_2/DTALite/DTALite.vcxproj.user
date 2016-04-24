@@ -5,8 +5,9 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerWorkingDirectory>C:\Prerelease_test\DTALite-NEXTA-Software-Package\ReleaseFolder\data_set_1_3-corridor_Network-RealTime</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>C:\Prerelease_test\DTALite-NEXTA-Software-Package\ReleaseFolder\data_set_1_3-corridor_Network</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerAttach>false</LocalDebuggerAttach>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerWorkingDirectory>C:\Software_testing\SiouxFalls</LocalDebuggerWorkingDirectory>
