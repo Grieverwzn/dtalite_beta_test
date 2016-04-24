@@ -98,6 +98,8 @@
 #include "Dlg_GIS_Setting_Config.h"
 #include "Dlg_DataImportWizard.h"
 #include "Dlg_NEXTA_Configuration.h"
+#include "DlgScenario.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -4414,8 +4416,6 @@ bool CTLiteDoc::ReadScenarioSettingCSVFile(LPCTSTR lpszFileName)
 			parser_scenario.GetValueByFieldName("signal_representation_model",m_signal_reresentation_model);
 
 			parser_scenario.GetValueByFieldName("traffic_analysis_method",m_traffic_analysis_method);
-			parser_scenario.GetValueByFieldName("demand_multiplier",m_demand_multiplier);
-
 			
 			parser_scenario.GetValueByFieldName("calibration_data_start_time_in_min", m_calibration_data_start_time_in_min);
 			parser_scenario.GetValueByFieldName("calibration_data_end_time_in_min", m_calibration_data_end_time_in_min);
@@ -4502,7 +4502,6 @@ bool CTLiteDoc::WriteScenarioSettingCSVFile(LPCTSTR lpszFileName)
 			ScenarioFile.SetFieldNameAndValue("traffic_flow_model",m_traffic_flow_model);
 			ScenarioFile.SetFieldNameAndValue("signal_representation_model",m_signal_reresentation_model);
 			ScenarioFile.SetFieldNameAndValue("traffic_analysis_method",m_traffic_analysis_method);
-			ScenarioFile.SetFieldNameAndValue("demand_multiplier",m_demand_multiplier);
 			ScenarioFile.SetFieldNameAndValue("random_seed",random_seed);
 			ScenarioFile.SetFieldNameAndValue("ODME_start_iteration",ODME_start_iteration);
 			ScenarioFile.SetFieldNameAndValue("ODME_max_percentage_deviation_wrt_hist_demand",ODME_max_percentage_deviation_wrt_hist_demand);
@@ -4864,7 +4863,6 @@ bool CTLiteDoc::ReadDemandTypeCSVFile(LPCTSTR lpszFileName)
 			parser.GetValueByFieldName("demand_type_name",demand_type_name);
 			parser.GetValueByFieldName("avg_VOT", averageVOT);
 
-			int pricing_type;
 			float ratio_pretrip, ratio_enroute;
 
 			parser.GetValueByFieldName("percentage_of_pretrip_info",ratio_pretrip);
@@ -4873,8 +4871,7 @@ bool CTLiteDoc::ReadDemandTypeCSVFile(LPCTSTR lpszFileName)
 			DTADemandType element;
 			element.demand_type = demand_type;
 			element.demand_type_name  = demand_type_name.c_str ();
-			element.average_VOT = averageVOT;
-			element.pricing_type = pricing_type;
+			element.average_VOT = max(0,min(averageVOT, 1000));
 			element.info_class_percentage[1] = ratio_pretrip;
 			element.info_class_percentage[2] = ratio_enroute;
 			element.info_class_percentage[0] = 1 - ratio_enroute - ratio_pretrip;
@@ -5279,7 +5276,7 @@ bool  CTLiteDoc::SaveSubareaDemandFile()
 
 		ExportPathflowToCSVFiles();
 
-		fopen_s(&st_meta_data,directory+"input_demand_meta_data.csv","w");
+		fopen_s(&st_meta_data,directory+"input_demand_file_list.csv","w");
 		if(st_meta_data!=NULL)
 		{
 			fprintf(st_meta_data,"scenario_no,file_sequence_no,file_name,format_type,number_of_lines_to_be_skipped,loading_multiplier,start_time_in_min,end_time_in_min,apply_additional_time_dependent_profile,subtotal_in_last_column,number_of_demand_types,demand_type_1,demand_type_2,demand_type_3,demand_type_4,'00:00,'00:15,'00:30,'00:45,'01:00,'01:15,'01:30,'01:45,'02:00,'02:15,'02:30,'02:45,'03:00,'03:15,'03:30,'03:45,'04:00,'04:15,'04:30,'04:45,'05:00,'05:15,'05:30,'05:45,'06:00,'06:15,'06:30,'06:45,'07:00,'07:15,'07:30,'07:45,'08:00,'08:15,'08:30,'08:45,'09:00,'09:15,'09:30,'09:45,'10:00,'10:15,'10:30,'10:45,'11:00,'11:15,'11:30,'11:45,'12:00,'12:15,'12:30,'12:45,'13:00,'13:15,'13:30,'13:45,'14:00,'14:15,'14:30,'14:45,'15:00,'15:15,'15:30,'15:45,'16:00,'16:15,'16:30,'16:45,'17:00,'17:15,'17:30,'17:45,'18:00,'18:15,'18:30,'18:45,'19:00,'19:15,'19:30,'19:45,'20:00,'20:15,'20:30,'20:45,'21:00,'21:15,'21:30,'21:45,'22:00,'22:15,'22:30,'22:45,'23:00,'23:15,'23:30,'23:45\n");
@@ -5287,10 +5284,10 @@ bool  CTLiteDoc::SaveSubareaDemandFile()
 			// m_DemandLoadingStartTimeInMin,m_DemandLoadingEndTimeInMin are read from the original project
 			fclose(st_meta_data);
 
-			AfxMessageBox("File input_demand_meta_data.csv is reset with AMS_OD_table.csv as a new demand input file, as a result of the subarea cut.", MB_ICONINFORMATION);
+			AfxMessageBox("File input_demand_file_list.csv is reset with AMS_OD_table.csv as a new demand input file, as a result of the subarea cut.", MB_ICONINFORMATION);
 		}else
 		{
-			AfxMessageBox("Error: File input_demand_meta_data.csv cannot be opened.\nIt might be currently used and locked by EXCEL.");
+			AfxMessageBox("Error: File input_demand_file_list.csv cannot be opened.\nIt might be currently used and locked by EXCEL.");
 			return false;
 		}
 
@@ -5320,7 +5317,7 @@ bool  CTLiteDoc::SaveNewDemandMatrixFile()
 
 		ExportPathflowToCSVFiles();
 
-		fopen_s(&st_meta_data,directory+"input_demand_meta_data.csv","w");
+		fopen_s(&st_meta_data,directory+"input_demand_file_list.csv","w");
 		if(st_meta_data!=NULL)
 		{
 			fprintf(st_meta_data,"scenario_no,file_sequence_no,file_name,format_type,number_of_lines_to_be_skipped,loading_multiplier,start_time_in_min,end_time_in_min,apply_additional_time_dependent_profile,subtotal_in_last_column,number_of_demand_types,demand_type_1,demand_type_2,demand_type_3,demand_type_4,'00:00,'00:15,'00:30,'00:45,'01:00,'01:15,'01:30,'01:45,'02:00,'02:15,'02:30,'02:45,'03:00,'03:15,'03:30,'03:45,'04:00,'04:15,'04:30,'04:45,'05:00,'05:15,'05:30,'05:45,'06:00,'06:15,'06:30,'06:45,'07:00,'07:15,'07:30,'07:45,'08:00,'08:15,'08:30,'08:45,'09:00,'09:15,'09:30,'09:45,'10:00,'10:15,'10:30,'10:45,'11:00,'11:15,'11:30,'11:45,'12:00,'12:15,'12:30,'12:45,'13:00,'13:15,'13:30,'13:45,'14:00,'14:15,'14:30,'14:45,'15:00,'15:15,'15:30,'15:45,'16:00,'16:15,'16:30,'16:45,'17:00,'17:15,'17:30,'17:45,'18:00,'18:15,'18:30,'18:45,'19:00,'19:15,'19:30,'19:45,'20:00,'20:15,'20:30,'20:45,'21:00,'21:15,'21:30,'21:45,'22:00,'22:15,'22:30,'22:45,'23:00,'23:15,'23:30,'23:45\n");
@@ -5329,7 +5326,7 @@ bool  CTLiteDoc::SaveNewDemandMatrixFile()
 			fclose(st_meta_data);
 		}else
 		{
-			AfxMessageBox("Error: File input_demand_meta_data.csv cannot be opened.\nIt might be currently used and locked by EXCEL.");
+			AfxMessageBox("Error: File input_demand_file_list.csv cannot be opened.\nIt might be currently used and locked by EXCEL.");
 			return false;
 		}
 
@@ -5408,10 +5405,10 @@ void  CTLiteDoc::CopyDefaultFiles(CString directory)
 
 		if(m_DemandMatrixMap.size() >0)  // we have imported data, so we delete the file first
 		{
-			DeleteFile(m_ProjectDirectory+"input_demand_meta_data.csv");
+			DeleteFile(m_ProjectDirectory+"input_demand_file_list.csv");
 		}
 
-		CopyDefaultFile(DefaultDataFolder,m_ProjectDirectory,directory,"input_demand_meta_data_matrix.csv","input_demand_meta_data.csv");
+		CopyDefaultFile(DefaultDataFolder,m_ProjectDirectory,directory,"input_demand_meta_data_matrix.csv","input_demand_file_list.csv");
 
 	}
 
@@ -6157,7 +6154,9 @@ BOOL CTLiteDoc::SaveProject(LPCTSTR lpszPathName, int SelectedLayNo)
 		{
 			(*itr).demand_type_name.Replace (",", " ");
 			{
-				fprintf(st, "%d,%s,%5.3f,%5.3f,%5.3f,", (*itr).demand_type , (*itr).demand_type_name,  (*itr).info_class_percentage[1], (*itr).info_class_percentage[2]);
+				fprintf(st, "%d,%s,%5.3f,%5.3f,%5.3f,%5.3f,", (*itr).demand_type, (*itr).demand_type_name, (*itr).average_VOT,
+					
+					(*itr).info_class_percentage[1], (*itr).info_class_percentage[2]);
 			}
 
 			for(i=0; i< m_VehicleTypeVector.size(); i++)
@@ -6255,9 +6254,7 @@ if(m_DemandMatrixMap.size()>0)
 
 	WriteLink_basedTollScenarioData();
 	WriteVMSScenarioData();
-	WriteIncidentScenarioData();
 	WriteWorkZoneScenarioData();
-	WriteTrafficControlScenarioData();
 
 	CMainFrame* pMainFrame = (CMainFrame*) AfxGetMainWnd();
 
@@ -9052,7 +9049,7 @@ void CTLiteDoc::RunNEXTA_32()
 void CTLiteDoc::LoadSimulationOutput()
 {
 
-	ReadMetaDemandCSVFile(m_ProjectDirectory + "input_demand_meta_data.csv");
+	ReadMetaDemandCSVFile(m_ProjectDirectory + "input_demand_file_list.csv");
 	ReadScenarioSettingCSVFile(m_ProjectDirectory + "input_scenario_settings.csv");
 
 	CString DTASettingsPath = m_ProjectDirectory + "DTASettings.txt";
@@ -9541,7 +9538,7 @@ void CTLiteDoc::OnToolsViewassignmentsummarylog()
 
 void CTLiteDoc::OnHelpVisitdevelopmentwebsite()
 {
-	g_OpenDocument("http://code.google.com/p/nexta/", SW_SHOW);
+	g_OpenDocument("https://github.com/xzhou99/dtalite_software_release", SW_SHOW);
 }
 
 bool CTLiteDoc::CheckControlData()
@@ -9589,7 +9586,7 @@ bool CTLiteDoc::EditTrafficAssignmentOptions()
 	dlg.m_pDoc = this;
 
 	ReadDemandTypeCSVFile(m_ProjectDirectory+"input_demand_type.csv");
-	if(ReadMetaDemandCSVFile(m_ProjectDirectory+"input_demand_meta_data.csv") == false)
+	if(ReadMetaDemandCSVFile(m_ProjectDirectory+"input_demand_file_list.csv") == false)
 		return false;
 
 	ReadScenarioSettingCSVFile(m_ProjectDirectory+"input_scenario_settings.csv");
@@ -10879,9 +10876,8 @@ void CTLiteDoc::OnLinkAddWorkzone()
 			(*iLink)->CapacityReductionVector .clear();
 
 		}
-		ReadIncidentScenarioData();
+
 		ReadWorkZoneScenarioData();
-		ReadTrafficControlScenarioData();
 		CapacityReduction cs;
 		cs.bWorkzone  = true; 
 
@@ -11139,7 +11135,7 @@ bool CTLiteDoc::WriteWorkZoneScenarioData()
 
 				if(element.bWorkzone == true)
 				{
-					fprintf(st,"\"[%d,%d]\",%d,%d,%d,%3.0f,%3.0f,%3.1f,%3.1f\n", (*iLink)->m_FromNodeNumber , (*iLink)->m_ToNodeNumber ,
+					fprintf(st,"\"[%d,%d]\",%d,%d,%d,%3.1f,%3.1f,%3.1f,%3.1f\n", (*iLink)->m_FromNodeNumber , (*iLink)->m_ToNodeNumber ,
 						element.ScenarioNo,element.StartDayNo  , element.EndDayNo , element.StartTime , element.EndTime ,element.LaneClosurePercentage, element.SpeedLimit );
 				}
 			}
@@ -11679,7 +11675,7 @@ void CTLiteDoc::OnLinkAddlink()
 		WriteLink_basedTollScenarioData();
 
 		CDlgScenario dlg;
-		dlg.m_SelectTab = 3;
+		dlg.m_SelectTab = 2;
 		dlg.m_pDoc = this;
 
 		dlg.DoModal();
@@ -11722,7 +11718,7 @@ void CTLiteDoc::OnLinkAddhovtoll()
 		CDlgScenario dlg(0);
 		dlg.m_pDoc = this;
 
-		dlg.m_SelectTab = 3;
+		dlg.m_SelectTab = 2;
 		dlg.DoModal();
 
 		UpdateAllViews(0);
@@ -11764,7 +11760,7 @@ void CTLiteDoc::OnLinkAddhottoll()
 		CDlgScenario dlg(0);
 		dlg.m_pDoc = this;
 
-		dlg.m_SelectTab = 3;
+		dlg.m_SelectTab = 2;
 		dlg.DoModal();
 
 		UpdateAllViews(0);
@@ -13881,7 +13877,7 @@ void CTLiteDoc::OnImportAmsdataset()
 #ifndef _WIN64
 
 	CDlg_Information dlg_info;
-	dlg_info.m_StringInfo = "This function imports node/link/zone/centroid/connector GIS files\r\nIt supports importing files from TransCAD, CUBE, VISUM and AIMSUN.\r\nThis function requires 32-bit NEXTA.\r\nThis function requires fours files:\r\n(1) input_node_control_type.csv,\r\n(2) input_link_type.csv,\r\n(3) input_demand_meta_data.csv (and related demand files),\r\n(4) import_GIS_settings.csv.";
+	dlg_info.m_StringInfo = "This function imports node/link/zone/centroid/connector GIS files\r\nIt supports importing files from TransCAD, CUBE, VISUM and AIMSUN.\r\nThis function requires 32-bit NEXTA.\r\nThis function requires fours files:\r\n(1) input_node_control_type.csv,\r\n(2) input_link_type.csv,\r\n(3) input_demand_file_list.csv (and related demand files),\r\n(4) import_GIS_settings.csv.";
 	dlg_info.m_SampleFileDirectory = "importing_sample_data_sets\\GIS_files\\West_Jordan_from_CUBE";
 	dlg_info.m_OnLineDocumentLink = "https://docs.google.com/file/d/0Bw8gtHCvOm7WSDBBamdPTDAwYmc"; 
 
@@ -18683,11 +18679,7 @@ void CTLiteDoc::OnDeleteWorkzone()
 			(*iLink)->CapacityReductionVector .clear();
 
 		}
-		ReadIncidentScenarioData();
 		ReadWorkZoneScenarioData(pLink->m_FromNodeNumber , pLink->m_ToNodeNumber );
-		ReadTrafficControlScenarioData();
-
-
 		WriteWorkZoneScenarioData();
 
 
@@ -18712,11 +18704,7 @@ void CTLiteDoc::OnCrashDeleteincidentonselectedlink()
 			(*iLink)->CapacityReductionVector .clear();
 
 		}
-		ReadIncidentScenarioData(pLink->m_FromNodeNumber , pLink->m_ToNodeNumber );
-		ReadWorkZoneScenarioData();
-		ReadTrafficControlScenarioData();
 
-		WriteWorkZoneScenarioData();
 
 
 		UpdateAllViews(0);

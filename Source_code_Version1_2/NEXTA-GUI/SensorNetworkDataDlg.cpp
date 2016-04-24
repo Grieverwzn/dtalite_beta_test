@@ -43,7 +43,7 @@ IMPLEMENT_DYNAMIC(CSensorNetworkDataSettingDlg, CDialog)
 
 CSensorNetworkDataSettingDlg::CSensorNetworkDataSettingDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CSensorNetworkDataSettingDlg::IDD, pParent)
-	, m_ZoomToSelectedObject(FALSE)
+	, m_ZoomToSelectedObject(TRUE)
 {
 	m_SelectTab = 0;
 

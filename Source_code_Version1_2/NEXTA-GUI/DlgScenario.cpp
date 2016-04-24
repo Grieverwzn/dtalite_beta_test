@@ -37,9 +37,9 @@
 #include <string>
 #include <sstream>
 
-#define _MAX_SCENARIO_SIZE 4
+#define _MAX_SCENARIO_SIZE 3
 // CDlgScenario dialog
-static LPTSTR SCENARIO_ELEMENTS[_MAX_SCENARIO_SIZE] = { "Work_Zone", "Incident", "Dynamic_Message_Sign","Link_Based_Toll", ""};
+static LPTSTR SCENARIO_ELEMENTS[_MAX_SCENARIO_SIZE] = { "Work_Zone", "Dynamic_Message_Sign","Link_Based_Toll"};
 
 IMPLEMENT_DYNAMIC(CDlgScenario, CDialog)
 
@@ -93,7 +93,7 @@ void CDlgScenario::GetDefaultInfo(int i, std::vector<std::string>& HeaderList, s
 		HeaderList.push_back("End Day No");
 		HeaderList.push_back("Start Time in Min");
 		HeaderList.push_back("End Time in min");
-		HeaderList.push_back("Responce Percentage (%)");
+		HeaderList.push_back("Response Percentage (%)");
 
 
 		DefaultList.push_back("0");
@@ -103,23 +103,7 @@ void CDlgScenario::GetDefaultInfo(int i, std::vector<std::string>& HeaderList, s
 		DefaultList.push_back("1440");
 		DefaultList.push_back("100");
 		break;
-	case 2:  // incident
-		HeaderList.push_back("Link");
-		HeaderList.push_back("Scenario No");
-		HeaderList.push_back("Day No");
-		HeaderList.push_back("Start Time in Min");
-		HeaderList.push_back("End Time in min");
-		HeaderList.push_back("Capacity Reduction Percentage (%)");
-		HeaderList.push_back("Speed Limit");
-
-		DefaultList.push_back("0");
-		DefaultList.push_back("10");
-		DefaultList.push_back("600");
-		DefaultList.push_back("640");
-		DefaultList.push_back("60");
-		DefaultList.push_back("30");
-		break;
-	case 3:
+	case 2:
 		// link toll
 		HeaderList.push_back("Link");
 		HeaderList.push_back("Scenario No");

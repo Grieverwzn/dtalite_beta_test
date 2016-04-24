@@ -44,7 +44,7 @@ IMPLEMENT_DYNAMIC(CCorridorDataDlg, CDialog)
 
 CCorridorDataDlg::CCorridorDataDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CCorridorDataDlg::IDD, pParent)
-	, m_ZoomToSelectedObject(FALSE)
+	, m_ZoomToSelectedObject(TRUE)
 {
 	m_SelectTab = 0;
 

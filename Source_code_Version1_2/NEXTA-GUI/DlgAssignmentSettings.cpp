@@ -40,7 +40,6 @@ void CDlgAssignmentSettings::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_SIMULATION_METHOD, m_SimulationMethodControl);
 
 	DDX_Control(pDX, IDC_LIST_DEMAND_LOADING_MODE2, m_NetworkDataList);
-	DDX_Text(pDX, IDC_EDIT_Demand_LoadingMultiplier, m_DemandLoadingMultipler);
 	DDX_Control(pDX, IDC_LIST_SCENARIO, m_ScenarioList);
 
 }
@@ -229,12 +228,12 @@ void CDlgAssignmentSettings::UpdateScenarioFile()
 	UpdateData(true);
 
 
-	if(m_pDoc->m_traffic_analysis_method != 0)
-	{
-		if(m_pDoc->CheckControlData () == false)
-			return;
-	}
-	if(m_pDoc->m_traffic_flow_model != m_SimulationMethodControl.GetCurSel())
+	//if(m_pDoc->m_traffic_analysis_method != 0)
+	//{
+	//	if(m_pDoc->CheckControlData () == false)
+	//		return;
+	//}
+	if(m_pDoc->m_traffic_flow_model-1 != m_SimulationMethodControl.GetCurSel())
 	{
 		m_bModifiedFlag = true;
 		m_pDoc->m_traffic_flow_model = m_SimulationMethodControl.GetCurSel()+1;
@@ -252,13 +251,6 @@ void CDlgAssignmentSettings::UpdateScenarioFile()
 	{
 		m_bModifiedFlag = true;
 		m_pDoc->m_number_of_reporting_days = m_NumberReportingDays;
-	}
-
-
-	if(fabs(m_DemandLoadingMultipler - m_pDoc->m_demand_multiplier)>0.00001)
-	{
-		m_bModifiedFlag = true;
-		m_pDoc->m_demand_multiplier = m_DemandLoadingMultipler;
 	}
 
 	if(m_bModifiedFlag == true)

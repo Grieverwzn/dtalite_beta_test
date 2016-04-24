@@ -43,7 +43,7 @@ IMPLEMENT_DYNAMIC(CNetworkDataSettingDlg, CDialog)
 
 CNetworkDataSettingDlg::CNetworkDataSettingDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CNetworkDataSettingDlg::IDD, pParent)
-	, m_ZoomToSelectedObject(FALSE)
+	, m_ZoomToSelectedObject(TRUE)
 {
 	m_SelectTab = 0;
 	m_SelectRowByUser = -1;

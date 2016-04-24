@@ -705,18 +705,15 @@ BOOL CTLiteDoc::OnOpenDYNASMARTProject(CString ProjectFileName, bool bNetworkOnl
 	DTADemandType demand_type_element;
 	demand_type_element.demand_type =1;
 	demand_type_element.demand_type_name = "SOV";
-	demand_type_element.pricing_type = 1;
 	demand_type_element.average_VOT = 10;
 	m_DemandTypeVector.push_back(demand_type_element);
 
 	demand_type_element.demand_type =2;
-	demand_type_element.pricing_type = 2;
 	demand_type_element.demand_type_name = "HOV";
 	demand_type_element.average_VOT = 10;
 	m_DemandTypeVector.push_back(demand_type_element);
 
 	demand_type_element.demand_type =3;
-	demand_type_element.pricing_type = 3;
 	demand_type_element.demand_type_name = "truck";
 	m_DemandTypeVector.push_back(demand_type_element);
 
@@ -1216,11 +1213,21 @@ BOOL CTLiteDoc::ReadDYNASMARTSimulationResults()
 	str.Format ("Start loading vehicle trajectory data...");
 	SetStatusText(str);
 
-	fopen_s(&pFile,directory+"VehTrajectory.dat","r");
+	CString TrajectoryFileDayByDay;
+	int start_day_no = (int)(g_GetPrivateProfileDouble("simulation_result", "start_day_no", 10, m_ProjectFile));
+	int end_day_no = (int)(g_GetPrivateProfileDouble("simulation_result", "end_day_no", 20, m_ProjectFile));
+	ReadBackgroundImageFile(m_ProjectFile);
 
-	float LengthinMB;
+	for (int day_no = start_day_no; day_no <= end_day_no; day_no++)
+	{
+
+		TrajectoryFileDayByDay.Format("vehtrajectory.dat%d", day_no);
+
+	fopen_s(&pFile, directory + TrajectoryFileDayByDay, "r");
+
+	/*float LengthinMB;
 	bool bLoadVehicleData = true;
-	fopen_s(&pFile,directory+"VehTrajectory.dat","rb");
+	fopen_s(&pFile, directory + TrajectoryFileDayByDay, "rb");
 	if(pFile!=NULL)
 	{
 		fseek(pFile, 0, SEEK_END );
@@ -1234,20 +1241,17 @@ BOOL CTLiteDoc::ReadDYNASMARTSimulationResults()
 			if(AfxMessageBox(msg,MB_YESNO|MB_ICONINFORMATION)==IDNO)
 				bLoadVehicleData = false;
 		}
-	}
+	}*/
 
-	ReadBackgroundImageFile(m_ProjectFile);
 
 	//LoadGPSData();
 
 
-	if(bLoadVehicleData)
-	{
 
 		char  str_line[2000]; // input string
 		DTALink* m_pPathLinkVector[MAX_NODE_SIZE_IN_A_PATH];
 
-		fopen_s(&pFile,directory+"VehTrajectory.dat","r");
+		fopen_s(&pFile, directory + TrajectoryFileDayByDay, "r");
 
 		if(pFile != NULL)
 		{
@@ -1442,7 +1446,7 @@ BOOL CTLiteDoc::ReadDYNASMARTSimulationResults()
 				if(m_VehicleSet.size()%10000==0)
 				{
 					CString str_veh;
-					str_veh.Format ("loading %d vehicles",m_VehicleSet.size());
+					str_veh.Format ("loading %d vehicles from day %d",m_VehicleSet.size(), day_no);
 					SetStatusText(str_veh);
 				}
 
@@ -1450,12 +1454,11 @@ BOOL CTLiteDoc::ReadDYNASMARTSimulationResults()
 			}
 
 			fclose(pFile);
+			
+		}	// file open
+	}  // for each day
 
-
-			m_SimulationVehicleDataLoadingStatus.Format ("%d vehicles are loaded from VehTrajectory.dat .",m_VehicleSet.size());
-
-		}
-	}
+	m_SimulationVehicleDataLoadingStatus.Format("%d vehicles are loaded from VehTrajectory.dat .", m_VehicleSet.size());
 
 		RecalculateLinkMOEFromVehicleTrajectoryFile();
 
@@ -2592,7 +2595,7 @@ void CTLiteDoc::SaveDSPDemandFiles(CString OriginDirectory, CString DestinationD
 	m_DemandLoadingEndTimeInMin = 0;
 
 	CCSVParser parser0;
-	if (parser0.OpenCSVFile(CString2StdString(OriginDirectory + "input_demand_meta_data.csv")))
+	if (parser0.OpenCSVFile(CString2StdString(OriginDirectory + "input_demand_file_list.csv")))
 	{
 		int i=0;
 
@@ -2631,24 +2634,24 @@ void CTLiteDoc::SaveDSPDemandFiles(CString OriginDirectory, CString DestinationD
 
 			if(start_time_in_min ==-1)  // skip negative sequence no 
 			{
-				AfxMessageBox("Please provide start_time_in_min in file input_demand_meta_data.csv");
+				AfxMessageBox("Please provide start_time_in_min in file input_demand_file_list.csv");
 				return;
 			}
 			if(end_time_in_min ==-1)  // skip negative sequence no 
 			{
-				AfxMessageBox( "Please provide end_time_in_min in file input_demand_meta_data.csv");
+				AfxMessageBox( "Please provide end_time_in_min in file input_demand_file_list.csv");
 				return;
 			}
 
 			if(end_time_in_min>1440)
 			{
-				AfxMessageBox( "end_time_in_min should be less than 1440 min in input_demand_meta_data.csv" );
+				AfxMessageBox( "end_time_in_min should be less than 1440 min in input_demand_file_list.csv" );
 				return;
 			}
 
 			if(start_time_in_min < 0 )
 			{
-				AfxMessageBox( "start_time_in_min should be greater than 0 min in input_demand_meta_data.csv" );
+				AfxMessageBox( "start_time_in_min should be greater than 0 min in input_demand_file_list.csv" );
 				return;
 			}
 
@@ -2685,7 +2688,7 @@ void CTLiteDoc::SaveDSPDemandFiles(CString OriginDirectory, CString DestinationD
 	CCSVParser parser;
 
 	//step 3:
-	if (parser.OpenCSVFile(CString2StdString(OriginDirectory + "input_demand_meta_data.csv")))
+	if (parser.OpenCSVFile(CString2StdString(OriginDirectory + "input_demand_file_list.csv")))
 	{
 		int i=0;
 
@@ -2729,13 +2732,13 @@ void CTLiteDoc::SaveDSPDemandFiles(CString OriginDirectory, CString DestinationD
 
 			if(end_time_in_min>1440)
 			{
-				AfxMessageBox( "end_time_in_min should be less than 1440 min in input_demand_meta_data.csv");
+				AfxMessageBox( "end_time_in_min should be less than 1440 min in input_demand_file_list.csv");
 				return;
 			}
 
 			if(start_time_in_min < 0 )
 			{
-				AfxMessageBox( "start_time_in_min should be greater than 0 min in input_demand_meta_data.csv");
+				AfxMessageBox( "start_time_in_min should be greater than 0 min in input_demand_file_list.csv");
 				return;
 			}
 
@@ -2743,7 +2746,7 @@ void CTLiteDoc::SaveDSPDemandFiles(CString OriginDirectory, CString DestinationD
 			parser.GetValueByFieldName("format_type",format_type);
 			if(format_type.find ("null")!= string::npos)  // skip negative sequence no 
 			{
-				AfxMessageBox( "Please provide format_type in file input_demand_meta_data.csv" );
+				AfxMessageBox( "Please provide format_type in file input_demand_file_list.csv" );
 				return;
 			}
 
@@ -2816,7 +2819,7 @@ void CTLiteDoc::SaveDSPDemandFiles(CString OriginDirectory, CString DestinationD
 
 				if(number_of_demand_types==0)
 				{
-					AfxMessageBox(  "number_of_demand_types = 0 in file input_demand_meta_data.csv. Please check.");
+					AfxMessageBox(  "number_of_demand_types = 0 in file input_demand_file_list.csv. Please check.");
 					return;
 				}
 
@@ -2858,8 +2861,8 @@ void CTLiteDoc::SaveDSPDemandFiles(CString OriginDirectory, CString DestinationD
 
 					if(number_of_values != 2 + number_of_demand_types + demand_type_in_3rd_column) // 2: origin, destination (demand type)
 					{
-					//	AfxMessageBox( "There are " << number_of_values << " values() per line in file " << file_name << "," << endl << "but " << number_of_demand_types << " demand type(s) are defined in file input_demand_meta_data.csv. " << endl << 
-						AfxMessageBox( "There are << number_of_values << values  per line in file ""Please check file input_demand_meta_data.csv.");
+					//	AfxMessageBox( "There are " << number_of_values << " values() per line in file " << file_name << "," << endl << "but " << number_of_demand_types << " demand type(s) are defined in file input_demand_file_list.csv. " << endl << 
+						AfxMessageBox( "There are << number_of_values << values  per line in file ""Please check file input_demand_file_list.csv.");
 						return;
 
 					}
@@ -3000,7 +3003,7 @@ void CTLiteDoc::SaveDSPDemandFiles(CString OriginDirectory, CString DestinationD
 				if (g_detect_if_a_file_is_column_format(file_name.c_str()) == true)
 				{
 					CString str;
-					str.Format("Demand input file %s looks to be based on column format but the format_type=matrix in input_demand_meta_data.csv.\nPlease check the demand file format, and change format_type=column in input_demand_meta_data.cv.", file_name);
+					str.Format("Demand input file %s looks to be based on column format but the format_type=matrix in input_demand_file_list.csv.\nPlease check the demand file format, and change format_type=column in input_demand_meta_data.cv.", file_name);
 					AfxMessageBox(str);
 					return;
 
@@ -3411,7 +3414,7 @@ void CTLiteDoc::WriteInputDemandMetaDataForDSP(CString DestinationProjectDirecto
 {
 		FILE* st_meta_data = NULL;
 		CString str;
-		str.Format("%sinput_demand_meta_data.csv",DestinationProjectDirectory);
+		str.Format("%sinput_demand_file_list.csv",DestinationProjectDirectory);
 
 		fopen_s(&st_meta_data,str,"w");
 

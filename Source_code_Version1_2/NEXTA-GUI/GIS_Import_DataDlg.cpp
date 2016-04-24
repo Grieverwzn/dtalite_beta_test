@@ -46,7 +46,7 @@ IMPLEMENT_DYNAMIC(CGIS_Import_DataDlg, CDialog)
 
 CGIS_Import_DataDlg::CGIS_Import_DataDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CGIS_Import_DataDlg::IDD, pParent)
-	, m_ZoomToSelectedObject(FALSE)
+	, m_ZoomToSelectedObject(TRUE)
 {
 	m_SelectTab = 0;
 

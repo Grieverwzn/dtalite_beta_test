@@ -39,6 +39,8 @@ BEGIN_MESSAGE_MAP(CDlgODDemandGridCtrl, CDialog)
 	ON_BN_CLICKED(ID_EDIT_META_DATABASE2, &CDlgODDemandGridCtrl::OnBnClickedEditMetaDatabase2)
 	ON_BN_CLICKED(ID_EDIT_META_DATABASE3, &CDlgODDemandGridCtrl::OnBnClickedEditMetaDatabase3)
 	ON_NOTIFY(HDN_ITEMDBLCLICK, 0, &CDlgODDemandGridCtrl::OnHdnItemdblclickDemandtypelist)
+	ON_BN_CLICKED(ID_EDIT_META_DATABASE4, &CDlgODDemandGridCtrl::OnBnClickedEditMetaDatabase4)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_DemandFileLIST, &CDlgODDemandGridCtrl::OnLvnItemchangedDemandfilelist)
 END_MESSAGE_MAP()
 
 
@@ -58,8 +60,8 @@ CDlgODDemandGridCtrl::~CDlgODDemandGridCtrl()
 void CDlgODDemandGridCtrl::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Control(pDX,IDC_GRID_CTRL,m_ODMatrixGrid);
-	DDX_Control(pDX,IDC_DemandTypeLIST,m_DemandFileGrid);
+	DDX_Control(pDX,IDC_DemandFileLIST,m_DemandFileGrid);
+	DDX_Control(pDX, IDC_DemandTypeLIST2, m_DemandTypeGrid);
 }
 
 void CDlgODDemandGridCtrl::DisplayDemandTypeTable()
@@ -98,7 +100,7 @@ void CDlgODDemandGridCtrl::DisplayDemandTypeTable()
 
 
 		char file_name[_MAX_PATH];
-		sprintf(file_name,"%s//input_demand_meta_data.csv",m_pDoc->m_ProjectDirectory);
+		sprintf(file_name,"%s//input_demand_file_list.csv",m_pDoc->m_ProjectDirectory);
 
 		CCSVParser parser;
 		if (parser.OpenCSVFile( file_name))
@@ -237,31 +239,64 @@ void CDlgODDemandGridCtrl::DisplayDemandTypeTable()
 		
 		}
 
-	static _TCHAR *_gColumnTypeLabel[11] =
+	static _TCHAR *_gColumnTypeLabel[5] =
 	{
-		_T("No."), _T("Demand Type"), _T("Avg VOT"), _T("Pricing Type"), _T("% of Pretrip Info"),
-		_T("% of Enroutetrip Info"),_T("% of passenger car"),
-		_T("% of passenger truck"),
-		_T("% of light commercial truck"),
-		_T("% of single unit long-haul truck"),
-		_T("% of combination long-haul truck"),
+		_T("No."), _T("Demand Type"), _T("Avg VOT"), _T("% of Pretrip Info"),
+		_T("% of Enroutetrip Info"),
 
 	};
 
-	for(int vt = 0; vt < m_pDoc->m_VehicleTypeVector.size(); vt++)
-	{
-		DTAVehicleType element = m_pDoc->m_VehicleTypeVector[vt];
-		char str_vehicle_type[100];
+	//for(int vt = 0; vt < m_pDoc->m_VehicleTypeVector.size(); vt++)
+	//{
+	//	DTAVehicleType element = m_pDoc->m_VehicleTypeVector[vt];
+	//	char str_vehicle_type[100];
 
-		sprintf_s(str_vehicle_type,"%% of %s", element.vehicle_type_name );
-		m_Column_names.push_back(str_vehicle_type);
+	//	sprintf_s(str_vehicle_type,"%% of %s", element.vehicle_type_name );
+	//	m_Column_names.push_back(str_vehicle_type);
 
-	}
+	//}
 
 	//Add Columns and set headers
+	//Add Columns and set headers
+	for (size_t i = 0; i<5; i++)
+	{
 
+		lvc.iSubItem = i;
+		lvc.pszText = _gColumnTypeLabel[i];
+		lvc.cx = 50;
+		if (i >= 1)
+			lvc.cx = 120;
 
+		lvc.fmt = LVCFMT_LEFT;
+		m_DemandTypeGrid.InsertColumn(i, &lvc);
+	}
 
+	m_DemandTypeGrid.SetExtendedStyle(LVS_EX_AUTOSIZECOLUMNS | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
+
+	m_DemandTypeGrid.SetColumnWidth(0, 80);
+	//
+	for (int type = m_pDoc->m_DemandTypeVector.size()-1; type >= 0; type--)
+	{
+		DTADemandType elment = m_pDoc->m_DemandTypeVector[type];
+
+		// can be also enhanced to edit the real time information percentage
+		char text[100];
+		sprintf_s(text, "%d", elment.demand_type);
+		int Index = m_DemandTypeGrid.InsertItem(LVIF_TEXT, 0, text, 0, 0, 0, NULL);
+
+		sprintf_s(text, "%s", elment.demand_type_name);
+		m_DemandTypeGrid.SetItemText(Index, 1, text);
+
+		sprintf_s(text, "%5.2f", elment.average_VOT);
+		m_DemandTypeGrid.SetItemText(Index, 2, text);
+
+		sprintf_s(text, "%5.2f", elment.info_class_percentage[1]);
+		m_DemandTypeGrid.SetItemText(Index, 3, text);
+
+		sprintf_s(text, "%5.2f", elment.info_class_percentage[2]);
+		m_DemandTypeGrid.SetItemText(Index, 4, text);
+
+	}
 
 }
 
@@ -269,6 +304,7 @@ void CDlgODDemandGridCtrl::DisplayDemandTypeTable()
 
 void CDlgODDemandGridCtrl::DisplayDemandMatrix()
 {
+	return; 
 	if(m_pDoc==NULL)
 		return;
 
@@ -697,7 +733,7 @@ OnBnClickedButtonReload();
 void CDlgODDemandGridCtrl::OnBnClickedEditMetaDatabase()
 {
 	char file_name[_MAX_PATH];
-	sprintf(file_name,"%s//input_demand_meta_data.csv",m_pDoc->m_ProjectDirectory);
+	sprintf(file_name,"%s//input_demand_file_list.csv",m_pDoc->m_ProjectDirectory);
 	m_pDoc->OpenCSVFileInExcel (file_name);
 }
 
@@ -714,7 +750,7 @@ void CDlgODDemandGridCtrl::LoadDemandMatrixFromDemandFile(int DemandFileSequence
 	float DemandLoadingEndTimeInMin = 0;
 
 	char meta_file_name[_MAX_PATH];
-	sprintf(meta_file_name,"%s//input_demand_meta_data.csv",m_pDoc->m_ProjectDirectory);
+	sprintf(meta_file_name,"%s//input_demand_file_list.csv",m_pDoc->m_ProjectDirectory);
 
 	m_ODMatrixMap.clear();
 
@@ -904,7 +940,7 @@ void CDlgODDemandGridCtrl::LoadDemandMatrixFromDemandFile(int DemandFileSequence
 	//			if (g_detect_if_a_file_is_column_format(m_pDoc->m_ProjectDirectory + file_name.c_str()) == true)
 	//			{
 	//				CString str;
-	//				str.Format("Demand input file %s looks to be based on column format but the format_type=matrix in input_demand_meta_data.csv.\nPlease check the demand file format, and change format_type=column in input_demand_meta_data.cv.", file_name.c_str());
+	//				str.Format("Demand input file %s looks to be based on column format but the format_type=matrix in input_demand_file_list.csv.\nPlease check the demand file format, and change format_type=column in input_demand_meta_data.cv.", file_name.c_str());
 	//				AfxMessageBox(str);
 	//				return;
 	//			
@@ -1145,7 +1181,7 @@ void CDlgODDemandGridCtrl::OnBnClickedButtonReload()
 		if(nSelectedRow < DemandFileNameVector .size())
 			m_SelectedFileName = DemandFileNameVector[nSelectedRow];
 
-		DisplayDemandMatrix();
+
 		return;
 	}
 }
@@ -1240,4 +1276,34 @@ void CDlgODDemandGridCtrl::OnBnClickedButtonExportColumn()
 
 		m_pDoc->OpenCSVFileInExcel(AMS_File);
 
+}
+
+
+void CDlgODDemandGridCtrl::OnBnClickedEditMetaDatabase4()
+{
+
+	char file_name[_MAX_PATH];
+	sprintf(file_name, "%s//input_demand_type.csv", m_pDoc->m_ProjectDirectory);
+	m_pDoc->OpenCSVFileInExcel(file_name);
+}
+
+
+void CDlgODDemandGridCtrl::OnLvnItemchangedDemandfilelist(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+	CWaitCursor wait;
+	m_SelectedDemandMetaType = -1;
+	POSITION pos = m_DemandFileGrid.GetFirstSelectedItemPosition();
+	while (pos != NULL)
+	{
+		int nSelectedRow = m_DemandFileGrid.GetNextSelectedItem(pos);
+		char str[100];
+		m_SelectedFileName = "input_demand.csv";
+
+		if (nSelectedRow < DemandFileNameVector.size())
+			m_SelectedFileName = DemandFileNameVector[nSelectedRow];
+	}
 }

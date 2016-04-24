@@ -4220,7 +4220,7 @@ BOOL CTLiteDoc::ImportingTransportationPlanningDataSet(CString ProjectFileName, 
 		return false;
 	}
 
-	if(ReadMetaDemandCSVFile(directory+"input_demand_meta_data.csv") == false)
+	if(ReadMetaDemandCSVFile(directory+"input_demand_file_list.csv") == false)
 	{
 		CString msg;
 		msg.Format ("Please prepare demand meta data file input_demand_meta_data and place it at folder %s.",directory);

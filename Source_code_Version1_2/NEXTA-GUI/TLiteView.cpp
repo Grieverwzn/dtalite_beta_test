@@ -286,6 +286,7 @@ BEGIN_MESSAGE_MAP(CTLiteView, CView)
 	ON_COMMAND(ID_SHOWALLOWEDLINKSFORDEMANDTYPE_SHOWALL, &CTLiteView::OnShowallowedlinksfordemandtypeShowall)
 	ON_UPDATE_COMMAND_UI(ID_SHOWALLOWEDLINKSFORDEMANDTYPE_SHOWALL, &CTLiteView::OnUpdateShowallowedlinksfordemandtypeShowall)
 	ON_COMMAND(ID_REFERENCELINE_SHOWREFERENCELINENO, &CTLiteView::OnReferencelineShowreferencelineno)
+	ON_BN_CLICKED(IDC_BUTTON_Search, &CTLiteView::OnBnClickedButtonSearch)
 	END_MESSAGE_MAP()
 
 // CTLiteView construction/destruction
@@ -9399,4 +9400,10 @@ void CTLiteView::OnReferencelineShowreferencelineno()
 	m_DislayReferenceLineNo = true;
 	Invalidate();
 
+}
+
+
+void CTLiteView::OnBnClickedButtonSearch()
+{
+	OnSearchFindlink();
 }

@@ -278,8 +278,10 @@
 #define ID_EDIT_META_DATABASE2          1028
 #define IDC_LIST_SIMULATION_METHOD      1029
 #define ID_EDIT_VEHICLE_TYPE_FILE       1029
+#define ID_EDIT_META_DATABASE4          1029
 #define IDC_LIST_DEMAND_LOADING_MODE    1030
 #define ID_EDIT_VEHICLE_EMISSIONS_FILE  1030
+#define ID_EDIT_META_DATABASE5          1030
 #define IDC_EDIT_Number_of_Days         1031
 #define IDC_LIST_Routing_METHOD         1031
 #define ID_EDIT_META_DATABASE3          1031
@@ -430,6 +432,7 @@
 #define IDC_DOC_TITLE                   1113
 #define IDC_CHECK_LINKMOE               1113
 #define IDC_DemandTypeLIST              1118
+#define IDC_DemandFileLIST              1118
 #define IDC_EDIT_DemandMultipler        1119
 #define IDC_DemandTypeLIST2             1119
 #define IDC_SCROLLBAR1                  1120
@@ -438,6 +441,7 @@
 #define IDC_BUTTON_Database             1124
 #define IDC_BUTTON_Configuration        1125
 #define IDC_TaskLIST                    1126
+#define IDC_BUTTON_Search               1126
 #define IDC_EDIT_CYCLE_LENGTH           1131
 #define IDC_SETTING_TAB                 1132
 #define IDC_BUTTON_COPY                 1133
@@ -675,6 +679,7 @@
 #define IDC_EDIT_Signal_Control         1328
 #define IDADD_COUNTSENSOR_ID            1328
 #define IDADD_SPEEDSENSOR_ID            1329
+#define IDC_ACTIVE_LAYER                1329
 #define ID_NODE_ORIGIN                  32771
 #define ID_NODE_DESTINATION             32772
 #define ID_VIEW_ZOOMIN                  32773
@@ -1509,7 +1514,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        258
 #define _APS_NEXT_COMMAND_VALUE         33816
-#define _APS_NEXT_CONTROL_VALUE         1329
+#define _APS_NEXT_CONTROL_VALUE         1330
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

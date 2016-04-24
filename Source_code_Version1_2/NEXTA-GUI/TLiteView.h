@@ -928,6 +928,7 @@ public:
 	afx_msg void OnShowallowedlinksfordemandtypeShowall();
 	afx_msg void OnUpdateShowallowedlinksfordemandtypeShowall(CCmdUI *pCmdUI);
 	afx_msg void OnReferencelineShowreferencelineno();
+	afx_msg void OnBnClickedButtonSearch();
 };
 struct PieInfo
 {

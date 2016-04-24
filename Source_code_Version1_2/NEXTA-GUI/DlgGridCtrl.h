@@ -118,4 +118,6 @@ public:
 	afx_msg void OnBnClickedButtonReload();
 	afx_msg void OnBnClickedButtonExportMatrix();
 	afx_msg void OnBnClickedButtonExportColumn();
+	afx_msg void OnBnClickedEditMetaDatabase4();
+	afx_msg void OnLvnItemchangedDemandfilelist(NMHDR *pNMHDR, LRESULT *pResult);
 };

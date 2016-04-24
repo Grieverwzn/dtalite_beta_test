@@ -1033,7 +1033,6 @@ class DTADemandType
 public:
 	int demand_type;
 	float average_VOT;
-	int pricing_type; // 1: SOV, 2: HOV, 3: truck, 4: intermodal
 	float info_class_percentage[MAX_INFO_CLASS_SIZE];
 	float vehicle_type_percentage[MAX_VEHICLE_TYPE_SIZE];
 
