@@ -498,8 +498,8 @@ void g_MultiScenarioTrafficAssignment()
 			case analysis_OD_demand_estimation:
 				g_SummaryStatFile.WriteParameterValue("Routing method", "OD demand estimation");
 				g_AgentBasedAssignmentFlag = 0; // zone based mode only
-				g_UEAssignmentMethod = analysis_MSA; // default assignment mode to MSA, use ODME_step_size after running ODME
-				g_ODEstimationFlag = 1;
+				//g_UEAssignmentMethod = analysis_MSA; // default assignment mode to MSA, use ODME_step_size after running ODME
+				g_ODEstimationFlag = 1; 
 				break;
 
 			case analysis_vehicle_binary_file_based_scenario_evaluation:
@@ -608,6 +608,7 @@ void g_MultiScenarioTrafficAssignment()
 			g_ValidationDataStartTimeInMin = 11440;
 			g_ValidationDataEndTimeInMin = 0;
 			g_ODEstimation_StartingIteration = 1000;
+			g_ODEstimation_EndingIteration = 1000;
 			g_ODEstimation_max_ratio_deviation_wrt_hist_demand = 0.20f;
 
 
@@ -620,12 +621,14 @@ void g_MultiScenarioTrafficAssignment()
 					getchar();
 				}
 
-
-				if (TotalUEIterationNumber > g_ODEstimation_StartingIteration && g_ODEstimation_StartingIteration >= _MAX_ODT_PATH_SIZE_4_ODME)
+				if (parser_scenario.GetValueByFieldName("ODME_end_iteration", g_ODEstimation_EndingIteration) == false)
 				{
-					cout << "Field ODME_start_iteration should be less than " << _MAX_ODT_PATH_SIZE_4_ODME << endl;
-					g_ODEstimation_StartingIteration = _MAX_ODT_PATH_SIZE_4_ODME - 1;
-					getchar();
+					g_ODEstimation_StartingIteration = g_ODEstimation_StartingIteration+1000;
+				}
+
+				if (g_ODEstimation_EndingIteration <= g_ODEstimation_StartingIteration )
+				{
+					g_ODEstimation_EndingIteration = TotalUEIterationNumber;
 				}
 
 				float ODEstimation_max_percentage_deviation_wrt_hist_demand = 20;

@@ -52,8 +52,6 @@ extern std::vector<DemandType> g_DemandTypeVector;
 extern std::map<int, DTALinkType> g_LinkTypeMap;
 extern std::map<int, string> g_NodeControlTypeMap;
 
-extern	std::vector<VOTDistribution> g_VOTDistributionVector;
-
 
 extern int g_DemandLoadingStartTimeInMin;
 extern int g_DemandLoadingEndTimeInMin;
@@ -65,16 +63,8 @@ class HistoricalDemand
 {
 public: 
 	float* m_alpha;
-	float ** m_beta;  // for each origin, tau
-	float ** m_gammar; //for each origin-destination pair
-
 	float* m_alpha_last_value;
-	float ** m_beta_last_value;  // for each origin, tau
-	float ** m_gammar_last_value; //for each origin-destination pair
-
 	float* m_alpha_hist_value;
-	float ** m_beta_hist_value;  // for each origin, tau
-	float ** m_gammar_hist_value; //for each origin-destination pair
 
 
 public:
@@ -135,57 +125,14 @@ public:
 
 			m_alpha_last_value[i] = m_alpha[i];
 
-			for (int j = 0; j <= m_ODZoneSize; j++)
-			{
-				m_gammar_last_value[i][j] = m_gammar[i][j];
-
-				for (int t = 0; t < g_NumberOfSPCalculationPeriods; t++)
-				{
-					m_beta_last_value[i][t] = m_beta[i][t];
-
-				}
-			}
 		}
 
 
 	}
 
-	void CalculateTempDemand();
 
-	void UpdatedDemandParameters(int i, int j, int t, float flow_value, float flow_gradient);
-	void DemandParameterInitialization()
-	{
-		//calculate alpha, beta gammar based on m_HistDemand
-		for (int i = 0; i <= m_ODZoneSize; i++)
-		{
-			for (int t = 0; t < g_NumberOfSPCalculationPeriods; t++)
-			{
+	void UpdatedDemandParameters(int origin_zone_number, int destination_zone_number, int t, float flow_value, float flow_gradient);
 
-				_proxy_ODME_log(1, 0, " demand[%d][%d] = %f, demand[%d]= %f, beta_ratio = %f \n",
-					i, t, 
-					m_beta[i][t],
-					i,
-					m_alpha[i],
-					m_beta[i][t] / max(1, m_alpha[i]));
-					
-				m_beta[i][t] = m_beta[i][t] / max(1, m_alpha[i]);
-
-
-			}
-
-		}
-		
-		for (int i = 0; i <= m_ODZoneSize; i++)
-		{
-			for (int j = 0; j <= m_ODZoneSize; j++)
-			{
-				m_gammar[i][j] = m_gammar[i][j] / max(1, m_alpha[i]);
-			}
-
-		}
-		
-		
-	}
 
 	void Reset()
 	{
@@ -197,14 +144,9 @@ public:
 
 			for (int j = 0; j <= m_ODZoneSize; j++)
 			{
-				m_gammar[i][j] = 0;
-				m_gammar_hist_value[i][j] = 0;
 
 			for (int t = 0; t < g_NumberOfSPCalculationPeriods; t++)
 			{
-				m_beta[i][t] = 0;
-				m_beta_hist_value[i][t] = 0;
-
 				m_HistDemand[i][j][t] = 0;
 				m_UpdatedDemand[i][j][t] = 0;
 
@@ -232,18 +174,10 @@ public:
 		m_UpdatedDemand = Allocate3DDynamicArray<float>(m_ODZoneSize + 1, m_ODZoneSize + 1, g_NumberOfSPCalculationPeriods);
 		m_TempDemand = Allocate3DDynamicArray<float>(m_ODZoneSize + 1, m_ODZoneSize + 1, g_NumberOfSPCalculationPeriods);
 
-
 		m_alpha = new float[m_ODZoneSize + 1];
-		m_beta = AllocateDynamicArray<float>(m_ODZoneSize + 1, g_NumberOfSPCalculationPeriods);  // for each origin, tau
-		m_gammar = AllocateDynamicArray<float>(m_ODZoneSize + 1, m_ODZoneSize + 1);  // for each origin, tau
 
 		m_alpha_last_value = new float[m_ODZoneSize + 1];
-		m_beta_last_value = AllocateDynamicArray<float>(m_ODZoneSize + 1, g_NumberOfSPCalculationPeriods);  // for each origin, tau
-		m_gammar_last_value = AllocateDynamicArray<float>(m_ODZoneSize + 1, m_ODZoneSize + 1);  // for each origin, tau
-
 		m_alpha_hist_value = new float[m_ODZoneSize + 1];
-		m_beta_hist_value = AllocateDynamicArray<float>(m_ODZoneSize + 1, g_NumberOfSPCalculationPeriods);  // for each origin, tau
-		m_gammar_hist_value = AllocateDynamicArray<float>(m_ODZoneSize + 1, m_ODZoneSize + 1);  // for each origin, tau
 
 		Reset();
 
@@ -264,17 +198,10 @@ public:
 
 		m_alpha[origin_zone] += value;
 
-		if (origin_zone == 2)
-			TRACE("");
-
-
-//		_proxy_ODME_log(0, 0, "alpha[%d]+ %f = %f\n", origin_zone, value, m_alpha[origin_zone]);
 
 
 		m_alpha_hist_value[origin_zone] += value;
 
-		m_beta[origin_zone][AssignmentInterval] += value;
-		m_gammar[origin_zone][destination_zone] += value;
 
 	}
 

@@ -131,6 +131,7 @@ int g_SensorDataCount = 0;
 int g_Agent_shortest_path_generation_flag = 0;
 int g_ODEstimationMeasurementType = 0; // 0: flow, 1: density, 2, speed
 int g_ODEstimation_StartingIteration = 2;
+int g_ODEstimation_EndingIteration = 2;
 float g_ODEstimation_max_ratio_deviation_wrt_hist_demand;
 
 int g_ODEstimationNumberOfIterationsForSequentialAdjustment = 10;
@@ -138,7 +139,7 @@ int g_ODEstimationTimePeriodForSequentialAdjustment = 60; // min
 int g_ODEstimationWeightOnTravelTimeDeviationFreeflow = 100;
 int g_ODEstimationWeightOnTravelTimeDeviationCongested = 10;
 
-int g_ODEstimation_alpha_based_adjustment = 0;
+int g_ODEstimation_alpha_based_adjustment = 1;
 
 
 int g_ODDemandIntervalSize = 1;
@@ -156,7 +157,7 @@ void HistoricalDemand::UpdatedDemandParameters(int origin_zone_number, int desti
 
 
 
-	m_alpha[i] -= alpha_step_size*flow_gradient* flow_value / max(0.00001, m_alpha_last_value[i]);
+	m_alpha[i] -= alpha_step_size*flow_gradient* flow_value ;
 #pragma omp critical
 
 	{
@@ -231,8 +232,6 @@ bool g_ReadLinkMeasurementFile()
 
 	if (parser.OpenCSVFile("sensor_count.csv", g_ODEstimationFlag == 1))
 	{
-
-
 		int sensor_count = 0;
 		while (parser.ReadRecord())
 		{
@@ -1111,36 +1110,12 @@ void DTANetworkForSP::ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval_OD
 
 }
 
-void HistoricalDemand::CalculateTempDemand()
-{
-	//calculate alpha, beta gammar based on m_HistDemand
-
-	for (int i = 0; i <= m_ODZoneSize; i++)
-	{
-		for (int j = 0; j <= m_ODZoneSize; j++)
-		{
-			if (i != j)
-			{
-				for (int t = 0; t < g_NumberOfSPCalculationPeriods; t++)
-				{
-					m_TempDemand[i][j][t] = m_alpha[i] * m_beta[i][t] * m_gammar[i][j];
-
-					float ratio = m_TempDemand[i][j][t] / max(1, m_UpdatedDemand[i][j][t]);
-						_proxy_ODME_log(2, 0, "temp New demand [%d][%d][%d] = %f, ratio = %.2f\n", i, j, t, m_TempDemand[i][j][t], ratio);
-				}
-			}
-		}
-	}
-}
 void g_GenerateVehicleData_ODEstimation()
 {
 
 	//	g_EstimationLogFile << "g_GenerateVehicleData_ODEstimation "  <<endl; 
 
 	g_FreeMemoryForVehicleVector();
-
-	g_SystemDemand.CalculateTempDemand();
-
 
 	cout << "Converting OD demand flow to vehicles..."<< endl;
 	
@@ -1171,9 +1146,9 @@ void g_GenerateVehicleData_ODEstimation()
 				int OriginZoneNo = g_ZoneMap[element.m_OriginZoneID].m_ZoneSequentialNo;
 				int DestinationZoneNo = g_ZoneMap[element.m_DestinationZoneID].m_ZoneSequentialNo;
 
-				float adjustment_ratio = 1.0;  // no alpha-based adjustment 
+				float adjustment_ratio = 1.0; 
 				
-				adjustment_ratio = g_SystemDemand.m_TempDemand[OriginZoneNo][DestinationZoneNo][element.m_DepartureTimeIndex] / (max(1, g_SystemDemand.m_UpdatedDemand[OriginZoneNo][DestinationZoneNo][element.m_DepartureTimeIndex]));
+				adjustment_ratio = g_SystemDemand.m_alpha[OriginZoneNo] / (max(0.1, g_SystemDemand.m_alpha_last_value[OriginZoneNo]));
 
 
 				if (g_ODEstimation_alpha_based_adjustment == 1)  //enable alpha based adjustment mode
@@ -1508,9 +1483,9 @@ void g_UpdateLinkMOEDeviation_ODEstimation(NetworkLoadingOutput& output, int Ite
 							obs_v_over_c_ratio  = ObsFlowCount*60.0f/max(1,time_interval) /max(1,link_capacity);
 							simu_over_c_ratio = SimulatedInFlowCount*60.0f/max(1,time_interval) /max(1,link_capacity);
 						}
-						//g_EstimationLogFile << "Iteration," << Iteration << "," << pLink->m_LinkMeasurementAry[i].name << "," << pLink->m_LinkMeasurementAry[i].direction << "," << pLink->m_LinkTypeName << ",Link " << pLink->m_FromNodeNumber << ",->," << pLink->m_ToNodeNumber 
-						//	<< ",time "<<  g_GetTimeStampString(pLink->m_LinkMeasurementAry[i].StartTime) << "->" << g_GetTimeStampString(pLink->m_LinkMeasurementAry[i].EndTime) <<  ",Observed and simulated link count,"<< ObsFlowCount << "," << SimulatedInFlowCount <<", Error:, " << SimulatedInFlowCount -  ObsFlowCount << 
-						//	"," << AbosolutePercentageError << " %" << ",Lane Flow Error /h=, " << LaneFlowError << "," << pLink->GetNumberOfLanes ()* pLink->m_LaneCapacity << "," << obs_v_over_c_ratio << "," << simu_over_c_ratio ;
+						g_EstimationLogFile << "Iteration," << Iteration << "," << pLink->m_LinkMeasurementAry[i].name << "," << pLink->m_LinkMeasurementAry[i].direction << "," << pLink->m_LinkTypeName << ",Link " << pLink->m_FromNodeNumber << ",->," << pLink->m_ToNodeNumber
+							<< ",time " << g_GetTimeStampString(pLink->m_LinkMeasurementAry[i].StartTime) << "->" << g_GetTimeStampString(pLink->m_LinkMeasurementAry[i].EndTime) << ",Observed and simulated link count," << ObsFlowCount << "," << SimulatedInFlowCount << ", Error:, " << SimulatedInFlowCount - ObsFlowCount <<
+							"," << AbosolutePercentageError << " %" << ",Lane Flow Error /h=, " << LaneFlowError << "," << pLink->GetNumberOfLanes()* pLink->m_LaneCapacity << "," << obs_v_over_c_ratio << "," << simu_over_c_ratio << endl;
 
 						TotalMOEPercentageError +=AbosolutePercentageError ; 
 						TotalMOEAbsError += fabs(LaneFlowError) ;

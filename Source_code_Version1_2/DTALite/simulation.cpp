@@ -131,13 +131,13 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 						total_delay_in_queue += existing_delay;
 
 					}
-
-					pLink->m_prevailing_travel_time = pLink->m_FreeFlowTravelTime + total_delay_in_queue / max(1, pLink->ExitQueue.size());
+					float time_dependent_free_flow_traveltime = pLink->GetFreeMovingTravelTime(TrafficFlowModelFlag, DayNo, CurrentTime, 0);
+						pLink->m_prevailing_travel_time = time_dependent_free_flow_traveltime + total_delay_in_queue / max(1, pLink->ExitQueue.size());
 
 
 				pLink->m_prevailing_travel_time =
 					(1 - weight)*	pLink->m_prevailing_travel_time
-					+ weight * 	max(pLink->m_FreeFlowTravelTime,
+					+ weight * 	max(time_dependent_free_flow_traveltime,
 					pLink->total_departure_based_travel_time / max(1, pLink->departure_count));
 
 				ASSERT(pLink->m_prevailing_travel_time <= 9000);
@@ -1587,6 +1587,8 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 								MessageSign vms;
 								if (IS_id >= 0)
 									vms = p_Nextlink->MessageSignVector[IS_id];
+
+
 								g_OpenMPAgentBasedPathAdjustmentWithRealTimeInfo(pVehicle->m_AgentID, CurrentTime, IS_id, vms);
 							}
 							}
@@ -2097,15 +2099,13 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 
 		g_VehicularSimulation(Iteration, time, meso_simulation_time_interval_no, TrafficFlowModelFlag);
 
-		// we cannot simply stop here
-		//if (bPrintOut && g_Number_of_GeneratedVehicles > 0 && g_Number_of_CompletedVehicles == g_Number_of_GeneratedVehicles)
-		//{
-		//	cout << "--Simulation completes as all the vehicles are out of the network.--" << endl;
-		//	output.NetworkClearanceTimeStamp_in_Min = time;
-		//	output.NetworkClearanceTimePeriod_in_Min = time - g_DemandLoadingStartTimeInMin;
-		//	bPrintOut = false;
-		//	g_SimululationReadyToEnd = time + 10; // run for another 10 min for simulator to tally all statstics (for every 1 or 5 min)
-		//}
+		
+		if (g_Number_of_GeneratedVehicles > 0 && g_Number_of_CompletedVehicles == g_Number_of_GeneratedVehicles)
+		{
+				output.NetworkClearanceTimeStamp_in_Min = time;
+				output.NetworkClearanceTimePeriod_in_Min = time - g_DemandLoadingStartTimeInMin;
+			
+		}
 		if (meso_simulation_time_interval_no % 50 == 0 && bPrintOut) // every 5 min
 		{
 

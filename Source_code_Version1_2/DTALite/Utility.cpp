@@ -394,14 +394,7 @@ bool g_GetVehicleAttributes(int demand_type, int &VehicleType, int &InformationC
 
 	RandomPercentage= g_GetRandomRatio() * 100; 
 
-	for(std::vector<VOTDistribution>::iterator itr = g_VOTDistributionVector.begin(); itr != g_VOTDistributionVector.end(); ++itr)
-	{
-		if( (*itr).demand_type == demand_type
-			&& RandomPercentage >= (*itr).cumulative_percentage_LB 
-			&& RandomPercentage <= (*itr).cumulative_percentage_UB )
-
-			VOT = (*itr).VOT;
-	}
+	VOT = g_DemandTypeVector[demand_type_no].Avg_VOT;
 
 	if(VOT < 1)  // enforcing minimum travel time
 		VOT = 1;

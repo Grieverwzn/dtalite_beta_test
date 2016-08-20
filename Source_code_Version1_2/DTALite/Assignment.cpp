@@ -46,6 +46,34 @@ extern CTime g_AppLastIterationStartTime;
 
 std::map<CString, int> g_path_index_map;
 
+bool IsWithinODMEIteration(int iteration)
+{
+	
+	if (g_ODEstimationFlag == 1 && iteration >= g_ODEstimation_StartingIteration && iteration < g_ODEstimation_EndingIteration)
+		return true;
+	else
+		return false;
+
+}
+
+float g_GetSwitchingRate(int iteration, float ExperiencedTravelCost, float ComputedShortestPathCost)
+{
+	float relative_gap = (max(0, ExperiencedTravelCost - ComputedShortestPathCost)) / max(0.1, ComputedShortestPathCost);
+
+	float adjustment_factor = 1.0;
+
+	float switching_rate = max(0.0001, 1.0f / (iteration + 1)*adjustment_factor);
+
+	if (g_ODEstimationFlag == 1 && iteration >= g_ODEstimation_EndingIteration)
+	{
+		if (iteration <= g_ODEstimation_EndingIteration + 1)
+			switching_rate = 0;
+		else if(iteration >= g_ODEstimation_EndingIteration + 2)
+			switching_rate = 0.05;
+	}
+
+	return switching_rate;
+}
 
 
 bool g_GetSequentialUEAdjustmentTimePeriod(int iteration, float DepartureTime)
@@ -65,20 +93,16 @@ DTANetworkForSP g_TimeDependentNetwork_MP[_MAX_NUMBER_OF_PROCESSORS]; //  networ
 
 void g_WithIterationPathBuildingForAllAgents(int iteration, bool bRebuildNetwork, bool bOutputLog, int DemandLoadingStartTime, int DemandLoadingEndTime)
 {
-	if (g_ODEstimationFlag && iteration >= g_ODEstimation_StartingIteration)  // perform path flow adjustment after at least 10 normal OD estimation
+	if (IsWithinODMEIteration(iteration))  // perform path flow adjustment after at least 10 normal OD estimation
 	{
 		g_SystemDemand.StoreDemandParametersFromLastIteration();
-		g_SystemDemand.CalculateTempDemand();
-		
+	
 	}
 
 
 
 	// assign different zones to different processors
 	int number_of_threads = omp_get_max_threads();
-
-	//	if(g_ODEstimationFlag==1)  // single thread mode for ODME 
-	//		number_of_threads = 1;
 
 	if (bOutputLog)
 	{
@@ -124,7 +148,7 @@ void g_WithIterationPathBuildingForAllAgents(int iteration, bool bRebuildNetwork
 					if (vehicle_size > 0)
 					{
 						float node_size = 1;
-						if (g_ODEstimationFlag && iteration >= g_ODEstimation_StartingIteration)  // perform path flow adjustment after at least 10 normal OD estimation
+						if (IsWithinODMEIteration(iteration))  // perform path flow adjustment after at least 10 normal OD estimation
 							g_TimeDependentNetwork_MP[id].ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval_ODEstimation(CurZoneID, departure_time_index, iteration);
 						else
 							node_size = g_TimeDependentNetwork_MP[id].AgentBasedPathFindingForEachZoneAndDepartureTimeInterval(CurZoneID, departure_time, departure_end_time, iteration);
@@ -136,7 +160,7 @@ void g_WithIterationPathBuildingForAllAgents(int iteration, bool bRebuildNetwork
 
 							if (bOutputLog)
 							{
-								if (g_ODEstimationFlag && iteration >= g_ODEstimation_StartingIteration)  // perform path flow adjustment after at least 10 normal OD estimation
+								if (IsWithinODMEIteration(iteration))  // perform path flow adjustment after at least 10 normal OD estimation
 									cout << "Processor " << id << " is adjusting OD demand table for zone " << CurZoneID << endl;
 								else
 									cout << "Processor " << id << " is calculating the shortest paths for zone " << CurZoneID << " with " << vehicle_size << " agents." << endl;
@@ -179,15 +203,10 @@ void g_AgentBasedDynamicTrafficAssignmentSimulation()  // this is an adaptation 
 	//cout << "find section [computation], set max_number_of_threads_to_be_used=1 or a small value to reduce memory usage. " << endl;
 	//cout << "This modification could significantly increase the total runing time as a less number of CPU threads will be used. " << endl;
 
-	if (g_ODEstimationFlag)
-		g_SystemDemand.DemandParameterInitialization();
-
 	//
 	//" number_of_threads << " CPU threads" << endl;
 
 	int number_of_threads = omp_get_max_threads();
-	//	if(g_ODEstimationFlag==1)  // single thread mode for ODME 
-	//		number_of_threads = 1;
 
 	cout << "# of Computer Processors = " << number_of_threads << endl;
 
@@ -199,7 +218,7 @@ void g_AgentBasedDynamicTrafficAssignmentSimulation()  // this is an adaptation 
 	{
 		cout << "------- Iteration = " << iteration + 1 << "--------" << endl;
 
-		if (g_ODEstimationFlag && iteration >= g_ODEstimation_StartingIteration)
+		if (IsWithinODMEIteration(iteration))
 			g_SystemDemand.ResetUpdatedValue(); // reset update hist table
 
 
@@ -228,7 +247,7 @@ void g_AgentBasedDynamicTrafficAssignmentSimulation()  // this is an adaptation 
 		////
 
 
-		if (g_ODEstimationFlag && iteration >= g_ODEstimation_StartingIteration)  // re-generate vehicles based on global path set
+		if (IsWithinODMEIteration(iteration))  // re-generate vehicles based on global path set
 		{
 			_proxy_ODME_log(0, iteration, "--------------------------\n");
 
@@ -331,14 +350,9 @@ float DTANetworkForSP::AgentBasedPathFindingForEachZoneAndDepartureTimeInterval(
 		// +100 will disallow any departure switch, because the benchmark (experienced travel time - 100) is too low. 
 
 
-			float switching_rate = 0.05;   // default switching rate 
-//			switching_rate = 1.0f / (iteration + 1);
+		float switching_rate = g_GetSwitchingRate(iteration, pVeh->m_TripTime, TotalCost);   // default switching rate 
 
-		if (g_UEAssignmentMethod == analysis_day_to_day_learning_threshold_route_choice)
-		{
-			switching_rate = float(g_LearningPercVector[iteration + 1]) / 100.0f; // 1: day-to-day learning
-			// all agents have also to subject to bounded rationality rules
-		}
+
 
 		if (pVeh->m_OriginZoneID == pVeh->m_DestinationZoneID)
 		{  // do not simulate intra zone traffic
@@ -614,7 +628,6 @@ void DTANetworkForSP::ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval(in
 			if (LabelCostVectorPerType[pVeh->m_DemandType][DestinationCentriod] > MAX_SPLABEL - 10)
 			{
 
-
 				{
 					cout << "Warning: vehicle " << pVeh->m_AgentID << " from zone " << pVeh->m_OriginZoneID << " to zone " << pVeh->m_DestinationZoneID << " does not have a physical path. Please check warning.log for details. " << endl;
 					//g_WarningFile << "Warning: vehicle " << pVeh->m_AgentID << " from zone " << pVeh->m_OriginZoneID << " to zone " << pVeh->m_DestinationZoneID << " does not have a physical path. " << endl;
@@ -624,7 +637,8 @@ void DTANetworkForSP::ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval(in
 
 			}
 		
-		
+			TotalCost = LabelCostVectorPerType[pVeh->m_DemandType][DestinationCentriod];
+
 		}
 
 
@@ -632,7 +646,7 @@ void DTANetworkForSP::ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval(in
 		pVeh->m_bConsiderToSwitch = false;
 
 		pVeh->m_bSwitch = false;
-
+		pVeh->m_gap_update = false;
 
 		if (iteration > 0 && pVeh->m_InformationType != 0) // update path assignments -> determine whether or not the vehicle will switch
 		{
@@ -641,22 +655,7 @@ void DTANetworkForSP::ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval(in
 			pVeh->SetMinCost(TotalCost);
 
 
-			float switching_rate = 0.05;   // default switching rate from MSA
-
-	
-			if (g_UEAssignmentMethod == analysis_gap_function_MSA_step_size) // gap function based method,
-			{
-				switching_rate = 0.05;
-
-			}
-
-			if (g_UEAssignmentMethod == analysis_day_to_day_learning_threshold_route_choice )
-			{
-				switching_rate = float(g_LearningPercVector[iteration + 1]) / 100.0f; // 1: day-to-day learning
-				// all agents have also to subject to bounded rationality rules
-
-
-			}
+			float switching_rate = g_GetSwitchingRate(iteration, pVeh->m_TripTime, TotalCost);
 
 			double RandomNumber = pVeh->GetRandomRatio();  // vehicle-dependent random number generator, very safe for multi-thread applications			
 
@@ -784,6 +783,9 @@ void DTANetworkForSP::ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval(in
 				if (NodeNumberSum == pVeh->m_NodeNumberSum)  //same path
 					m_gap = 0.0;
 
+				pVeh->m_gap_update = true;
+				pVeh->m_gap = m_gap;
+
 #pragma omp critical
 				{
 					if (pVeh->m_bComplete)
@@ -894,10 +896,14 @@ void DTANetworkForSP::ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval(in
 				int NodeNumberSum = 0;
 				for (int i = NodeSize - 1; i >= 0; i--)
 				{
-					NodeNumberSum += temp_reversed_PathLinkList[i];
 					PathNodeList[j++] = temp_reversed_PathLinkList[i];
 
 					ASSERT(PathNodeList[j] < m_PhysicalNodeSize);
+				}
+
+				for (int i = 0; i < NodeSize - 1; i++) // NodeSize-1 is the number of links along the paths
+				{
+					NodeNumberSum += PathNodeList[i];
 				}
 
 				float m_gap;
@@ -910,6 +916,8 @@ void DTANetworkForSP::ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval(in
 				if (NodeNumberSum == pVeh->m_NodeNumberSum)  //same path
 					m_gap = 0.0;
 
+				pVeh->m_gap_update = true;
+				pVeh->m_gap = m_gap;
 #pragma omp critical
 				{
 					if (pVeh->m_bComplete)
@@ -1225,7 +1233,7 @@ void g_GenerateSimulationSummary(int iteration, bool NotConverged, int TotalNumO
 		g_SummaryStatFile.SetFieldName("Avg Travel Time (min)");
 		g_SummaryStatFile.SetFieldName("Avg Waiting Time at Origin (min)");
 		g_SummaryStatFile.SetFieldName("Avg Trip Time Index=(Mean TT/Free-flow TT)");
-		g_SummaryStatFile.SetFieldName("Avg Distance)");
+		g_SummaryStatFile.SetFieldName("Avg Distance");
 		g_SummaryStatFile.SetFieldName("Avg Speed");
 		g_SummaryStatFile.SetFieldName("Avg CO (g)");
 
@@ -1326,7 +1334,7 @@ void g_GenerateSimulationSummary(int iteration, bool NotConverged, int TotalNumO
 	g_SummaryStatFile.SetValueByFieldName("# of agents", p_SimuOutput->NumberofVehiclesGenerated);
 	g_SummaryStatFile.SetValueByFieldName("Avg Travel Time (min)", p_SimuOutput->AvgTravelTime);
 
-	float buffer_waiting_time = p_SimuOutput->AvgTripTime - p_SimuOutput->AvgTravelTime;
+	float buffer_waiting_time = max(0, p_SimuOutput->AvgTripTime - p_SimuOutput->AvgTravelTime);
 	g_SummaryStatFile.SetValueByFieldName("Avg Waiting Time at Origin (min)", buffer_waiting_time);
 	g_SummaryStatFile.SetValueByFieldName("Avg Trip Time Index=(Mean TT/Free-flow TT)", p_SimuOutput->AvgTTI);
 	g_SummaryStatFile.SetValueByFieldName("Avg Distance", p_SimuOutput->AvgDistance);
@@ -1346,11 +1354,11 @@ void g_GenerateSimulationSummary(int iteration, bool NotConverged, int TotalNumO
 
 	g_PercentageCompleteTrips = PercentageComplete;
 
-	if (g_ODEstimationFlag == 1 && iteration >= g_ODEstimation_StartingIteration)
+	if (IsWithinODMEIteration(iteration))
 	{
 		p_SimuOutput->AvgUEGap = 0;
 		p_SimuOutput->AvgRelativeUEGap = 0;
-
+	
 		g_SummaryStatFile.SetValueByFieldName("ODME: number of data points", p_SimuOutput->ODME_result_link_count.data_size);
 
 		g_SummaryStatFile.SetValueByFieldName("ODME: Absolute link count error", p_SimuOutput->LinkVolumeAvgAbsError);
@@ -1375,8 +1383,7 @@ void g_GenerateSimulationSummary(int iteration, bool NotConverged, int TotalNumO
 		}
 		//		g_SummaryStatFile.SetValueByFieldName ("ODME: avg_simulated_to_avg_obs",p_SimuOutput->ODME_result_link_count.avg_y_to_x_ratio  );
 	}
-
-	if (g_ODEstimationFlag == 1 && iteration >= g_ODEstimation_StartingIteration)
+	if (IsWithinODMEIteration(iteration))
 	{
 		//ODME gap results
 		float AvgUEGap = g_CurrentGapValue / max(1, p_SimuOutput->NumberofVehiclesGenerated);
@@ -1391,7 +1398,7 @@ void g_GenerateSimulationSummary(int iteration, bool NotConverged, int TotalNumO
 	{
 		if (iteration >= 1)
 		{
-			g_SummaryStatFile.SetValueByFieldName("Avg UE gap (min)", p_SimuOutput->AvgUEGap);
+			g_SummaryStatFile.SetValueByFieldName("Avg User Equilibirum (UE) gap (min)", p_SimuOutput->AvgUEGap);
 			g_SummaryStatFile.SetValueByFieldName("Relative UE gap (%)", p_SimuOutput->AvgRelativeUEGap);
 		}
 
@@ -1516,8 +1523,7 @@ void g_ZoneBasedDynamicTrafficAssignmentSimulation()
 	if (g_ODEstimationFlag)
 	{
 
-		g_SystemDemand.DemandParameterInitialization();
-		fprintf(g_ODME_result_file, "Iteration no,,");
+		fprintf(g_ODME_result_file, "Iteration no, Alpha,");
 
 		for (int z = 0; z <= g_ODZoneNumberSize; z++)  // for each zone 
 		{
@@ -1550,7 +1556,7 @@ void g_ZoneBasedDynamicTrafficAssignmentSimulation()
 
 		cout << "------- Iteration = " << iteration << "--------" << endl;
 
-		if (g_ODEstimationFlag && iteration >= g_ODEstimation_StartingIteration)  // perform path flow adjustment after at least 10 normal OD estimation
+		if (IsWithinODMEIteration(iteration))  // perform path flow adjustment after at least 10 normal OD estimation
 		{
 			g_SystemDemand.StoreDemandParametersFromLastIteration();
 		}
@@ -1572,7 +1578,7 @@ void g_ZoneBasedDynamicTrafficAssignmentSimulation()
 		{
 			g_EstimationLogFile << "----- Iteration = " << iteration << " ------" << endl;
 
-			if (g_ODEstimationFlag && iteration >= g_ODEstimation_StartingIteration)
+			if (IsWithinODMEIteration(iteration))
 				g_SystemDemand.ResetUpdatedValue(); // reset update hist table
 
 				g_SetupTDTollValue(iteration);
@@ -1626,7 +1632,7 @@ void g_ZoneBasedDynamicTrafficAssignmentSimulation()
 
 									bool debug_flag = false;
 
-									if (g_ODEstimationFlag && iteration >= g_ODEstimation_StartingIteration)  // perform path flow adjustment after at least 10 normal OD estimation
+									if (IsWithinODMEIteration(iteration))  // perform path flow adjustment after at least 10 normal OD estimation
 										g_TimeDependentNetwork_MP[ProcessID].ZoneBasedPathFindingForEachZoneAndDepartureTimeInterval_ODEstimation(CurZoneID, departure_time_index, iteration);
 									else
 									{
@@ -1634,7 +1640,7 @@ void g_ZoneBasedDynamicTrafficAssignmentSimulation()
 										{
 											if (g_SimulationResult.number_of_vehicles_DemandType[demand_type] >= 1)
 											{
-												g_TimeDependentNetwork_MP[ProcessID].TDLabelCorrecting_DoubleQueue_PerDemandType(CurZoneID, g_NodeVector.size(), departure_time, demand_type, g_DemandTypeVector[demand_type-1].default_VOT, false, debug_flag);  // g_NodeVector.size() is the node ID corresponding to CurZoneNo
+												g_TimeDependentNetwork_MP[ProcessID].TDLabelCorrecting_DoubleQueue_PerDemandType(CurZoneID, g_NodeVector.size(), departure_time, demand_type, g_DemandTypeVector[demand_type-1].Avg_VOT, false, debug_flag);  // g_NodeVector.size() is the node ID corresponding to CurZoneNo
 											}
 										}
 
@@ -1650,7 +1656,7 @@ void g_ZoneBasedDynamicTrafficAssignmentSimulation()
 			}  // for each processor
 			//the OD estimation code below should be single thread
 
-			if (g_ODEstimationFlag && iteration >= g_ODEstimation_StartingIteration)  // re-generate vehicles based on global path set
+			if (IsWithinODMEIteration(iteration))  // re-generate vehicles based on global path set
 			{
 
 				_proxy_ODME_log(0, iteration, "--------------------------\n");
@@ -1694,10 +1700,38 @@ void g_ZoneBasedDynamicTrafficAssignmentSimulation()
 
 	} // for each assignment iteration
 
+	if (g_ODEstimationFlag)  // re-generate vehicles based on global path set
+	{
+		FILE *final_ODME_result_file = fopen("ODME_final_result.csv", "w");
+
+		if (final_ODME_result_file != NULL)
+		{
+
+			fprintf(final_ODME_result_file, "zone_id,ODME_ratio\n");
+
+			for (int z = 0; z <= g_ODZoneNumberSize; z++)  // for each zone 
+			{
+				if (g_ZoneMap.find(z) == g_ZoneMap.end())
+					continue;
+
+				int zone_index = g_ZoneMap[z].m_ZoneSequentialNo;
+
+				float ODME_ratio = g_SystemDemand.m_alpha[zone_index] / max(1, g_SystemDemand.m_alpha_hist_value[zone_index]);
+				if (g_SystemDemand.m_alpha_hist_value[zone_index] < 0.1)
+					ODME_ratio = 1.0;
+
+				fprintf(final_ODME_result_file, "%d,%.4f\n", z, ODME_ratio);
+
+			}
+
+			fclose(final_ODME_result_file);
+		}
+	}
 	cout << "Writing Vehicle Trajectory and MOE File... " << endl;
 
 	if (iteration == g_NumberOfIterations)
 	{
+
 		iteration = g_NumberOfIterations - 1;  //roll back to the last iteration if the ending condition is triggered by "iteration < g_NumberOfIterations"
 	}
 

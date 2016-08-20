@@ -268,6 +268,8 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 					continue; // skip reading 
 			}
 
+			if (agent_id == 561)
+				TRACE("");
 
 			_proxy_ABM_log(0, "--step 1: read agent id = %d \n", agent_id);
 
@@ -742,7 +744,12 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 					//--------------------------------------------------------------------------------------------------------//
 
 				}
+				int time_interval = g_FindAssignmentIntervalIndexFromTime(pVehicle->m_DepartureTime);
 
+				if (g_ODEstimationFlag == 1) // having hist od only unde ODME mode
+				{
+					g_SystemDemand.AddValue(pVehicle->m_OriginZoneID, pVehicle->m_DestinationZoneID, time_interval, 1); // to store the initial table as hist database
+				}
 			}
 			else if (bUpdatePath) //not new 
 			{
@@ -751,6 +758,8 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 				{
 					AddPathToVehicle(pVehicle, path_node_sequence, file_name.c_str());
 					_proxy_ABM_log(0, "--step 11.1: read and add path_node_sequence = %s\n", path_node_sequence_str.c_str());
+
+					fprintf(g_DebugLogFile, "read and add path_node_sequence = %s for vehicle %d\n", path_node_sequence_str.c_str(), pVehicle->m_AgentID);
 				}
 				//-----------------------------------//
 				else
@@ -1209,6 +1218,364 @@ void g_SkimMatrixGenerationForAllDemandTypes(string FileName, bool bTimeDependen
 	str_output_file_in_summary.Format("Output file =,%s\n", file_name);
 	g_SummaryStatFile.WriteTextLabel(str_output_file_in_summary);
 
+	int time_dependent_ODMOE_distance_label = g_GetPrivateProfileInt("output", "time_dependent_ODMOE_distance_label", 1, g_DTASettingFileName);
+
+	bool bDistanceCost = false;
+
+	bool bRebuildNetwork = false;
+
+	if (bTimeDependentFlag == true)
+		bRebuildNetwork = true;
+
+
+	// find unique origin node
+	// find unique destination node
+	int number_of_threads = g_number_of_CPU_threads();
+
+
+	// calculate distance 
+	int node_size = g_NodeVector.size();
+	int link_size = g_LinkVector.size();
+
+	bool  bUseCurrentInformation = true;
+
+	int DemandLoadingStartTimeInMin = g_DemandLoadingStartTimeInMin;
+	int DemandLoadingEndTimeInMin = g_DemandLoadingEndTimeInMin;
+
+	if (bTimeDependentFlag)
+	{
+		bUseCurrentInformation = false;  // then time dependent travel time wil be used
+	}
+
+
+	if (bUseCurrentInformation == true)
+	{
+		DemandLoadingStartTimeInMin = CurrentTime;
+		DemandLoadingEndTimeInMin = CurrentTime + 1;
+
+	}
+	cout << "calculate time interval " << DemandLoadingStartTimeInMin << " -> " << DemandLoadingEndTimeInMin << "min; with an aggregation time interval of " << g_AggregationTimetInterval << endl;
+
+
+	int total_demand_type = g_DemandTypeVector.size();
+	//cout << "------00---------" << endl;
+	int StatisticsIntervalSize = 1;
+
+	int number_of_time_intervals_for_reporting = max(1, (DemandLoadingEndTimeInMin - DemandLoadingStartTimeInMin) / g_AggregationTimetInterval);
+
+	//cout << "allocating memory for time-dependent ODMOE data...for " << g_ODZoneIDSize << " X " <<  g_ODZoneIDSize << "zones for " << 
+	//	StatisticsIntervalSize << " 15-min time intervals" << endl;
+	float**** ODTravelTime = NULL;
+	//ODTravelTime = Allocate4DDynamicArray<float>(1000, 1000, 1000, 1000);
+	ODTravelTime = Allocate4DDynamicArray<float>(total_demand_type + 1, g_ODZoneIDSize + 1, g_ODZoneIDSize + 1, StatisticsIntervalSize);
+
+	float**** ODDistance = NULL;
+	ODDistance = Allocate4DDynamicArray<float>(total_demand_type + 1, g_ODZoneIDSize + 1, g_ODZoneIDSize + 1, StatisticsIntervalSize);
+
+	float**** ODDollarCost = NULL;
+	ODDollarCost = Allocate4DDynamicArray<float>(total_demand_type + 1, g_ODZoneIDSize + 1, g_ODZoneIDSize + 1, StatisticsIntervalSize);
+
+
+	for (int departure_time_index = 0; departure_time_index < number_of_time_intervals_for_reporting; departure_time_index++)
+	{
+
+		int departure_time = DemandLoadingStartTimeInMin + departure_time_index* g_AggregationTimetInterval;
+
+		int assignment_interval_index = departure_time / 15;
+
+		if (departure_time_index > 0 && assignment_interval_index < 200 && g_AssignmentIntervalOutputFlag[assignment_interval_index] == 0)  // we output the data for sure: departure_time_index ==0
+		{
+			// skip the output of skim matrix 
+			continue;
+
+		}
+
+
+		cout << "...calculating time interval " << departure_time << " min... " << endl;
+
+
+		//cout << "------05---------" << endl;
+		for (int d = 1; d <= total_demand_type; d++)
+			for (int i = 0; i <= g_ODZoneIDSize; i++)
+				for (int j = 0; j <= g_ODZoneIDSize; j++)
+					for (int t = 0; t < StatisticsIntervalSize; t++)
+					{
+						if (i == j)
+						{
+							ODTravelTime[d][i][j][t] = 0.5;
+							ODDistance[d][i][j][t] = 0.5;
+							ODDollarCost[d][i][j][t] = 0.0;
+						}
+						else
+						{
+							ODTravelTime[d][i][j][t] = 0;
+							ODDistance[d][i][j][t] = 0;
+							ODDollarCost[d][i][j][t] = 0;
+						}
+					}
+
+
+		if (bTimeDependentFlag)
+			cout << "calculating time-dependent skim matrix on " << number_of_threads << " processors ... " << endl;
+		else
+			cout << "calculating real-time skim matrix on " << number_of_threads << " processors ... " << endl;
+
+
+#pragma omp parallel for
+		for (int ProcessID = 0; ProcessID < number_of_threads; ProcessID++)
+		{
+
+			// create network for shortest path calculation at this processor
+			int	id = omp_get_thread_num();  // starting from 0
+
+			//special notes: creating network with dynamic memory is a time-consumping task, so we create the network once for each processors
+
+			if (bRebuildNetwork || g_TimeDependentNetwork_MP[id].m_NodeSize == 0)
+			{
+				g_TimeDependentNetwork_MP[id].BuildPhysicalNetwork(0, -1, g_TrafficFlowModelFlag, bUseCurrentInformation, CurrentTime);  // build network for this zone, because different zones have different connectors...
+			}
+
+			// from each origin zone
+			for (std::map<int, DTAZone>::iterator iterZone = g_ZoneMap.begin(); iterZone != g_ZoneMap.end(); iterZone++)
+			{
+
+				if ((iterZone->first%number_of_threads) == ProcessID)
+				{ // if the remainder of a zone id (devided by the total number of processsors) equals to the processor id, then this zone id is 
+					int origin_node_indx = iterZone->second.GetRandomOriginNodeIDInZone((0) / 100.0f);  // use pVehicle->m_AgentID/100.0f as random number between 0 and 1, so we can reproduce the results easily
+
+					if (origin_node_indx >= 0) // convert node number to internal node id
+					{
+
+
+						int starting_demand_type = 1;
+
+						if (departure_time_index == 0) // starting time of all computing 
+							starting_demand_type = 0;
+
+						for (int demand_type = starting_demand_type; demand_type <= total_demand_type; demand_type++)
+						{
+
+							bDistanceCost = false;
+
+							if (bTimeDependentFlag == false)  // real time version
+							{
+								if (fabs(CurrentTime - departure_time) > 10)  // not in the current time interval, skip outputing 
+									continue;
+							}
+							g_TimeDependentNetwork_MP[id].TDLabelCorrecting_DoubleQueue(origin_node_indx, iterZone->first, departure_time, demand_type, DEFAULT_VOT, bDistanceCost, false, true);  // g_NodeVector.size() is the node ID corresponding to CurZoneNo
+
+							// to each destination zone
+							for (std::map<int, DTAZone>::iterator iterZone2 = g_ZoneMap.begin(); iterZone2 != g_ZoneMap.end(); iterZone2++)
+							{
+
+								int dest_node_index = iterZone2->second.GetRandomDestinationIDInZone((0) / 100.0f);
+								if (dest_node_index >= 0 && (iterZone->first != iterZone2->first)) // convert node number to internal node id
+								{
+
+									int time_interval_no = 0;  // send data to 0 index element
+
+									float TravelTime = g_TimeDependentNetwork_MP[id].LabelCostAry[dest_node_index];
+									ODTravelTime[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] = g_TimeDependentNetwork_MP[id].LabelCostAry[dest_node_index];
+
+									ODDistance[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] = g_TimeDependentNetwork_MP[id].LabelDistanceAry[dest_node_index];
+									ODDollarCost[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] = g_TimeDependentNetwork_MP[id].LabelDollarCostAry[dest_node_index];
+
+									if (ODDollarCost[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] > 0.1)
+									{
+										TRACE("");
+									}
+								}
+
+							} //for each destination zone
+						}  // departure type
+					}  // with origin node numbers 
+				} // each demand type 
+			} // current thread	
+
+		}  // origin zone
+
+
+
+
+
+		FILE* st = NULL;
+
+		int hour = departure_time / 60;
+		int min = (departure_time - hour * 60);
+
+		CString time_str;
+		time_str.Format("_%02dh%02dm", hour, min);
+
+		CString final_file_name; 
+		final_file_name = file_name;
+
+		if (bTimeDependentFlag)
+		{
+			final_file_name += time_str;
+			final_file_name += ".csv";
+
+		}
+
+		fopen_s(&st, final_file_name, "w");
+		if (st != NULL)
+		{
+			//write header:
+			fprintf(st, "from_zone_id,to_zone_id,departure_time_in_min,");
+			CString str;
+
+			for (int demand_type = 1; demand_type <= total_demand_type; demand_type++)
+			{
+				str.Format("DT%d_TT_in_min,", demand_type);
+				fprintf(st, str);
+			}
+
+			if(time_dependent_ODMOE_distance_label==1)
+			{ 
+				for (int demand_type = 1; demand_type <= total_demand_type; demand_type++)
+				{
+					str.Format("DT%d_Distance,", demand_type);
+					fprintf(st, str);
+				}
+			}
+
+			for (int demand_type = 1; demand_type <= total_demand_type; demand_type++)
+			{
+				str.Format("DT%d_Toll_Cost,", demand_type);
+				fprintf(st, str);
+			}
+
+
+			//str.Format("demand_type_%d_generalized_travel_time_diff,demand_type_%d_distance_diff,demand_type_%d_dollar_cost_diff,", total_demand_type, total_demand_type, total_demand_type);
+
+
+			fprintf(st, "\n");
+
+			// from each origin zone
+			for (std::map<int, DTAZone>::iterator iterZone = g_ZoneMap.begin(); iterZone != g_ZoneMap.end(); iterZone++)
+			{
+				// to each destination zone
+				for (std::map<int, DTAZone>::iterator iterZone2 = g_ZoneMap.begin(); iterZone2 != g_ZoneMap.end(); iterZone2++)
+				{
+					int origin_zone = iterZone->first;
+					int destination_zone = iterZone2->first;
+
+
+					if (origin_zone != destination_zone && origin_zone >= 1 && destination_zone >= 1)
+					{
+
+						int time_interval_no = 0; // send data to zero index element
+
+						if (bTimeDependentFlag == false)  // real time version
+						{
+							if (fabs(CurrentTime - departure_time) > 10)  // not in the current time interval, skip outputing 
+								continue;
+						}
+
+						bool new_data_flag = false;
+
+						//check travel time
+						int demand_type_0 = 0;
+						for (int demand_type = 1; demand_type <= total_demand_type; demand_type++)
+						{
+							if (fabs(ODTravelTime[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] -
+								ODTravelTime[demand_type_0][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][0]) > 0.01)
+							{
+								new_data_flag = true;
+								break;
+							}
+						}
+
+						if (new_data_flag == false)
+						{
+							//check distance 
+							for (int demand_type = 1; demand_type <= total_demand_type; demand_type++)
+							{
+								if (fabs(ODDistance[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] -
+									ODDistance[demand_type_0][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][0]) > 0.01)
+								{
+									new_data_flag = true;
+									break;
+								}
+							}
+
+							if (new_data_flag == false)
+							{
+
+								//check ODDollarCost 
+								for (int demand_type = 1; demand_type <= total_demand_type; demand_type++)
+								{
+									if (fabs(ODDollarCost[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] -
+										ODDollarCost[demand_type_0][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][0]) > 0.01)
+									{
+										new_data_flag = true;
+										break;
+
+									}
+								}
+							}
+						}
+
+
+
+
+						if (departure_time_index == 0 || new_data_flag == true || bTimeDependentFlag == true)
+						{
+							fprintf(st, "%d,%d,%d,",
+								origin_zone,
+								destination_zone,
+
+								departure_time);
+
+							for (int demand_type = 1; demand_type <= total_demand_type; demand_type++)
+								fprintf(st, "%4.1f,", ODTravelTime[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no]);
+
+							if (time_dependent_ODMOE_distance_label == 1)
+							{ 
+								for (int demand_type = 1; demand_type <= total_demand_type; demand_type++)
+								fprintf(st, "%4.2f,", ODDistance[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no]);
+							}
+							for (int demand_type = 1; demand_type <= total_demand_type; demand_type++)
+							{
+								float value = ODDollarCost[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no];
+
+								if(value >=0.01)
+									fprintf(st, "%4.1f,", value );
+								else 
+									fprintf(st, "0,");
+							}
+
+							fprintf(st, "\n");
+						}
+					}
+
+				}  // each department type
+
+			}
+			fclose(st);
+		}
+		else
+		{
+			cout << "File " << file_name << " cannot be opened." << endl;
+			getchar();
+			exit(0);
+
+		}
+		
+
+	}
+}
+
+
+void g_SkimMatrixGenerationForAllDemandTypesV2(string FileName, bool bTimeDependentFlag, double CurrentTime)
+{
+
+	CString file_name;
+	file_name.Format(FileName.c_str());
+
+	CString str_output_file_in_summary;
+	str_output_file_in_summary.Format("Output file =,%s\n", file_name);
+	g_SummaryStatFile.WriteTextLabel(str_output_file_in_summary);
+
 	bool bDistanceCost = false;
 
 	bool bRebuildNetwork = false;
@@ -1318,7 +1685,7 @@ void g_SkimMatrixGenerationForAllDemandTypes(string FileName, bool bTimeDependen
 			int	id = omp_get_thread_num();  // starting from 0
 
 
-			//special notes: creating network with dynamic memory is a time-consumping task, so we create the network once for each processors
+											//special notes: creating network with dynamic memory is a time-consumping task, so we create the network once for each processors
 
 			if (bRebuildNetwork || g_TimeDependentNetwork_MP[id].m_NodeSize == 0)
 			{
@@ -1354,7 +1721,7 @@ void g_SkimMatrixGenerationForAllDemandTypes(string FileName, bool bTimeDependen
 							}
 							g_TimeDependentNetwork_MP[id].TDLabelCorrecting_DoubleQueue(origin_node_indx, iterZone->first, departure_time, demand_type, DEFAULT_VOT, bDistanceCost, false, true);  // g_NodeVector.size() is the node ID corresponding to CurZoneNo
 
-							// to each destination zone
+																																																   // to each destination zone
 							for (std::map<int, DTAZone>::iterator iterZone2 = g_ZoneMap.begin(); iterZone2 != g_ZoneMap.end(); iterZone2++)
 							{
 
@@ -1370,6 +1737,10 @@ void g_SkimMatrixGenerationForAllDemandTypes(string FileName, bool bTimeDependen
 									ODDistance[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] = g_TimeDependentNetwork_MP[id].LabelDistanceAry[dest_node_index];
 									ODDollarCost[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] = g_TimeDependentNetwork_MP[id].LabelDollarCostAry[dest_node_index];
 
+									if (ODDollarCost[demand_type][iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] > 0.1)
+									{
+										TRACE("");
+									}
 								}
 
 							} //for each destination zone
@@ -1386,13 +1757,21 @@ void g_SkimMatrixGenerationForAllDemandTypes(string FileName, bool bTimeDependen
 
 		FILE* st = NULL;
 
-		CString min_string;
+		int hour = departure_time / 60;
+		int min = (departure_time - hour * 60);
 
-		min_string.Format("_%d_min.csv", departure_time);
-		
+		CString time_str;
+		time_str.Format("_%02dh%02dm", hour, min);
 
-		CString final_file_name; 
-		final_file_name = file_name + min_string;
+		CString final_file_name;
+		final_file_name = file_name;
+
+		if (bTimeDependentFlag)
+		{
+			final_file_name += time_str;
+			final_file_name += ".csv";
+
+		}
 
 		fopen_s(&st, final_file_name, "w");
 		if (st != NULL)
@@ -1493,7 +1872,7 @@ void g_SkimMatrixGenerationForAllDemandTypes(string FileName, bool bTimeDependen
 
 
 
-						if (departure_time_index == 0 || new_data_flag == true)
+						if (departure_time_index == 0 || new_data_flag == true || bTimeDependentFlag == true)
 						{
 							fprintf(st, "%d,%d,%d,",
 								origin_zone,
@@ -1526,453 +1905,9 @@ void g_SkimMatrixGenerationForAllDemandTypes(string FileName, bool bTimeDependen
 			exit(0);
 
 		}
-		
-
-	}
-}
-
-
-
-void g_AgentBasedSkimMatrixGeneration(bool bTimeDependentFlag, int DemandType, double CurrentTime)
-{
-	bool bDistanceCost = false;
-
-	bool bRebuildNetwork = false;
-
-	if (bTimeDependentFlag == true)
-		bRebuildNetwork = true;
-
-
-	// find unique origin node
-	// find unique destination node
-	int number_of_threads = g_number_of_CPU_threads();
-
-
-	// calculate distance 
-	int node_size = g_NodeVector.size();
-	int link_size = g_LinkVector.size();
-
-	bool  bUseCurrentInformation = true;
-
-	int ComputationStartTimeInMin = g_DemandLoadingStartTimeInMin;
-	int ComputationEndTimeInMin = g_DemandLoadingEndTimeInMin;
-
-	if (bTimeDependentFlag)
-	{
-		bUseCurrentInformation = false;  // then time dependent travel time wil be used
-	}
-
-
-	if (bUseCurrentInformation == true)
-	{
-		ComputationStartTimeInMin = CurrentTime;
-		ComputationEndTimeInMin = CurrentTime + 1;
-
-	}
-	cout << "calculation interval " << ComputationStartTimeInMin << " -> " << ComputationEndTimeInMin << "min; with an aggregation time interval of " << g_AggregationTimetInterval << endl;
-
-
-	int StatisticsIntervalSize = max(1, (ComputationEndTimeInMin - ComputationStartTimeInMin) / g_AggregationTimetInterval);
-
-
-
-	//cout << "allocating memory for time-dependent ODMOE data...for " << g_ODZoneIDSize << " X " <<  g_ODZoneIDSize << "zones for " << 
-	//	StatisticsIntervalSize << " 15-min time intervals" << endl;
-	float*** ODTravelTime = NULL;
-	ODTravelTime = Allocate3DDynamicArray<float>(g_ODZoneIDSize + 1, g_ODZoneIDSize + 1, StatisticsIntervalSize);
-
-	float*** ODDistance = NULL;
-	ODDistance = Allocate3DDynamicArray<float>(g_ODZoneIDSize + 1, g_ODZoneIDSize + 1, StatisticsIntervalSize);
-
-	for (int i = 0; i <= g_ODZoneIDSize; i++)
-	for (int j = 0; j <= g_ODZoneIDSize; j++)
-	for (int t = 0; t < StatisticsIntervalSize; t++)
-	{
-
-		if (i == j)
-		{
-			ODTravelTime[i][j][t] = 0.5;
-			ODDistance[i][j][t] = 0.5;
-		}
-		else
-		{
-			ODTravelTime[i][j][t] = 0;
-			ODDistance[i][j][t] = 0;
-		}
-	}
-
-
-	if (bTimeDependentFlag)
-		cout << "calculating time-dependent skim matrix on " << number_of_threads << " processors ... " << endl;
-	else
-		cout << "calculating real-time skim matrix on " << number_of_threads << " processors ... " << endl;
-
-
-#pragma omp parallel for
-	for (int ProcessID = 0; ProcessID < number_of_threads; ProcessID++)
-	{
-
-
-		// create network for shortest path calculation at this processor
-		int	id = omp_get_thread_num();  // starting from 0
-
-
-		//special notes: creating network with dynamic memory is a time-consumping task, so we create the network once for each processors
-
-		if (bRebuildNetwork || g_TimeDependentNetwork_MP[id].m_NodeSize == 0)
-		{
-			g_TimeDependentNetwork_MP[id].BuildPhysicalNetwork(0, -1, g_TrafficFlowModelFlag, bUseCurrentInformation, CurrentTime);  // build network for this zone, because different zones have different connectors...
-		}
-
-		// from each origin zone
-		for (std::map<int, DTAZone>::iterator iterZone = g_ZoneMap.begin(); iterZone != g_ZoneMap.end(); iterZone++)
-		{
-
-			if ((iterZone->first%number_of_threads) == ProcessID)
-			{ // if the remainder of a zone id (devided by the total number of processsors) equals to the processor id, then this zone id is 
-
-				int origin_node_indx = iterZone->second.GetRandomOriginNodeIDInZone((0) / 100.0f);  // use pVehicle->m_AgentID/100.0f as random number between 0 and 1, so we can reproduce the results easily
-
-				if (origin_node_indx >= 0) // convert node number to internal node id
-				{
-
-					bDistanceCost = false;
-					for (int departure_time = ComputationStartTimeInMin; departure_time < ComputationEndTimeInMin; departure_time += g_AggregationTimetInterval)
-					{
-						g_TimeDependentNetwork_MP[id].TDLabelCorrecting_DoubleQueue(origin_node_indx, iterZone->first, departure_time, DemandType, DEFAULT_VOT, bDistanceCost, false, true);  // g_NodeVector.size() is the node ID corresponding to CurZoneNo
-
-
-						// to each destination zone
-						for (std::map<int, DTAZone>::iterator iterZone2 = g_ZoneMap.begin(); iterZone2 != g_ZoneMap.end(); iterZone2++)
-						{
-
-							int dest_node_index = iterZone2->second.GetRandomDestinationIDInZone((0) / 100.0f);
-							if (dest_node_index >= 0) // convert node number to internal node id
-							{
-
-								int time_interval_no = (departure_time - ComputationStartTimeInMin) / g_AggregationTimetInterval;
-								ODTravelTime[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] = g_TimeDependentNetwork_MP[id].LabelCostAry[dest_node_index];
-								ODDistance[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no] = g_TimeDependentNetwork_MP[id].LabelDistanceAry[dest_node_index];
-
-							}
-
-						} //for each demand type
-					}  // departure time
-				}  // with origin node numbers 
-			} // current thread	
-
-		}  // origin zone
-
-	}  // multiple threads
-
-
-	if (bTimeDependentFlag == true) // time-dependent skim files
-	{
-		for (int departure_time = ComputationStartTimeInMin; departure_time < ComputationEndTimeInMin; departure_time += g_AggregationTimetInterval)
-		{
-
-			CString str;
-			int time_interval_no = departure_time / g_AggregationTimetInterval;
-
-			str.Format("output_skim_demand_type_%d_min%d.csv", DemandType, time_interval_no * 15);
-
-			CString str_output_file_in_summary;
-			str_output_file_in_summary.Format("Output file =,%s\n", str);
-			g_SummaryStatFile.WriteTextLabel(str_output_file_in_summary);
-
-
-
-			FILE* st = NULL;
-			fopen_s(&st, str, "w");
-			if (st != NULL)
-			{
-
-				fprintf(st, "origin_zone,destination_zone,demand_type,travel_time_in_min,travel_distance,travel_cost\n");
-
-
-				// from each origin zone
-				for (std::map<int, DTAZone>::iterator iterZone = g_ZoneMap.begin(); iterZone != g_ZoneMap.end(); iterZone++)
-				{
-					// to each destination zone
-					for (std::map<int, DTAZone>::iterator iterZone2 = g_ZoneMap.begin(); iterZone2 != g_ZoneMap.end(); iterZone2++)
-					{
-
-						int time_interval_no = (departure_time - ComputationStartTimeInMin) / g_AggregationTimetInterval;
-						fprintf(st, "%d,%d,%4.2f,%4.2f\n",
-							iterZone->first,
-							iterZone2->first,
-							ODTravelTime[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no],
-							ODDistance[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no]);
-
-					}
-				}
-
-
-				fclose(st);
-			}
-
-		}
-
-	}
-	else // real time skim file
-	{
-
-		// step w: calculate experienced travel time for complete vehile trips
-
-		ODStatistics** ODMOEArray = NULL;
-
-		int total_number_of_zones = g_ZoneMap.size();
-
-		ODMOEArray = AllocateDynamicArray<ODStatistics>(total_number_of_zones, total_number_of_zones);
-
-		int i, j;
-		for (i = 0; i < total_number_of_zones; i++)
-		for (j = 0; j < total_number_of_zones; j++)
-		{
-
-			ODMOEArray[i][j].OriginZoneNumber = 0;
-			ODMOEArray[i][j].DestinationZoneNumber = 0;
-			ODMOEArray[i][j].TotalVehicleSize = 0;
-			ODMOEArray[i][j].TotalCompleteVehicleSize = 0;
-			ODMOEArray[i][j].TotalTravelTime = 0;
-			ODMOEArray[i][j].TotalDistance = 0;
-
-		}
-
-		std::map<int, DTAVehicle*>::iterator iterVM;
-		for (iterVM = g_VehicleMap.begin(); iterVM != g_VehicleMap.end(); iterVM++)
-		{
-
-			DTAVehicle* pVehicle = iterVM->second;
-
-			int origin_zone_no = g_ZoneMap[pVehicle->m_OriginZoneID].m_ZoneSequentialNo;
-			int destination_zone_no = g_ZoneMap[pVehicle->m_DestinationZoneID].m_ZoneSequentialNo;
-
-			ODMOEArray[origin_zone_no][destination_zone_no].TotalVehicleSize += 1;
-			int arrival_time_window_begin_time_in_min = CurrentTime - g_AggregationTimetInterval;
-			if (/*pVehicle->m_DemandType == DemandType && */pVehicle->m_NodeSize >= 2 && pVehicle->m_bComplete && pVehicle->m_ArrivalTime >= arrival_time_window_begin_time_in_min)  // with physical path in the network
-			{
-
-
-				ODMOEArray[origin_zone_no][destination_zone_no].OriginZoneNumber = pVehicle->m_OriginZoneID;
-				ODMOEArray[origin_zone_no][destination_zone_no].DestinationZoneNumber = pVehicle->m_DestinationZoneID;
-
-
-				ODMOEArray[origin_zone_no][destination_zone_no].TotalCompleteVehicleSize += 1;
-				ODMOEArray[origin_zone_no][destination_zone_no].TotalTravelTime += pVehicle->m_TripTime;
-				ODMOEArray[origin_zone_no][destination_zone_no].TotalDistance += pVehicle->m_Distance;
-			}
-		}
-
-
-		for (i = 0; i < total_number_of_zones; i++)
-		for (j = 0; j < total_number_of_zones; j++)
-		{
-
-			if (ODMOEArray[i][j].TotalCompleteVehicleSize >= 1)
-			{
-
-				ODTravelTime[i][j][0]
-					= ODMOEArray[i][j].TotalTravelTime / max(1, ODMOEArray[i][j].TotalCompleteVehicleSize);
-
-				ODDistance[i][j][0]
-					= ODMOEArray[i][j].TotalDistance / max(1, ODMOEArray[i][j].TotalCompleteVehicleSize);
-			}
-		}
-
-		//
-
-		FILE* st = NULL;
-		fopen_s(&st, "OD_real_time_skim.csv", "w");
-
-		if (st != NULL)
-		{
-			g_LogFile << " output ODMOE data to file OD_real_time_skim.csv" << endl;
-
-			fprintf(st, "from_zone_id,to_zone_id,number_of_agents,trip_time_in_min,trip_distance\n");
-
-			// from each origin zone
-			for (std::map<int, DTAZone>::iterator iterZone = g_ZoneMap.begin(); iterZone != g_ZoneMap.end(); iterZone++)
-			{
-				// to each destination zone
-				for (std::map<int, DTAZone>::iterator iterZone2 = g_ZoneMap.begin(); iterZone2 != g_ZoneMap.end(); iterZone2++)
-				{
-
-					for (int departure_time = ComputationStartTimeInMin; departure_time < ComputationEndTimeInMin; departure_time += g_AggregationTimetInterval)
-					{
-						int time_interval_no = (departure_time - ComputationStartTimeInMin) / g_AggregationTimetInterval;
-						fprintf(st, "%d,%d,%d,%4.2f,%4.2f\n",
-							iterZone->first,
-							iterZone2->first,
-							ODMOEArray[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo].TotalCompleteVehicleSize,
-							ODTravelTime[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no],
-							ODDistance[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][time_interval_no]
-							);
-
-					}
-
-				}
-			}
-
-			fclose(st);
-
-			if (ODMOEArray != NULL)
-				DeallocateDynamicArray<ODStatistics>(ODMOEArray, total_number_of_zones, total_number_of_zones);
-
-		}
-		else
-		{
-			cout << "File OD_real_time_skim.csv cannot be opened. Please check." << endl;
-			g_ProgramStop();
-		}
-
 
 
 	}
-
-	if (ODTravelTime != NULL)
-		Deallocate3DDynamicArray<float>(ODTravelTime, g_ODZoneIDSize + 1, g_ODZoneIDSize + 1);
-
-	if (ODDistance != NULL)
-		Deallocate3DDynamicArray<float>(ODDistance, g_ODZoneIDSize + 1, g_ODZoneIDSize + 1);
-
-}
-
-void g_AgentBasedSkimMatrixGenerationExtendedSingleFile(string file_name, double CurrentTime)
-{
-
-	bool bDistanceCost = true;
-
-	bool bRebuildNetwork = true;
-
-	// find unique origin node
-	// find unique destination node
-	int number_of_threads = g_number_of_CPU_threads();
-
-
-	// calculate distance 
-	int node_size = g_NodeVector.size();
-	int link_size = g_LinkVector.size();
-
-	bool  bUseCurrentInformation = true;
-
-	//cout << "allocating memory for time-dependent ODMOE data...for " << g_ODZoneIDSize << " X " <<  g_ODZoneIDSize << "zones for " << 
-	//	StatisticsIntervalSize << " 15-min time intervals" << endl;
-	float*** ODTravelTime = NULL;
-	ODTravelTime = Allocate3DDynamicArray<float>(g_ODZoneIDSize + 1, g_ODZoneIDSize + 1, g_DemandTypeVector.size() + 1);
-
-	float*** ODDistance = NULL;
-	ODDistance = Allocate3DDynamicArray<float>(g_ODZoneIDSize + 1, g_ODZoneIDSize + 1, g_DemandTypeVector.size() + 1);
-
-	for (int i = 0; i <= g_ODZoneIDSize; i++)
-	for (int j = 0; j <= g_ODZoneIDSize; j++)
-	for (int t = 1; t <= g_DemandTypeVector.size(); t++)
-	{
-
-		if (i == j)
-		{
-			ODTravelTime[i][j][t] = 0.5;
-			ODDistance[i][j][t] = 0.5;
-		}
-		else
-		{
-			ODTravelTime[i][j][t] = 0;
-			ODDistance[i][j][t] = 0;
-		}
-	}
-
-	cout << "calculating real-time skim matrix on " << number_of_threads << " processors ... " << endl;
-
-	for (int demand_type = 1; demand_type <= g_DemandTypeVector.size(); demand_type++)
-	{
-
-#pragma omp parallel for
-		for (int ProcessID = 0; ProcessID < number_of_threads; ProcessID++)
-		{
-
-
-			// create network for shortest path calculation at this processor
-			int	id = omp_get_thread_num();  // starting from 0
-
-
-			//special notes: creating network with dynamic memory is a time-consumping task, so we create the network once for each processors
-
-			g_TimeDependentNetwork_MP[id].BuildPhysicalNetwork(0, -1, g_TrafficFlowModelFlag, bUseCurrentInformation, CurrentTime);  // build network for this zone, because different zones have different connectors...
-
-			// from each origin zone
-			for (std::map<int, DTAZone>::iterator iterZone = g_ZoneMap.begin(); iterZone != g_ZoneMap.end(); iterZone++)
-			{
-
-				if ((iterZone->first%number_of_threads) == ProcessID)
-				{ // if the remainder of a zone id (devided by the total number of processsors) equals to the processor id, then this zone id is 
-
-					int origin_node_indx = iterZone->second.GetRandomOriginNodeIDInZone((0) / 100.0f);  // use pVehicle->m_AgentID/100.0f as random number between 0 and 1, so we can reproduce the results easily
-
-					if (origin_node_indx >= 0) // convert node number to internal node id
-					{
-
-						bDistanceCost = false;
-						g_TimeDependentNetwork_MP[id].TDLabelCorrecting_DoubleQueue(origin_node_indx, iterZone->first, CurrentTime, demand_type, DEFAULT_VOT, bDistanceCost, false, true);  // g_NodeVector.size() is the node ID corresponding to CurZoneNo
-
-
-						// to each destination zone
-						for (std::map<int, DTAZone>::iterator iterZone2 = g_ZoneMap.begin(); iterZone2 != g_ZoneMap.end(); iterZone2++)
-						{
-
-							int dest_node_index = iterZone2->second.GetRandomDestinationIDInZone((0) / 100.0f);
-							if (dest_node_index >= 0) // convert node number to internal node id
-							{
-
-								ODTravelTime[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][demand_type] = g_TimeDependentNetwork_MP[id].LabelCostAry[dest_node_index];
-								ODDistance[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][demand_type] = g_TimeDependentNetwork_MP[id].LabelDistanceAry[dest_node_index];
-
-
-							}
-
-						} //for each destination zone
-					}  // with origin node numbers 
-				} // current thread	
-
-			}  // origin zone
-
-		}  // multiple threads
-
-	}
-	FILE* st = NULL;
-	fopen_s(&st, file_name.c_str(), "w");
-	if (st != NULL)
-	{
-
-
-		// from each origin zone
-		for (std::map<int, DTAZone>::iterator iterZone = g_ZoneMap.begin(); iterZone != g_ZoneMap.end(); iterZone++)
-		{
-			// to each destination zone
-			for (std::map<int, DTAZone>::iterator iterZone2 = g_ZoneMap.begin(); iterZone2 != g_ZoneMap.end(); iterZone2++)
-			{
-
-				for (int t = 1; t <= g_DemandTypeVector.size(); t++)
-				{
-
-					fprintf(st, "%d,%d,%4.2f,%4.2f\n",
-						iterZone->first,
-						iterZone2->first,
-						ODTravelTime[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][t],
-						ODDistance[iterZone->second.m_ZoneSequentialNo][iterZone2->second.m_ZoneSequentialNo][t]);
-				}
-			}
-		}
-
-
-		fclose(st);
-	}
-	if (ODTravelTime != NULL)
-		Deallocate3DDynamicArray<float>(ODTravelTime, g_ODZoneIDSize + 1, g_ODZoneIDSize + 1);
-
-	if (ODDistance != NULL)
-		Deallocate3DDynamicArray<float>(ODDistance, g_ODZoneIDSize + 1, g_ODZoneIDSize + 1);
-
-
 }
 
 

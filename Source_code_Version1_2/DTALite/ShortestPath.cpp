@@ -504,7 +504,7 @@ void DTANetworkForSP::UpdateCurrentTravelTime(int DayNo, double CurrentTime)  //
 
 			int link_entering_time_interval = g_FindAssignmentIntervalIndexFromTime(t);
 
-			if (pLink->m_FromNodeNumber = 4 && pLink->m_ToNodeNumber == 5)
+			if (pLink->m_FromNodeNumber == 4 && pLink->m_ToNodeNumber == 5)
 			{
 				TRACE("");
 			}
@@ -593,8 +593,10 @@ void DTANetworkForSP::BuildTravelerInfoNetwork(int DayNo, int CurrentTime, float
 }
 
 
-bool DTANetworkForSP::TDLabelCorrecting_DoubleQueue(int origin, int origin_zone, int departure_time, int demand_type=1, float VOT = 10, bool distance_cost_flag = false, bool debug_flag = false, 
-	bool bDistanceCostByProductOutput = false)
+bool DTANetworkForSP::TDLabelCorrecting_DoubleQueue(
+	int origin, int origin_zone, int departure_time, 
+	int demand_type=1, float VOT = 10, bool distance_cost_flag = false, 
+	bool debug_flag = false, bool bDistanceCostByProductOutput = true)
 // time -dependent label correcting algorithm with deque implementation
 {
 	debug_flag = false;

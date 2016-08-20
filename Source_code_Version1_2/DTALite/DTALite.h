@@ -348,12 +348,12 @@ public:
 
 	double info_class_percentage[MAX_INFO_CLASS_SIZE];
 	double cumulative_info_class_percentage[MAX_INFO_CLASS_SIZE];
-	double default_VOT;
+	double Avg_VOT;
 	string demand_type_name;
 
 	DemandType()
 	{
-		default_VOT = 12;
+		Avg_VOT = 12;
 		vehicle_trip_multiplier_factor = 1;
 		cumulative_demand_type_percentage = 0;
 		demand_type_percentage = 0;
@@ -690,6 +690,7 @@ class DTAZone
 public:
 	int m_ZoneNumber;
 	int m_ZoneSequentialNo;
+	float m_ODME_ratio; 
 	int m_OriginVehicleSize;  // number of vehicles from this origin, for fast acessing
 	std::vector<int> m_OriginActivityVector;
 	std::vector<int> m_DestinationActivityVector;
@@ -747,6 +748,7 @@ public:
 		m_Capacity  =0;
 		m_Demand = 0;
 		m_OriginVehicleSize = 0;
+		m_ODME_ratio = 1.0f;
 
 	}
 	~DTAZone()
@@ -1360,24 +1362,9 @@ public:
 		m_FlowMeasurementError = 0;
 		m_AADT = 0;
 		m_bSensorData = false;
-		m_NumberOfCrashes = 0;
-		m_NumberOfFatalAndInjuryCrashes = 0;
-		m_NumberOfPDOCrashes = 0;
 
 		m_BPR_Distance =0;
 
-
-
-		m_Num_Driveways_Per_Mile = 20;
-		m_volume_proportion_on_minor_leg = 0.1;
-		m_Num_3SG_Intersections = 1;
-		m_Num_3ST_Intersections = 1;
-		m_Num_4SG_Intersections = 3;
-		m_Num_4ST_Intersections = 0;
-
-		m_Intersection_NumberOfCrashes = 0;
-		m_Intersection_NumberOfFatalAndInjuryCrashes =0;
-		m_Intersection_NumberOfPDOCrashes = 0;
 		m_SimulationHorizon	= TimeSize;
 		m_LinkMOEAry.resize(m_SimulationHorizon+1);
 
@@ -1413,13 +1400,10 @@ public:
 		m_SaturationFlowRate_In_vhc_per_hour_per_lane = 1800;
 
 
-		for (int p = 0; p < MAX_DEMAND_TYPE_SIZE; p++)
-		{
-		
-			RealTimePricingRate[p] = 0;
-		}
 
 	};
+	int m_FromNodeNumber;
+	int m_ToNodeNumber;
 
 	VehicleLinkPrice m_LROptimizationLinkPrice; 
 
@@ -1657,8 +1641,6 @@ public:
 	float m_CumulativeInCapacityCount;
 
 
-	int m_FromNodeNumber;
-	int m_ToNodeNumber;
 
 	float	m_Length;  // in miles
 	float   m_VehicleSpaceCapacity; // in vehicles
@@ -1680,13 +1662,10 @@ public:
 	float	m_LaneCapacity;  //Capacity used in BPR for each link, reduced due to link type and other factors.
 	float m_LoadingBufferWaitingTime;
 
-	float RealTimePricingRate[MAX_DEMAND_TYPE_SIZE];  // 4 is 3_+1 , as pricing 
-
 
 	char m_Direction;
 
 	std::string m_geometry_string, m_original_geometry_string;
-	double m_Intersection_NumberOfCrashes, m_Intersection_NumberOfFatalAndInjuryCrashes,m_Intersection_NumberOfPDOCrashes;
 	bool m_bOnRampType;
 	bool m_bOffRampType;
 	string m_LinkTypeName;
@@ -2398,22 +2377,6 @@ return pow(((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y)),0.5);
 	float m_AADT;
 	bool m_bSensorData;
 
-	// safety prediction
-	double m_Num_Driveways_Per_Mile;
-	double m_volume_proportion_on_minor_leg;
-	double m_Num_3SG_Intersections; 
-	double m_Num_3ST_Intersections; 
-	double m_Num_4SG_Intersections;
-	double m_Num_4ST_Intersections;
-
-	double m_NumberOfCrashes;
-	double m_NumberOfFatalAndInjuryCrashes;
-	double m_NumberOfPDOCrashes;
-
-
-
-	double m_AdditionalDelayDueToCrashes;
-
 	int LinkOutCapacity;  // unit: number of vehiles
 	int LinkLeftOutCapacity;  // unit: number of vehiles
 	int LinkInCapacity;   // unit: number of vehiles
@@ -2534,6 +2497,8 @@ return pow(((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y)),0.5);
 		float total_travel_time = 0;
 		int total_flow =0;
 		int time_end = min(starting_time+time_interval, m_SimulationHorizon);
+
+		float time_dependent_free_flow_traveltime = GetFreeMovingTravelTime(2, 0, starting_time);
 		for(t=starting_time; t< time_end; t++)
 		{
 			total_travel_time += m_LinkMOEAry[t].TotalTravelTime;
@@ -2543,11 +2508,11 @@ return pow(((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y)),0.5);
 		if(total_flow >= 1)
 		{
 			travel_time =  total_travel_time/total_flow;
-			if(travel_time < m_FreeFlowTravelTime)
-				travel_time = m_FreeFlowTravelTime; // minimum travel time constraint for shortest path calculation
+			if(travel_time < time_dependent_free_flow_traveltime)
+				travel_time = time_dependent_free_flow_traveltime; // minimum travel time constraint for shortest path calculation
 		}
 		else
-			travel_time =  m_FreeFlowTravelTime;
+			travel_time =  time_dependent_free_flow_traveltime;
 
 		if(travel_time > 99999)
 		{
@@ -2942,6 +2907,25 @@ public:
 	int m_NodeNumberSum;  // used for comparing two paths
 	SVehicleLink *m_LinkAry; // link list arrary of a vehicle path  // to do list, change this to a STL vector for better readability
 
+	SVehicleLink *m_OriginalLinkAry;
+	int m_OrgNodeSize;
+
+	void StoreOriginalPath()
+	{
+		if (m_OriginalLinkAry == NULL)  // we have not set the original path
+		{
+			m_OriginalLinkAry = new SVehicleLink[m_NodeSize];
+
+			for (int j = 0; j< m_NodeSize - 1; j++)  // for all nodes
+			{
+				m_OriginalLinkAry[j].LinkNo = m_LinkAry[j].LinkNo;
+			}
+
+			m_OrgNodeSize = m_NodeSize;
+		}
+
+	}
+
 	float m_PrevSpeed;
 
 	unsigned int m_RandomSeed;
@@ -3130,7 +3114,9 @@ public:
 		m_MinCost = 0;
 
 		m_LinkAry = NULL;
+		m_OriginalLinkAry = NULL;
 		m_NodeSize	= 0;
+		m_OrgNodeSize = 0;
 		m_bImpacted = false; 
 		m_InformationType = learning_from_hist_travel_time;
 		m_DemandType = 1;
@@ -4575,9 +4561,7 @@ extern CString g_GetTimeStampString(int time_stamp_in_mine);
 extern void g_FreeMemoryForVehicleVector();
 
 void g_AgentBasedShortestPathGeneration();
-void g_AgentBasedSkimMatrixGeneration(bool bTimeDependentFlag, int DemandType, double CurrentTime);
 void g_SkimMatrixGenerationForAllDemandTypes(string file_name, bool bTimeDependentFlag, double CurrentTime);
-void g_AgentBasedSkimMatrixGenerationExtendedSingleFile(string file_name, double CurrentTime);
 
 extern bool g_ReadLinkMeasurementFile();
 //extern void g_ReadObservedLinkMOEData(DTANetworkForSP* pPhysicalNetwork);
@@ -4597,6 +4581,9 @@ extern int g_ODEstimationFlag;
 extern int g_SensorDataCount;
 extern int g_ODEstimationMeasurementType;
 extern int g_ODEstimation_StartingIteration;
+extern int g_ODEstimation_EndingIteration;
+
+extern bool IsWithinODMEIteration(int iteration);
 
 extern float g_ODEstimation_max_ratio_deviation_wrt_hist_demand;
 

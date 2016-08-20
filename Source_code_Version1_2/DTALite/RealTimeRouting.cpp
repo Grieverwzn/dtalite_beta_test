@@ -210,6 +210,8 @@ void DTANetworkForSP::AgentBasedPathAdjustment(
 
 			if( pVeh->m_LinkAry !=NULL)  // delete the old path
 			{
+				pVeh->StoreOriginalPath();
+
 				delete pVeh->m_LinkAry;
 			}
 
@@ -557,6 +559,7 @@ void g_AgentBasedPathAdjustmentWithRealTimeInfo(int ProcessID, int VehicleID , d
 				//switching 
 				if (pVeh->m_LinkAry != NULL)  // delete the old path
 				{
+					pVeh->StoreOriginalPath();
 					delete pVeh->m_LinkAry;
 				}
 
@@ -835,6 +838,7 @@ void g_OpenMPAgentBasedPathAdjustmentWithRealTimeInfo(int VehicleID, double curr
 
 		if (pVeh->m_LinkAry != NULL)  // delete the old path
 		{
+			pVeh->StoreOriginalPath();
 			delete pVeh->m_LinkAry;
 		}
 
@@ -1016,8 +1020,11 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 
 
 	// compare the newly calculated path and existing path
-
 	int bSwitchFlag = 0;
+
+	if (detour_node_sequence.size() > 0)  // with external given detour
+		bSwitchFlag = 1;
+
 	for (int i = 0; i < NodeSize - 1; i++)
 	{
 
@@ -1028,7 +1035,7 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 		CurrentPathLinkList[count] = NewSubPathLinkList[i];
 		count += 1;
 	}
-
+	
 	NodeSize = count + 1;
 
 	if (NodeSize <= 1)
@@ -1041,12 +1048,11 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 
 	if (pVeh->m_LinkAry != NULL)  // delete the old path
 	{
+		pVeh->StoreOriginalPath();
 		delete pVeh->m_LinkAry;
 	}
 
-
-
-
+	
 	pVeh->m_NodeSize = NodeSize;
 
 
@@ -1107,6 +1113,34 @@ void g_UpdateAgentPathBasedOnDetour(int VehicleID, std::vector<int> detour_node_
 			}
 		}
 
+		bool bOutputDebugLogFile = true;
+		if (bOutputDebugLogFile)
+		{
+		
+			fprintf(g_DebugLogFile, "switching path for agent %d; updated path sequence = ", pVeh->m_AgentID);
+
+
+		for (int i = 0; i < pVeh->m_NodeSize - 1; i++)
+		{
+			int link_no = pVeh->m_LinkAry[i].LinkNo;
+	/*		DTALink* pLink = g_LinkMap[GetLinkStringID(usn, dsn)]; */
+			int from_node_number = g_LinkVector[link_no]->m_FromNodeNumber;
+
+			fprintf(g_DebugLogFile, "%d;", from_node_number);
+
+			if (i == pVeh->m_NodeSize - 2)  // last link
+			{
+				int to_node_number = g_LinkVector[link_no]->m_ToNodeNumber;
+
+				fprintf(g_DebugLogFile, "%d;", to_node_number);
+
+			}
+		}
+
+		fprintf(g_DebugLogFile, "\n");
+
+		}
+
 		_proxy_ABM_log(-1, "\n");
 		pVeh->m_Distance = Distance;
 		pVeh->m_NodeNumberSum = NodeNumberSum;
@@ -1129,6 +1163,7 @@ void g_UpdateAgentPathBasedOnNewDestinationOrDepartureTime(int VehicleID)
 
 	if (pVeh->m_LinkAry != NULL)  // delete the old path
 	{
+		pVeh->StoreOriginalPath();
 		delete pVeh->m_LinkAry;
 	}
 
@@ -1282,10 +1317,7 @@ void g_ReadRealTimeSimulationSettingsFile()
 		{
 			g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file = "RT_Input_Agent" + timestamp_str + ".csv";
 		}
-		if (RT_Input_DMS >= 1 && timestamp_in_second%RT_Input_DMS == 0)  // time resolution
-		{
-			g_RealTimeSimulationSettingsMap[timestamp_in_second].update_DMS_file = "RT_Input_DMS" + timestamp_str + ".csv";
-		}
+
 
 		if (RT_Input_Routing_Policy >= 1 && timestamp_in_second%RT_Input_Routing_Policy == 0)  // time resolution
 		{
@@ -1480,21 +1512,23 @@ void g_ExchangeRealTimeSimulationData(int day_no,int timestamp_in_second)
 
 			bool b_trip_file_ready = g_ReadTripCSVFile(g_RealTimeSimulationSettingsMap[timestamp_in_second].update_trip_file.c_str(), false);
 
-			g_UpdateRealTimeLinkAttributes();
-
-			int iteration = 0;
-
-			bool bRebuildNetwork = false;
-
-			//if(timestamp_in_min%15 ==0)  //rebuild the shoret path network every 15 min
-			//	bRebuildNetwork = true;
-
-
-			// use input link travel time 
-			g_WithIterationPathBuildingForAllAgents(iteration, bRebuildNetwork, false, timestamp_in_second / 60, timestamp_in_second / 60 + 15);
 
 			if (b_trip_file_ready)
 			{
+
+				g_UpdateRealTimeLinkAttributes();  // from scenario workzone
+
+				int iteration = 0;
+
+				bool bRebuildNetwork = false;
+
+				//if(timestamp_in_min%15 ==0)  //rebuild the shoret path network every 15 min
+				//	bRebuildNetwork = true;
+
+
+				// use input link travel time 
+				g_WithIterationPathBuildingForAllAgents(iteration, bRebuildNetwork, false, timestamp_in_second / 60, timestamp_in_second / 60 + 15);
+
 				break;
 			}
 			else
@@ -1612,4 +1646,7 @@ void g_UpdateRealTimeLinkAttributes()
 {
 	// read scenario file
 	g_ReadScenarioInputFiles(0);
+
+	fprintf(g_DebugLogFile, "reading scenario file ...\n" );
+
 }

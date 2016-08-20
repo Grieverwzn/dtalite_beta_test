@@ -272,7 +272,6 @@ float g_RelaxInFlowConstraintAfterDemandLoadingTime = 60;
 float g_MaxDensityRatioForVehicleLoading = 0.8f;
 float g_DefaultSaturationFlowRate_in_vehphpl;
 
-std::vector<VOTDistribution> g_VOTDistributionVector;
 std::vector<TimeDependentDemandProfile> g_TimeDependentDemandProfileVector;
 int g_DemandLoadingStartTimeInMin = 0;
 int g_DemandLoadingEndTimeInMin = 0;
@@ -460,7 +459,7 @@ void _proxy_ODME_log(int level, int iteration_no, const char *fmt, ...)
 
 void _proxy_ABM_log(int level, const char *fmt, ...)
 {
-
+	return;
 
 	va_list arg;
 
@@ -622,12 +621,6 @@ void g_ReadInputFiles()
 		CCSVWriter File_output_Agent;
 		File_output_Agent.Open("output_agent.csv");
 
-		//CCSVWriter File_output_ODME_table;
-		//File_output_ODME_table.Open("output_ODME_table.csv");
-
-		//CCSVWriter File_output_MovementMOE;
-		//File_output_MovementMOE.Open("output_MovementMOE.csv");
-
 		CCSVWriter File_output_ODTDMOE;
 		File_output_ODTDMOE.Open("output_ODTDMOE.csv");
 
@@ -645,7 +638,7 @@ void g_ReadInputFiles()
 	}
 
 
-	g_ReadAssignmentPeriodSettings();
+	 g_ReadAssignmentPeriodSettings();
 	//*******************************
 	// step 1: node input
 	cout << "Step 1: Reading file input_node.csv..." << endl;
@@ -1103,11 +1096,12 @@ void g_ReadInputFiles()
 			}
 
 
-			if (!parser_link.GetValueByFieldName("lane_capacity_in_vhc_per_hour", capacity))
+			if (!parser_link.GetValueByFieldName("lane_cap", capacity))
 			{
-				if (g_UEAssignmentMethod != analysis_accessibility_distance)
+				
+				if (!parser_link.GetValueByFieldName("lane_capacity_in_vhc_per_hour", capacity))
 				{
-					cout << "Field lane_capacity_in_vhc_per_hour has not been defined in file input_link.csv. Please check.";
+					cout << "Field lane_cap has not been defined in file input_link.csv. Please check.";
 					getchar();
 					exit(0);
 				}
@@ -1646,7 +1640,14 @@ void g_ReadInputFiles()
 
 			}
 
+			float ODME_ratio = 1.0f;
+			parser_zone.GetValueByFieldName("ODME_ratio", ODME_ratio);
 
+			if (ODME_ratio <= 0.01 || ODME_ratio >= 100)
+				ODME_ratio = 1.0;
+
+			
+			zone.m_ODME_ratio = ODME_ratio;
 			zone.m_ZoneSequentialNo = i++;
 			g_ZoneMap[zone_number] = zone;
 
@@ -2019,8 +2020,8 @@ void g_ReadInputFiles()
 			float ratio_person_info = 0;
 			float ratio_ecoSO = 0;
 
-			float default_VOT = 12;
-			parser_demand_type.GetValueByFieldName("avg_VOT", default_VOT);
+			float Avg_VOT = 12;
+			parser_demand_type.GetValueByFieldNameRequired("avg_VOT", Avg_VOT);
 
 
 			parser_demand_type.GetValueByFieldName("percentage_of_pretrip_info", ratio_pretrip);
@@ -2034,7 +2035,7 @@ void g_ReadInputFiles()
 
 			parser_demand_type.GetValueByFieldName("demand_type_name", element.demand_type_name);
 
-			element.default_VOT = default_VOT;
+			element.Avg_VOT = Avg_VOT;
 
 			element.info_class_percentage[1] = 0;  //learning 
 			element.info_class_percentage[2] = ratio_pretrip;
@@ -2083,19 +2084,6 @@ void g_ReadInputFiles()
 			}
 
 			g_DemandTypeVector.push_back(element);
-
-			//old_demand_type = demand_type;
-			//VOTDistribution element;
-			//element.demand_type = demand_type;
-			//element.percentage = percentage;
-			//element.VOT = VOT;
-			//element.cumulative_percentage_LB = cumulative_percentage;
-			//cumulative_percentage += percentage;
-			//element.cumulative_percentage_UB = cumulative_percentage;
-
-			//g_VOTDistributionVector.push_back(element);
-
-
 
 		}
 
@@ -2304,7 +2292,6 @@ void g_ReadInputFiles()
 
 	cout << "Number of Vehicle Types = " << g_VehicleTypeVector.size() << endl;
 	cout << "Number of Demand Types = " << g_DemandTypeVector.size() << endl;
-	cout << "Number of VOT records = " << g_VOTDistributionVector.size() << endl;
 
 	g_LogFile << "Number of Zones = " << g_ODZoneNumberSize << endl;
 	g_LogFile << "Number of Nodes = " << g_NodeVector.size() << endl;
@@ -2313,7 +2300,6 @@ void g_ReadInputFiles()
 	g_LogFile << "Demand Loading Period = " << g_DemandLoadingStartTimeInMin << " min -> " << g_DemandLoadingEndTimeInMin << " min." << endl;
 	g_LogFile << "Number of Vehicle Types = " << g_VehicleTypeVector.size() << endl;
 	g_LogFile << "Number of Demand Types = " << g_DemandTypeVector.size() << endl;
-	g_LogFile << "Number of VOT records = " << g_VOTDistributionVector.size() << endl;
 
 	// link type summary
 
@@ -2375,7 +2361,12 @@ void g_ReadInputFiles()
 	if (g_TrafficFlowModelFlag != tfm_BPR)  // if this is not BRP model, we require emission files 
 	{
 		// Xuesong Zhou to do: 
-		//ReadInputEmissionRateFile();
+		//if( g_EmissionDataOutputFlag == 1)
+		//{ 
+		//	ReadInputEmissionRateFile();
+
+		//}
+
 		//ReadInputCycleAverageEmissionFactors();
 
 		//ReadFractionOfOperatingModeForBaseCycle();
@@ -2395,6 +2386,10 @@ int CreateVehicles(int origin_zone, int destination_zone, float number_of_vehicl
 		return 0;
 	}
 	// reset the range of demand loading interval
+	
+	//apply ODME factor
+	number_of_vehicles *= g_ZoneMap[origin_zone].m_ODME_ratio;
+	
 
 	int number_of_vehicles_generated = g_GetRandomInteger_SingleProcessorMode(number_of_vehicles);
 	//g_LogFile << "r," << number_of_vehicles << "," << number_of_vehicles_generated << ",";
@@ -2814,11 +2809,9 @@ void ReadIncidentScenarioFile(string FileName, int scenario_no)
 
 				}
 
-				if (local_scenario_no == 0 || local_scenario_no == scenario_no)
-				{
+
 					pLink->IncidentCapacityReductionVector.push_back(cs);
 					count++;
-				}
 
 			}
 		}
@@ -2898,7 +2891,7 @@ void ReadWorkZoneScenarioFile(string FileName, int scenario_no)
 
 				float percentage = g_read_float(st);
 
-				if (percentage < 1.1f)
+				if (percentage < -0.1f)
 				{
 					cout << "Capacity Reduction Percentage = " << percentage << " % in line " << count + 1 << "in file Scenario_Work_Zone.csv. Please check!" << endl;
 
@@ -2921,11 +2914,9 @@ void ReadWorkZoneScenarioFile(string FileName, int scenario_no)
 					g_ProgramStop();
 
 				}
-				if (local_scenario_no == 0 || local_scenario_no == scenario_no)
-				{
+
 					pLink->CapacityReductionVector.push_back(cs);
 					count++;
-				}
 
 			}
 		}
@@ -3030,11 +3021,9 @@ void ReadGenericTrafficControlScenarioFile(string FileName, int scenario_no)
 					g_ProgramStop();
 
 				}
-				if (local_scenario_no == 0 || local_scenario_no == scenario_no)
-				{
+
 					pLink->CapacityReductionVector.push_back(cs);
 					count++;
-				}
 
 			}
 		}
@@ -3122,7 +3111,7 @@ void ReadWeatherScenarioFile(string FileName, int scenario_no)
 
 				float percentage = g_read_float(st);
 
-				if (percentage < 1.1f)
+				if (percentage < -0.1f)
 				{
 					cout << "Capacity Reduction Percentage = " << percentage << " % in line " << count + 1 << "in file Scenario_Work_Zone.csv. Please check!" << endl;
 
@@ -3145,11 +3134,9 @@ void ReadWeatherScenarioFile(string FileName, int scenario_no)
 					g_ProgramStop();
 
 				}
-				if (local_scenario_no == 0 || local_scenario_no == scenario_no)
-				{
+
 					pLink->CapacityReductionVector.push_back(cs);
 					count++;
-				}
 
 			}
 		}
@@ -3265,15 +3252,10 @@ void ReadEvacuationScenarioFile(string FileName, int scenario_no)
 					g_ProgramStop();
 
 				}
-				if (local_scenario_no == 0 || local_scenario_no == scenario_no)
-				{
 					//evacuation data record goes to both capacity reduction and evacuation vectors. the latter is used to inform drivers to switch
 					pLink->EvacuationImpactVector.push_back(cs);
 					pLink->CapacityReductionVector.push_back(cs);
-
-
 					count++;
-				}
 
 			}
 		}
@@ -3345,11 +3327,8 @@ void ReadMovementScenarioFile(string FileName, int scenario_no)
 				string movement_id = GetMovementStringID(element.in_link_from_node_id, element.in_link_to_node_id, element.out_link_to_node_id);
 				int middle_node_id = g_NodeNametoIDMap[element.in_link_to_node_id];
 
-				if (record_scenario_no == 0 || record_scenario_no == scenario_no)
-				{
 					g_NodeVector[middle_node_id].m_MovementMap[movement_id] = element;  // assign movement to individual node
 					count++;
-				}
 
 			}// skip -1 as no data available
 
@@ -3437,6 +3416,9 @@ void ReadVMSScenarioFile(string FileName, int scenario_no)
 						g_ProgramStop();
 
 					}
+
+
+
 					for (int i = 0; i < number_of_nodes; i++)
 					{
 						int node_number = g_read_integer(st);  // node number
@@ -3444,6 +3426,13 @@ void ReadVMSScenarioFile(string FileName, int scenario_no)
 						if (node_number == -1)
 						{
 							cout << "DMS has missing node_number " << endl;
+							g_ProgramStop();
+
+						}
+
+						if (i==0 /*first node*/ && node_number != dsn)
+						{
+							cout << "DMS on link " << usn << "->" << dsn << " detour no. " << path +1 << " should start from node " << dsn << endl;
 							g_ProgramStop();
 
 						}
@@ -3462,13 +3451,10 @@ void ReadVMSScenarioFile(string FileName, int scenario_no)
 				}
 
 
-				if (local_scenario_no == 0 || local_scenario_no == scenario_no)
-				{
 					g_bInformationUpdatingAndReroutingFlag = true;
 
 					pLink->MessageSignVector.push_back(is);
 					count++;
-				}
 			}
 		}
 
@@ -3587,11 +3573,8 @@ void ReadLinkTollScenarioFile(string FileName, int scenario_no)
 
 				}
 
-				if (local_scenario_no == 0 || local_scenario_no == scenario_no)
-				{
 					count++;
 					pLink->TollVector.push_back(tc);
-				}
 
 			}
 		}
@@ -3695,7 +3678,6 @@ void g_ReadScenarioInputFiles(int scenario_no)
 	if (g_ODEstimationFlag == false)
 	{
 		ReadVMSScenarioFile("Scenario_Dynamic_Message_Sign.csv", scenario_no);
-		//		ReadRadioMessageScenarioFile("Scenario_Radio_Message.csv",scenario_no);
 	}
 
 }
@@ -3762,7 +3744,7 @@ void OutputLinkMOEData(std::string fname, int Iteration, bool bStartWithEmpty)
 	{
 		if (bStartWithEmpty)
 		{
-			fprintf(st, "from_node_id,to_node_id,link_id_from_to,day_no,timestamp_in_min,travel_time_in_min,delay_in_min,link_in_volume_number_of_veh,link_out_volume_number_of_veh,link_volume_in_veh_per_hour_per_lane,link_volume_in_veh_per_hour_for_all_lanes,density_in_veh_per_distance_per_lane,speed,queue_length_percentage,number_of_queued_vehicles,cumulative_arrival_count,cumulative_departure_count,total_energy,total_CO2,total_NOX,total_CO,total_HC\n");
+			fprintf(st, "from_node_id,to_node_id,link_id_from_to,day_no,timestamp_in_min,travel_time_in_min,delay_in_min,link_in_volume_number_of_veh,link_out_volume_number_of_veh,link_volume_in_veh_per_hour_per_lane,link_volume_in_veh_per_hour_for_all_lanes,density_in_veh_per_distance_per_lane,speed,queue_length_percentage,number_of_queued_vehicles,cumulative_arrival_count,cumulative_departure_count,total_energy,total_CO2,total_NOX,total_CO,total_HC,total_PM,total_PM2.5\n");
 		}
 
 		for (unsigned li = 0; li < g_LinkVector.size(); li++)
@@ -3871,6 +3853,9 @@ void OutputLinkMOEData(std::string fname, int Iteration, bool bStartWithEmpty)
 					fprintf(st, "%f,", pLink->m_LinkMOEAry[time].NOX);
 					fprintf(st, "%f,", pLink->m_LinkMOEAry[time].CO);
 					fprintf(st, "%f,", pLink->m_LinkMOEAry[time].HC);
+					fprintf(st, "%f,", pLink->m_LinkMOEAry[time].PM);
+					fprintf(st, "%f,", pLink->m_LinkMOEAry[time].PM2_5);
+
 #endif
 			
 					fprintf(st, "\n");
@@ -3917,7 +3902,7 @@ void OutputRealTimeLinkMOEData(std::string fname, int current_time_in_min, int o
 		}
 		else
 		{
-			fprintf(st, "from_node_id,to_node_id,timestamp_in_min,travel_time_in_min,delay_in_min,link_volume_in_veh_per_hour_per_lane,link_volume_in_veh_per_hour_for_all_lanes,density_in_veh_per_mile_per_lane,speed,exit_queue_length_ratio\n");
+			fprintf(st, "from_node_id,to_node_id,timestamp_in_min,travel_time_in_min,delay_in_min,link_volume_in_veh_per_hour_per_lane,link_volume_in_veh_per_hour_for_all_lanes,density_in_veh_per_distance_per_lane,speed,exit_queue_length,cumulative_arrive_count,cumulative_departure_count\n");
 		}
 
 		for (unsigned li = 0; li < g_LinkVector.size(); li++)
@@ -3928,11 +3913,11 @@ void OutputRealTimeLinkMOEData(std::string fname, int current_time_in_min, int o
 			{
 
 				float LinkInFlow = float(pLink->GetArrivalFlow(time, ouput_MOE_aggregation_time_interval_in_min));
-				float travel_time = pLink->GetTravelTimeByMin(0, time, ouput_MOE_aggregation_time_interval_in_min, g_TrafficFlowModelFlag);
-
+				float travel_time = max(pLink->GetTravelTimeByMin(0, time, ouput_MOE_aggregation_time_interval_in_min, g_TrafficFlowModelFlag), pLink->m_prevailing_travel_time);
+				
 				float queue_length_ratio = 0;
 
-				queue_length_ratio = pLink->m_LinkMOEAry[time].ExitQueueLength / max(0.01, (pLink->m_KJam * pLink->m_Length * pLink->m_OutflowNumLanes)); /* in ratio*/
+				queue_length_ratio = pLink->m_LinkMOEAry[time].ExitQueueLength;
 
 				if (bTravelTimeOnly)
 				{
@@ -3947,7 +3932,7 @@ void OutputRealTimeLinkMOEData(std::string fname, int current_time_in_min, int o
 				else
 				{
 
-					fprintf(st, "%d,%d,%d,%6.2f,%6.2f,%6.2f,%6.2f,%6.2f,%6.2f,%3.2f,",
+					fprintf(st, "%d,%d,%d,%6.2f,%6.2f,%6.2f,%6.2f,%6.2f,%6.2f,%3.2f,%d,%d",
 						g_NodeVector[pLink->m_FromNodeID].m_NodeNumber,
 						g_NodeVector[pLink->m_ToNodeID].m_NodeNumber,
 						time,
@@ -3957,7 +3942,9 @@ void OutputRealTimeLinkMOEData(std::string fname, int current_time_in_min, int o
 						LinkInFlow*60.0,  /*per link hourly */
 						(pLink->m_LinkMOEAry[time].CumulativeArrivalCount - pLink->m_LinkMOEAry[time].CumulativeDepartureCount) / pLink->m_Length / max(1, pLink->m_OutflowNumLanes),  /*density*/
 						pLink->m_Length / max(0.1, travel_time)*60.0,
-						queue_length_ratio);
+						queue_length_ratio,
+						pLink->m_LinkMOEAry[time].CumulativeArrivalCount,
+						pLink->m_LinkMOEAry[time].CumulativeDepartureCount);
 
 					fprintf(st, "\n");
 				}
@@ -4035,7 +4022,7 @@ int g_InitializeLogFiles()
 	//g_ODME_log_level = g_GetPrivateProfileInt("debug", "ODME_log_level", 0, g_DTASettingFileName);
 
 
-	//g_ODME_result_file = fopen("debug_ODME_result.csv", "w");
+	g_ODME_result_file = fopen("ODME_zone_based_log.csv", "w");
 	//g_ABM_log_file = fopen("debug_ABM.log", "w");
 	//g_ABM_log_level = g_GetPrivateProfileInt("debug", "ABM_log_level", 0, g_DTASettingFileName);
 
@@ -4075,19 +4062,19 @@ int g_InitializeLogFiles()
 
 
 
-	//g_EstimationLogFile.open("debug_ODME_log.csv", ios::out);
-	//if (g_EstimationLogFile.is_open())
-	//{
-	//	g_EstimationLogFile.width(12);
-	//	g_EstimationLogFile.precision(3);
-	//	g_EstimationLogFile.setf(ios::fixed);
-	//}
-	//else
-	//{
-	//	cout << "File debug_ODME_log.csv cannot be opened, and it might be locked by another program!" << endl;
-	//	cin.get();  // pause
-	//	return 0;
-	//}
+	g_EstimationLogFile.open("ODME_link_based_log.csv", ios::out);
+	if (g_EstimationLogFile.is_open())
+	{
+		g_EstimationLogFile.width(12);
+		g_EstimationLogFile.precision(3);
+		g_EstimationLogFile.setf(ios::fixed);
+	}
+	else
+	{
+		cout << "File ODME_link_based_log.csv cannot be opened, and it might be locked by another program!" << endl;
+		cin.get();  // pause
+		return 0;
+	}
 
 
 	g_WarningFile.open("warning.log", ios::out);
@@ -4192,7 +4179,7 @@ void g_ReadDTALiteSettings()
 
 	g_EmissionDataOutputFlag = g_GetPrivateProfileInt("emission", "output_emission_data", 1, g_DTASettingFileName);
 
-	g_OutputEmissionOperatingModeData = g_GetPrivateProfileInt("emission", "output_opreating_mode_data", 0, g_DTASettingFileName);
+	g_OutputEmissionOperatingModeData = 0; // g_GetPrivateProfileInt("emission", "output_opreating_mode_data", 0, g_DTASettingFileName);
 	g_use_routing_policy_from_external_input = 0; // g_GetPrivateProfileInt("assignment", "use_routing_policy_from_external_input", 0, g_DTASettingFileName);
 
 	if (g_use_routing_policy_from_external_input == 1)
@@ -4271,7 +4258,7 @@ void g_ReadDTALiteSettings()
 	g_SystemOptimalStartingTimeinMin = 0; // g_GetPrivateProfileInt("system_optimal_assignment", "re_routing_start_time_in_min", 0, g_DTASettingFileName);
 
 	g_VMSPerceptionErrorRatio = 0.05;// g_GetPrivateProfileFloat("traveler_information", "coefficient_of_variation_of_VMS_perception_error", 0.05f, g_DTASettingFileName);
-	g_information_updating_interval_in_min = 5; // g_GetPrivateProfileInt("traveler_information", "information_updating_interval_in_min", 5, g_DTASettingFileName);
+	g_information_updating_interval_in_min = g_GetPrivateProfileInt("traveler_information", "information_updating_interval_in_min", 1, g_DTASettingFileName);
 
 	g_output_OD_path_MOE_file = 0; // = g_GetPrivateProfileInt("output", "OD_path_MOE_file", 0, g_DTASettingFileName);
 	g_output_OD_TD_path_MOE_file = 0;  // g_GetPrivateProfileInt("output", "OD_path_MOE_file", 0, g_DTASettingFileName);
@@ -4365,7 +4352,6 @@ void g_FreeMemory(bool exit_flag = true)
 	g_FreeMemoryForVehicleVector();
 	g_NetworkMOEAry.clear();
 
-	g_VOTDistributionVector.clear();
 	g_AssignmentMOEVector.clear();
 	g_ODTKPathVector.clear();
 	g_simple_vector_vehicles.clear();
@@ -4715,8 +4701,6 @@ void g_OutputSummaryKML(Traffic_MOE moe_mode)
 
 			switch (moe_mode)
 			{
-			case MOE_crashes:
-				value = pLink->m_NumberOfCrashes / base_rate; break;
 			case MOE_CO2:
 				value = pLink->TotalCO2 / base_rate; break;
 			case MOE_total_energy:
@@ -4754,22 +4738,7 @@ void g_OutputSummaryKML(Traffic_MOE moe_mode)
 				fprintf(st, "\t<Placemark>\n");
 				fprintf(st, "\t <name>%d</name>\n", total_count);
 
-				if (moe_mode == MOE_crashes)
-				{
-
-					if (g_GetRandomRatio()* pLink->m_NumberOfCrashes < pLink->m_NumberOfFatalAndInjuryCrashes)
-					{
-						fprintf(st, "\t <description>fatal crash</description>\n");
-					}
-					else if (g_GetRandomRatio()* pLink->m_NumberOfCrashes < pLink->m_NumberOfPDOCrashes)
-					{
-						fprintf(st, "\t <description>PTO crash</description>\n");
-					}
-					else
-					{
-						fprintf(st, "\t <description>crash</description>\n");
-					}
-				}
+	
 				if (moe_mode == MOE_CO2 || moe_mode == MOE_total_energy)
 				{
 					fprintf(st, "\t <description>%d-%d</description>\n", g_NodeVector[pLink->m_FromNodeID].m_NodeNumber, g_NodeVector[pLink->m_ToNodeID].m_NodeNumber);
@@ -4966,7 +4935,7 @@ void g_ReadDemandFileBasedOnDemandFileList()
 
 
 
-	//step 2:
+	////step 2:
 	if (g_ODEstimationFlag == 1)
 	{
 		g_SystemDemand.Initialize();
@@ -5679,21 +5648,13 @@ void g_ReadDemandFileBasedOnDemandFileList()
 
 					int line_no = 0;
 
-					int ZoneIndexArray[15000];
-					for (int zone_index = 0; zone_index < number_of_zones; zone_index++)
-					{
-						ZoneIndexArray[zone_index] = 1;
-						if (g_ZoneMap.find(zone_index) == g_ZoneMap.end())
-						{
-							ZoneIndexArray[zone_index] = -1; // origin zone or destination zone has not been defined, skipped. 
-						}
-
-					}
 
 					for (int origin_zone_index = 0; origin_zone_index < number_of_zones; origin_zone_index++)
 					{
 						int origin_zone = g_read_integer(st); // read the origin zone number
 
+						if(origin_zone == -1)
+							break;
 						if (g_ZoneMap.find(origin_zone) == g_ZoneMap.end())
 						{
 							continue; // origin zone  has not been defined, skipped. 
@@ -5707,11 +5668,6 @@ void g_ReadDemandFileBasedOnDemandFileList()
 						{
 							int destination_zone = LineIntegerVector[destination_zone_index];
 							float value = g_read_float(st);
-
-							if (ZoneIndexArray[destination_zone_index] == -1)
-							{
-								continue; // destination zone has not been defined, skipped. 
-							}
 
 
 							float number_of_vehicles = value*g_DemandGlobalMultiplier*local_demand_loading_multiplier;  // read the value
@@ -5988,17 +5944,17 @@ void g_ReadAssignmentPeriodSettings()
 
 				if (i * 15 >= g_DemandLoadingStartTimeInMin && i * 15 < g_PlanningHorizon)
 				{ 
-					CString time_string;
+					//CString time_string;
 
-					int hour = i / 4;
-					int min = (i - hour * 4) * 15;
+					//int hour = i / 4;
+					//int min = (i - hour * 4) * 15;
 
-					if (hour<10)
-						time_string.Format("'0%d:%02d", hour, min);
-					else
-						time_string.Format("'%2d:%02d", hour, min);
+					//if (hour<10)
+					//	time_string.Format("'0%d:%02d", hour, min);
+					//else
+					//	time_string.Format("'%2d:%02d", hour, min);
 
-					int period_start_flag  = g_GetPrivateProfileInt("skim_output", time_string, 1, g_DTASettingFileName);
+					int period_start_flag = 1; //g_GetPrivateProfileInt("skim_output", time_string, 1, g_DTASettingFileName);
 					g_AssignmentIntervalOutputFlag[i] = period_start_flag;
 					if (period_start_flag == 1 && i * 15 != g_DemandLoadingStartTimeInMin)   // if see 1, increaese the index counter by 1, if we are at the boundary of interval then there is no need to swtich to next time interval
 					{
@@ -6012,14 +5968,14 @@ void g_ReadAssignmentPeriodSettings()
 
 				}
 
-				i++;
+
 			}
 
 		g_AssignmentIntervalEndTimeInMin[index_counter] = g_DemandLoadingEndTimeInMin;  // close the last time interval with the end time 
 
 		g_NumberOfSPCalculationPeriods = index_counter + 1;  // final update from assignment time interval file
 
-		g_SummaryStatFile.WriteParameterValue("User Defined Assignment Intervals=", g_NumberOfSPCalculationPeriods);
+	//	g_SummaryStatFile.WriteParameterValue("User Defined Assignment Intervals=", g_NumberOfSPCalculationPeriods);
 
 
 		//for (int ti = 0; ti < g_NumberOfSPCalculationPeriods; ti++)
