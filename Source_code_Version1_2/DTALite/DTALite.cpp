@@ -2361,16 +2361,15 @@ void g_ReadInputFiles()
 	if (g_TrafficFlowModelFlag != tfm_BPR)  // if this is not BRP model, we require emission files 
 	{
 		// Xuesong Zhou to do: 
-		//if( g_EmissionDataOutputFlag == 1)
-		//{ 
-		//	ReadInputEmissionRateFile();
+		if( g_EmissionDataOutputFlag == 1)
+		{ 
+			ReadInputEmissionRateFile();
 
-		//}
+		}
 
-		//ReadInputCycleAverageEmissionFactors();
-
+		//ReadInputCycleAverageEmissionFactors();  // we do not read these two tables for original emisison calculation that need base cycle average 
 		//ReadFractionOfOperatingModeForBaseCycle();
-		//SetupOperatingModeVector();
+		SetupOperatingModeVector();
 	}
 
 

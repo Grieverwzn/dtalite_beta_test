@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerWorkingDirectory>C:\temp\3-corridor\3-corridor</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>C:\Prerelease_test\DTALite-NEXTA-Software-Package\data_set_1_3-corridor</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerWorkingDirectory>C:\temp\data_set_1_3-corridor</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>C:\Prerelease_test\DTALite-NEXTA-Software-Package\data_set_1_3-corridor</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerAttach>false</LocalDebuggerAttach>
   </PropertyGroup>
