@@ -3521,11 +3521,11 @@ bool CTLiteDoc::ReadLinkCSVFile(LPCTSTR lpszFileName, bool bCreateNewNodeFlag = 
 			parser.GetValueByFieldName("KML_yellow_height",yellow_height);
 
 
-			if(!parser.GetValueByFieldName("lane_capacity_in_vhc_per_hour",capacity_in_pcphpl))
+			if(!parser.GetValueByFieldName("lane_cap",capacity_in_pcphpl))
 			{
 				if(!capacity_field_warning)
 				{
-				error_message.Format("Link %s: Field lane_capacity_in_vhc_per_hour has not been defined in file input_link.csv. Please check.",name.c_str ());
+				error_message.Format("Link %s: Field lane_cap has not been defined in file input_link.csv. Please check.",name.c_str ());
 				AfxMessageBox(error_message);
 				capacity_field_warning = true;
 				}

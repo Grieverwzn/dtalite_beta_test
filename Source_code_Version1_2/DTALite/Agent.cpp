@@ -38,7 +38,7 @@ int g_FindNodeNumberWithCoordinate(double x, double y, double min_distance = 0.1
 void g_AddVehicleID2ListBasedonDepartureTime(DTAVehicle * pVehicle)
 {
 
-	int simulation_time_no = (int)(pVehicle->m_DepartureTime * 10);
+	int simulation_time_no = (int)(pVehicle->m_DepartureTime * g_simulation_time_intervals_per_min);
 	g_OriginalVehicleTDListMap[simulation_time_no].m_AgentIDVector.push_back(pVehicle->m_AgentID);
 
 
@@ -497,11 +497,11 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 					//remove vehicle id for the old departure time slot
 
 					int int_to_remove = pVehicle->m_AgentID;
-					g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * 10].m_AgentIDVector.erase(std::remove(g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * 10].m_AgentIDVector.begin(), g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * 10].m_AgentIDVector.end(), int_to_remove), g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * 10].m_AgentIDVector.end());
+					g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * g_simulation_time_intervals_per_min].m_AgentIDVector.erase(std::remove(g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * g_simulation_time_intervals_per_min].m_AgentIDVector.begin(), g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * g_simulation_time_intervals_per_min].m_AgentIDVector.end(), int_to_remove), g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * g_simulation_time_intervals_per_min].m_AgentIDVector.end());
 
 
 					//add vehicle id for the new departure time slot
-					g_VehicleTDListMap[departure_time * 10].m_AgentIDVector.push_back(pVehicle->m_AgentID);
+					g_VehicleTDListMap[departure_time * g_simulation_time_intervals_per_min].m_AgentIDVector.push_back(pVehicle->m_AgentID);
 
 					pVehicle->m_DepartureTime = departure_time;
 					pVehicle->m_PreferredDepartureTime = departure_time;
@@ -703,7 +703,7 @@ bool g_ReadTripCSVFile(string file_name, bool bOutputLogFlag)
 
 				}else
 				{
-					g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * 10].m_AgentIDVector.push_back(pVehicle->m_AgentID);
+					g_VehicleTDListMap[(int)pVehicle->m_DepartureTime * g_simulation_time_intervals_per_min].m_AgentIDVector.push_back(pVehicle->m_AgentID);
 				}
 				
 			

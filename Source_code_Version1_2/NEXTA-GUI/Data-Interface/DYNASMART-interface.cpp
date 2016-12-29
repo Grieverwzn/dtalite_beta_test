@@ -98,7 +98,6 @@ bool CTLiteDoc::ReadGPSData(string FileName)
 
 			pVehicle->m_NodeSize	= 0;
 			pVehicle->m_DemandType = 1;
-			pVehicle->m_PricingType = 1;
 
 			pVehicle->m_VOT = 10;
 			pVehicle->m_TollDollarCost = 0;
@@ -1328,14 +1327,7 @@ BOOL CTLiteDoc::ReadDYNASMARTSimulationResults()
 
 				pVehicle->m_NodeSize    = g_read_integer(pFile) +1;  // +1 as we need to allocate one more node for the first node
 				pVehicle->m_DemandType = g_read_integer(pFile);
-				if(pVehicle->m_DemandType==1)
-					pVehicle->m_PricingType =  1;
 
-				if(pVehicle->m_DemandType==2)
-					pVehicle->m_PricingType =  3;
-
-				if(pVehicle->m_DemandType==3)
-					pVehicle->m_PricingType =  2;
 
 				if(bformat_b_flag==false)
 				{
@@ -2388,7 +2380,6 @@ bool CTLiteDoc::ReadDYNASMARTVehicleTrajectoryFile(LPCTSTR lpszFileName, int dat
 			pVehicle->m_NodeSize    = g_read_integer(pFile) +1;  // +1 as we need to allocate one more node for the first node
 			pVehicle->m_DemandType = g_read_integer(pFile);
 			g_read_integer(pFile);
-			pVehicle->m_PricingType =  pVehicle->m_DemandType ;
 
 			//                      pVehicle->m_VehicleType = (unsigned char)g_read_integer(pFile);
 

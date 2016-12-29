@@ -137,7 +137,7 @@ BOOL CLinePlotTestDlg::OnInitDialog()
 	{
 		CLinePlotData element = m_PlotDataVector[i];
 		m_ListDataSource.AddString(element.szName);
-		m_LinePlot.Add(element.szName, element.crPlot, element.lineType,  &(element.vecData));
+		m_LinePlot.Add(element.szName, element.crPlot, element.lineType,  &(element.vecData) );
 	}
 
 	if(m_PlotDataVector.size() >0)

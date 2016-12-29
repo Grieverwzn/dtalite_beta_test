@@ -497,10 +497,6 @@ EXSTYLE WS_EX_APPWINDOW
 CAPTION "Data Summary Dialog"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Exit",IDOK,505,245,50,14
-    CONTROL         "Vechicle Statistics Classification Chart",IDC_VEHICLE_CHART1,
-                    "MFC_NSChartCtrl",WS_BORDER | WS_TABSTOP,7,37,436,222
-    GROUPBOX        "Chart style",IDC_STATIC,458,110,60,40,WS_GROUP
     CONTROL         "Pie Chart",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON,467,121,45,10
     CONTROL         "Bar Chart",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,468,134,45,10
     GROUPBOX        "Chart colors",IDC_STATIC,530,110,69,55,WS_GROUP
@@ -521,6 +517,10 @@ BEGIN
     COMBOBOX        IDC_COMBO_MAX_COLUMNS,462,167,42,146,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     DEFPUSHBUTTON   "Export All Data to Excel",ID_EXPORT_ALL_DATA,510,193,101,14
     LTEXT           "",IDC_STATIC_MESSAGE,464,233,119,8
+    GROUPBOX        "Chart style",IDC_STATIC,458,110,60,40,WS_GROUP
+    CONTROL         "Vechicle Statistics Classification Chart",IDC_VEHICLE_CHART1,
+                    "MFC_NSChartCtrl",WS_BORDER | WS_TABSTOP,7,37,436,222
+    DEFPUSHBUTTON   "Exit",IDOK,505,245,50,14
 END
 
 IDD_VISUALIZATION_CONFIG DIALOGEX 0, 0, 316, 130
@@ -797,12 +797,12 @@ BEGIN
     LTEXT           "Size of Movement Text:",IDC_STATIC,297,187,88,9
     PUSHBUTTON      "+",IDC_BUTTON_INCREASE_TEXT_SIZE,401,185,14,12
     PUSHBUTTON      "-",IDC_BUTTON_DECREASE_TEXT_SIZE,421,185,14,12
-    LTEXT           "Size of Link Text:",IDC_STATIC,117,169,55,9
+    LTEXT           "Size of Link Text:",IDC_STATIC,117,169,75,9
     LTEXT           "Size of Node Text:",IDC_STATIC,7,169,61,9
     PUSHBUTTON      "+",IDC_BUTTON_INCREASE_NODE_TEXT_SIZE,71,169,14,12
     PUSHBUTTON      "-",IDC_BUTTON_DECREASE_NODE_TEXT_SIZE,89,169,14,12
-    PUSHBUTTON      "+",IDC_BUTTON_INCREASE_LINK_TEXT_SIZE2,177,169,14,12
-    PUSHBUTTON      "-",IDC_BUTTON_DECREASE_LINK_TEXT_SIZE2,195,169,14,12
+    PUSHBUTTON      "+",IDC_BUTTON_INCREASE_LINK_TEXT_SIZE2,199,168,14,12
+    PUSHBUTTON      "-",IDC_BUTTON_DECREASE_LINK_TEXT_SIZE2,217,168,14,12
 END
 
 IDD_DIALOG_NodeProperties DIALOGEX 0, 0, 273, 135
@@ -997,16 +997,14 @@ BEGIN
     DEFPUSHBUTTON   "Fetch GIS Field Names",ID_GIS_FIELD_NAME,87,315,102,14
 END
 
-IDD_DIALOG_INFORMATION_WITH_HELP DIALOGEX 0, 0, 316, 183
+IDD_DIALOG_INFORMATION_WITH_HELP DIALOGEX 0, 0, 316, 136
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Information"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "NEXT",IDOK,205,162,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,259,162,50,14
-    PUSHBUTTON      "On-Line Help Document",IDC_BUTTON_ONLINE_DOCUMENT,133,121,92,14
-    EDITTEXT        IDC_EDIT1,29,16,231,93,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | ES_WANTRETURN
-    PUSHBUTTON      "Sample File(s)",IDC_BUTTON_SampleFile,30,121,92,14
+    DEFPUSHBUTTON   "NEXT",IDOK,205,115,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,259,115,50,14
+    EDITTEXT        IDC_EDIT1,29,16,231,76,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | ES_WANTRETURN
 END
 
 IDD_DIALOG_GIS_IMPORT_SHAPE_EXPORT DIALOGEX 0, 0, 422, 232
@@ -1021,9 +1019,9 @@ BEGIN
     LTEXT           "Shape File of Point/Line Data Layer:",IDC_STATIC,7,39,116,8
     RTEXT           "Message List:",IDC_STATIC,7,142,44,8
     DEFPUSHBUTTON   "Export to CSV File",ID_EXPORT_CSV_FILE,7,65,96,14
-    LTEXT           "GIS Shape File ->AMS CVS File:",IDC_STATIC,7,6,182,14,0,WS_EX_STATICEDGE
+    LTEXT           "GIS Shape File ->DTALite CVS File:",IDC_STATIC,7,6,182,14,0,WS_EX_STATICEDGE
     CONTROL         "",IDC_STATIC,"Static",SS_BLACKFRAME,201,6,1,141
-    LTEXT           "AMS CSV File->GIS Shape File",IDC_STATIC,207,6,182,14,0,WS_EX_STATICEDGE
+    LTEXT           "DTALite CSV File->GIS Shape File",IDC_STATIC,207,6,182,14,0,WS_EX_STATICEDGE
     LTEXT           "CSV File with geometry Field",IDC_STATIC,209,39,91,8
     EDITTEXT        IDC_EDIT_CSV_SHAPE_FILE,207,48,178,15,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_BUTTON_Find_CSF_File,388,50,20,14
@@ -1687,7 +1685,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 309
         TOPMARGIN, 7
-        BOTTOMMARGIN, 176
+        BOTTOMMARGIN, 129
     END
 
     IDD_DIALOG_GIS_IMPORT_SHAPE_EXPORT, DIALOG
@@ -1780,8 +1778,11 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "res\\TLite.ico"
+
 IDR_TLiteTYPE           ICON                    "res\\TLiteDoc.ico"
+
 IDR_MAINFRAME32         ICON                    "res\\idr_main.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1789,29 +1790,53 @@ IDR_MAINFRAME32         ICON                    "res\\idr_main.ico"
 //
 
 IDB_PATH_ICON           BITMAP                  "res\\smallico.bmp"
+
 IDB_PATH_CHECK          BITMAP                  "res\\stateico.bmp"
+
 IDR_VIEW_TOOLBAR        BITMAP                  "res\\toolbar1.bmp"
+
 IDR_MAINFRAME1          BITMAP                  "res\\mainfram.bmp"
+
 IDR_MAINFRAME2          BITMAP                  "res\\bmp00001.bmp"
+
 IDB_INCIDENT            BITMAP                  "res\\incident.bmp"
+
 IDB_VMS                 BITMAP                  "res\\VMS.bmp"
+
 IDB_WORKZONE            BITMAP                  "res\\workzone.bmp"
+
 IDB_TOLL                BITMAP                  "res\\toll.bmp"
+
 IDR_AMS_TOOLBAR         BITMAP                  "res\\bmp00002.bmp"
+
 IDR_TOOLBAR1            BITMAP                  "res\\bmp00003.bmp"
+
 IDR_TOOLBARLAYER        BITMAP                  "res\\toolbar2.bmp"
+
 IDR_MAINFRAME_RAIL      BITMAP                  "res\\bmp00004.bmp"
+
 IDR_VIEW_TOOLBAR_NU     BITMAP                  "res\\view_too.bmp"
+
 IDB_LINK_CLOSURE        BITMAP                  "res\\bmp00005.bmp"
+
 IDR_MAINFRAME4          BITMAP                  "res\\bmp00006.bmp"
+
 IDB_RADIOMESSAGE        BITMAP                  "res\\vms1.bmp"
+
 IDB_RAMP                BITMAP                  "res\\ramp.bmp"
+
 IDB_BUSTOLL             BITMAP                  "res\\toll1.bmp"
+
 IDB_BRTTOLL             BITMAP                  "res\\bustoll1.bmp"
+
 IDB_PRTOLL              BITMAP                  "res\\brttoll1.bmp"
+
 IDB_BUSMOVING           BITMAP                  "res\\bmp00007.bmp"
+
 IDB_CARMOVING           BITMAP                  "res\\busmovin.bmp"
+
 IDB_AGNETMOVING         BITMAP                  "res\\carmovin.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -2147,6 +2172,13 @@ BEGIN
         MENUITEM "View Movement Data Table",    ID_MOVEMENT_VIEWMOVEMENTDATATABLE
         MENUITEM "Highlight Prohibited Movements", ID_MOVEMENT_HIGHLIGHTPROHIBITEDMOVEMENTS
     END
+    POPUP "Connector"
+    BEGIN
+        MENUITEM "View Activity Location Data Table", ID_CONNECTOR_VIEWACTIVITYLOCATIONDATATABLE
+        MENUITEM SEPARATOR
+        MENUITEM "Generate Physical Zone Centroids on Road Network", ID_TOOLS_GENERATEPHYSICALZONECENTROIDSONROADNETWORK
+        MENUITEM "Regenerate Activity Locations for All Zones", ID_DEMAND_REGENERATEACTIVITYLOCATIONS
+    END
     POPUP "Zone"
     BEGIN
         MENUITEM "Highlight/Hide Associated Acitity Locations of Selected Zone", ID_ZONE_HIGHLIGHTASSOCIATEDACITITYLOCATIONS
@@ -2240,7 +2272,6 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Background Color",            ID_VIEW_BACKGROUNDCOLOR
     END
-    MENUITEM "Reference Line",              65535
     POPUP "Backup"
     BEGIN
         POPUP "Transit"
@@ -2254,13 +2285,6 @@ BEGIN
             MENUITEM "Show Transit Links Only",     ID_TRANSIT_SHOWTRANSITLINKSONLY
             MENUITEM "Show Walk Links Only",        ID_TRANSIT_SHOWWALKLINKSONLY
         END
-    END
-    POPUP "Connector"
-    BEGIN
-        MENUITEM "View Activity Location Data Table", ID_CONNECTOR_VIEWACTIVITYLOCATIONDATATABLE
-        MENUITEM SEPARATOR
-        MENUITEM "Generate Physical Zone Centroids on Road Network", ID_TOOLS_GENERATEPHYSICALZONECENTROIDSONROADNETWORK
-        MENUITEM "Regenerate Activity Locations for All Zones", ID_DEMAND_REGENERATEACTIVITYLOCATIONS
     END
 END
 
@@ -2480,6 +2504,7 @@ BEGIN
             MENUITEM "View Validation Plot for Lane Density", ID_MOE_VIEWODDEMANDESTIMATIONSUMMARYPLOT_LaneDensity
             MENUITEM "View Validation Plot for Link Speed", ID_SENSORTOOLS_VIEWVALIDATIONPLOTFORLINKSPEED
             MENUITEM "Generate Aggregated Data and View Validation Results in Excel", ID_SENSORTOOLS_CONVERTTOHOURCOUNT
+            MENUITEM "Map External Line ID from optional reference line to Speed Sensor ID in link layer", ID_REFERENCE_CREATESPEEDSENSORMAPPINGFORBASELINENETWORK
         END
         POPUP "Coordinate Management"
         BEGIN
@@ -3215,6 +3240,82 @@ BEGIN
     END
 END
 
+IDR_TLITETYPE3 MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "Import GIS Data Set",         ID_IMPORT_AMSDATASET
+        MENUITEM "Export GIS Data Set",         ID_IMPORT_ARCGISSHAPEFILE
+        MENUITEM "Export Link 2D KML",          ID_EXPORT_EXPORTLINK2DKMLFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&Open Traffic Network Project...\tCtrl+O", ID_FILE_OPEN_NEW_DOC
+        MENUITEM "&Open Traffic Network Only (Without Loading Simulation Data)...", ID_FILE_OPEN_NETWORK_ONLY
+        MENUITEM SEPARATOR
+        MENUITEM "Save Project",                ID_FILE_SAVE_PROJECT
+        MENUITEM "Save Project As",             ID_FILE_SAVE_PROJECT_AS
+        MENUITEM SEPARATOR
+        MENUITEM "Check Data Loading Status",   ID_FILE_DATALOADINGSTATUS
+        MENUITEM SEPARATOR
+        MENUITEM "Open Project Folder",         ID_TOOLS_PROJECTFOLDER
+        MENUITEM "Open NeXTA Program Folder",   ID_TOOLS_OPENNEXTAPROGRAMFOLDER
+        MENUITEM SEPARATOR
+        MENUITEM "&Close",                      ID_FILE_CLOSE
+        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "View"
+    BEGIN
+        MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
+        MENUITEM "Simulation ToolBar",          ID_VIEW_SIMULATIONTOOLBAR
+        MENUITEM "MOE Toolbar",                 ID_VIEW_MOETOOLBAR
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        MENUITEM "GIS Layer Panel",             ID_VIEW_GIS_Layer_Panel
+        MENUITEM SEPARATOR
+        POPUP "Node"
+        BEGIN
+            MENUITEM "Increase Node Size (Page Up Key)", ID_VIEW_INCREASENODESIZE
+            MENUITEM "Decrease Node Size (Page Down Key)", ID_VIEW_DECREATENODESIZE
+            MENUITEM "Increase Node Text Size",     ID_NODE_INCREASENODETEXTSIZE
+            MENUITEM "Decrease Node Text Size",     ID_NODE_DECREASENODETEXTSIZE
+        END
+        POPUP "Link"
+        BEGIN
+            MENUITEM "Increase Bandwidth (Keyboard  Shortcut: Up Arrow)", ID_LINK_INCREASEBANDWIDTH
+            MENUITEM "Decrease Bandwidth  (Keyboard  Shortcut: Down Arrow)", ID_LINK_DECREASEBANDWIDTH
+            MENUITEM "Show/Hide Link Direction Arrow", ID_SHOW_LINKARROW
+        END
+        POPUP "Zone"
+        BEGIN
+            MENUITEM "Highlight Activity Locations and Show Zone ID", ID_VIEW_HIGHLIGHTCENTROIDSANDACTIVITYLOCATIONS
+        END
+        POPUP "Path"
+        BEGIN
+            MENUITEM "Clear Path Display",          ID_SHOW_SHOWALLPATHS
+        END
+        POPUP "Vehicle"
+        BEGIN
+            MENUITEM "Show/Hide Vehicle Number",    ID_VEHICLE_VEHICLENUMBER
+            MENUITEM "Show Vehicles with Incomplete Trips Only", ID_DEBUG_SHOWVEHICLESWITHINCOMPLETETRIPSONLY
+            MENUITEM "Show Selected Vehicle Only",  ID_VEHICLE_SHOWSELECTEDVEHICLEONLY
+        END
+        MENUITEM "Background Color",            ID_VIEW_BACKGROUNDCOLOR
+        POPUP "Background Image"
+        BEGIN
+            MENUITEM "Background Image Configuration", ID_IMAGE_IMPORTBACKGROUNDIMAGE
+            MENUITEM "Unlock Background Image Position", ID_VIEW_IMAGE
+            MENUITEM "Lock Background Image Position", ID_IMAGE_LOCKBACKGROUNDIMAGEPOSITION
+            MENUITEM "Shift + Mouse Wheel -> Change X Resolution Only", ID_IMAGE_SHIFT
+            MENUITEM "Control + Mouse Wheel -> Change Y Resolution Only", ID_IMAGE_SHIFT32834
+        END
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About NeXTA Version 3...",   ID_APP_ABOUT
+        MENUITEM SEPARATOR
+        MENUITEM "Visit Development Website",   ID_HELP_VISITDEVELOPMENTWEBSITE
+    END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -3289,10 +3390,15 @@ END
 //
 
 IDC_MOVENETWORK         CURSOR                  "res\\cursor1.cur"
+
 IDC_CREATE_LINK_CURSOR  CURSOR                  "res\\cur00001.cur"
+
 IDC_CURSOR_SUBAREA      CURSOR                  "res\\cur00002.cur"
+
 IDC_CURSOR_ZONE         CURSOR                  "res\\cur00003.cur"
+
 IDC_CREATE_NODE_CURSOR  CURSOR                  "res\\create_l.cur"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -3326,9 +3432,24 @@ END
 //
 
 IDR_HTML_DLG_DISPLAY_CONFIGURATION_NODE HTML                    "Dlg_Display_Configuration_Node.htm"
+
 IDR_HTML_DLGZONEPROPERTIES HTML                    "DlgZoneProperties.htm"
+
 IDR_HTML_DLG_ZONEPROPERTIES HTML                    "Dlg_ZoneProperties.htm"
+
 IDR_HTML_DLG_IMPORTGISDATASET HTML                    "Dlg_ImportGISDataSet.htm"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_DIALOG_CONFIG_GIS_TEXT_DISPLAY AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -3916,6 +4037,7 @@ END
 //
 
 IDB_COLOR_RAMP          BITMAP                  "res\\bitmap1.bmp"
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 

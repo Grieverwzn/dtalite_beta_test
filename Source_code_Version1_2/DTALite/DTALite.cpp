@@ -120,6 +120,10 @@ menu -> project -> property -> configuraiton -> debugging -> setup working direc
 
 ***************************/
 
+int g_simulation_time_interval_step = 6;  // in seconds
+int g_simulation_time_intervals_per_min = 60/ g_simulation_time_interval_step;
+double g_DTASimulationInterval_InMin = g_simulation_time_interval_step / 60.0; // min
+
 
 // The one and only application object
 FILE *g_simulation_log_file = NULL;
@@ -138,7 +142,6 @@ FILE *g_ABM_log_file = NULL;
 int g_ABM_log_level = 0;
 
 TCHAR g_SupportedDemandFormat[200] = _T("column, matrix, full_matrix, agent_csv, dsp_vehicle_dat, agent_bin, dynasmart, emme_matrix,trip_csv,transims_trip_file");
-
 
 CWinApp theApp;
 
@@ -191,7 +194,7 @@ std::map<int, DTALinkType> g_LinkTypeMap;
 std::map<int, string> g_NodeControlTypeMap;
 
 // time inteval settings in assignment and simulation
-double g_DTASimulationInterval = 0.10000; // min
+
 
 double g_UnitOfMileOrKM = 1.0000;
 double g_gain_factor_link_travel_time_from_external_input = 0.5;
@@ -6560,7 +6563,7 @@ void g_ReadAMSMovementData()
 	int count = 0;
 	int zero_effective_green_time_error_count = 0;
 
-	if (parser_movement.OpenCSVFile("AMS_movement.csv", false))  // not required
+	if (parser_movement.OpenCSVFile("input_movement.csv", false))  // not required
 	{
 		int up_node_id = 0;
 		int dest_node_id = 0;

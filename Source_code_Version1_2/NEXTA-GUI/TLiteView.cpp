@@ -6463,7 +6463,6 @@ void CTLiteView::OnViewIncreasenodesize()
 	if(pDoc->m_LinkMOEMode != MOE_bottleneck)
 	{
 		pDoc->m_NodeDisplaySize = max(pDoc->m_NodeDisplaySize *1.2, pDoc->m_NodeDisplaySize+1);
-		m_LinkTextFontSize = max((int)(m_LinkTextFontSize*1.2),m_LinkTextFontSize+1);
 
 	}
 	else if(pDoc->m_LinkMOEMode != MOE_vehicle)
@@ -6488,9 +6487,6 @@ void CTLiteView::OnViewDecreatenodesize()
 	{
 		pDoc->m_NodeDisplaySize /=1.2;
 		pDoc->m_NodeDisplaySize = max(0.00001,pDoc->m_NodeDisplaySize);
-		m_LinkTextFontSize = min((int)(m_LinkTextFontSize/1.2),m_LinkTextFontSize-1);
-
-		m_LinkTextFontSize = max(m_LinkTextFontSize,8);
 	}
 	else
 	{

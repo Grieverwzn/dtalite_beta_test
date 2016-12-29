@@ -77,7 +77,7 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 	bool bRadioMessageActive = false;
 	float network_wide_RadioMessageResponsePercentage = 0;
 
-	if ((meso_simulation_time_interval_no) % 10 == 0)  // every one minute
+	if ((meso_simulation_time_interval_no) % g_simulation_time_intervals_per_min == 0)  // every one minute
 	{
 		for (unsigned li = 0; li< g_LinkVector.size(); li++)
 		{
@@ -102,7 +102,7 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 
 	if (g_bInformationUpdatingAndReroutingFlag && g_ODEstimationFlag != 1)
 	{
-		if ((meso_simulation_time_interval_no) % (10 * g_information_updating_interval_in_min) == 0)
+		if ((meso_simulation_time_interval_no) % (g_simulation_time_intervals_per_min * g_information_updating_interval_in_min) == 0)
 		{
 			// reset statistics for departure-time-based travel time collection
 
@@ -155,8 +155,8 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 
 
 	// user_defined information updating 
-	int time_clock_in_min = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no / 10;
-	int time_clock_in_second = g_DemandLoadingStartTimeInMin*60 + meso_simulation_time_interval_no * 6;
+	int time_clock_in_min = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no / g_simulation_time_intervals_per_min;
+	int time_clock_in_second = g_DemandLoadingStartTimeInMin*60 + meso_simulation_time_interval_no * g_simulation_time_interval_step;;
 	output_debug_info_on_screen(time_stamp_in_min, simulation_step_no++, "ExchangeRealTimeSimulationData");
 
 
@@ -185,7 +185,59 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 	struc_real_time_path_computation_element computation_element;
 
 
-	int simulation_time_no = time_stamp_in_min * 10 + meso_simulation_time_interval_no % 10;
+	int simulation_time_no = time_stamp_in_min * g_simulation_time_intervals_per_min + meso_simulation_time_interval_no % g_simulation_time_intervals_per_min;
+
+	for (int vehicle_v = 0; vehicle_v < g_VehicleTDListMap[simulation_time_no].m_AgentIDVector.size(); vehicle_v++)
+	{
+		int agent_id = g_VehicleTDListMap[simulation_time_no].m_AgentIDVector[vehicle_v];
+
+		DTAVehicle* pVeh;
+		if (g_VehicleMap.find(agent_id) == g_VehicleMap.end())
+		{
+			continue;
+
+		}
+		pVeh = g_VehicleMap[agent_id];
+		if (pVeh->m_bLoaded == false)  // not being loaded
+		{
+
+			if (pVeh->m_InformationType == info_pre_trip ||
+				pVeh->m_InformationType == info_en_route_and_pre_trip)
+			{  // vehicle rerouting
+				computation_element.veh_id = pVeh->m_AgentID;
+				computation_element.current_time_stamp = CurrentTime;
+				//				g_AgentBasedPathAdjustmentWithRealTimeInfo(pVeh->m_AgentID  ,CurrentTime);
+				Vector_path_computation_elements.push_back(computation_element);
+
+			}
+
+		}
+	}
+
+	int number_of_threads = g_number_of_CPU_threads_for_real_time_routing();
+
+	int computation_vector_size = Vector_path_computation_elements.size();
+	// calculate pre-trip paths for vehicles 
+	output_debug_info_on_screen(time_stamp_in_min, simulation_step_no++, "calculate pre-trip paths for vehicles ");
+
+#pragma omp parallel for
+	for (int ProcessID = 0; ProcessID < number_of_threads; ProcessID++)
+	{
+		// create network for shortest path calculation at this processor
+		for (int i = 0; i < computation_vector_size; i++)
+		{
+
+			if ((i%number_of_threads) == ProcessID)
+			{
+				g_AgentBasedPathAdjustmentWithRealTimeInfo(ProcessID, Vector_path_computation_elements[i].veh_id, Vector_path_computation_elements[i].current_time_stamp);
+			}
+		}
+	}
+
+	Vector_path_computation_elements.clear();
+
+	output_debug_info_on_screen(time_stamp_in_min, simulation_step_no++, "operations in loading buffer ");
+
 
 	for (int vehicle_v = 0; vehicle_v < g_VehicleTDListMap[simulation_time_no].m_AgentIDVector.size(); vehicle_v++)
 	{
@@ -205,16 +257,6 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 
 		if (pVeh->m_bLoaded == false)  // not being loaded
 		{
-
-			if (pVeh->m_InformationType == info_pre_trip ||
-				pVeh->m_InformationType == info_en_route_and_pre_trip)
-			{  // vehicle rerouting
-				computation_element.veh_id = pVeh->m_AgentID;
-				computation_element.current_time_stamp = CurrentTime;
-				//				g_AgentBasedPathAdjustmentWithRealTimeInfo(pVeh->m_AgentID  ,CurrentTime);
-				Vector_path_computation_elements.push_back(computation_element);
-
-			}
 
 			if (pVeh->m_NodeSize >= 2)  // with physical path
 			{
@@ -310,9 +352,9 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 	}
 
 
-	int number_of_threads = g_number_of_CPU_threads_for_real_time_routing();
+	number_of_threads = g_number_of_CPU_threads_for_real_time_routing();
 
-	int computation_vector_size = Vector_path_computation_elements.size();
+	computation_vector_size = Vector_path_computation_elements.size();
 	// calculate pre-trip paths for vehicles 
 	output_debug_info_on_screen(time_stamp_in_min, simulation_step_no++, "calculate pre-trip paths for vehicles ");
 
@@ -614,7 +656,7 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 
 			if (g_LinkTypeMap[pLink->m_link_type].IsFreeway())
 			{
-				if (g_StochasticCapacityMode &&  pLink->m_StochaticCapcityFlag >= 1 && meso_simulation_time_interval_no % 150 == 0)  // update stochastic capacity every 15 min
+				if (g_StochasticCapacityMode &&  pLink->m_StochaticCapcityFlag >= 1 && meso_simulation_time_interval_no % (15* g_simulation_time_intervals_per_min) == 0)  // update stochastic capacity every 15 min
 				{
 					bool QueueFlag = false;
 
@@ -661,7 +703,7 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 						pLink->m_LeftTurn_SaturationFlowRate_In_vhc_per_hour_per_lane);  /*left turn handling for saturation flow rate*/
 
 					float PerLinkLeftTurnCapacityCountAtCurrentSimulatioInterval = PerHourLeftTurnCapacityAtCurrentSimulatioInterval
-						*g_DTASimulationInterval / 60.0f*pLink->m_LeftTurn_NumberOfLanes;
+						*g_DTASimulationInterval_InMin / 60.0f*pLink->m_LeftTurn_NumberOfLanes;
 
 					if (g_RandomizedCapacityMode)
 					{
@@ -687,7 +729,7 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 			float number_of_lanes = pLink->GetNumberOfLanes(DayNo, CurrentTime, OutFlowFlag);
 
 
-			float number_vehicles_per_simulation_interval = PerHourCapacityAtCurrentSimulatioInterval *g_DTASimulationInterval / 60.0f * number_of_lanes; //60 --> cap per min --> unit # of vehicle per simulation interval
+			float number_vehicles_per_simulation_interval = PerHourCapacityAtCurrentSimulatioInterval *g_DTASimulationInterval_InMin / 60.0f * number_of_lanes; //60 --> cap per min --> unit # of vehicle per simulation interval
 
 			float Capacity = number_vehicles_per_simulation_interval;
 			// use integer number of vehicles as unit of capacity
@@ -752,7 +794,7 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 				float AvailableSpaceCapacity = pLink->m_VehicleSpaceCapacity - NumberOfVehiclesOnThisLinkAtCurrentTime;
 
 				if (g_LinkTypeMap[pLink->m_link_type].IsFreeway())
-					fLinkInCapacity = min(AvailableSpaceCapacity, 1800 * g_DTASimulationInterval / 60.0f* pLink->GetInflowNumberOfLanes(DayNo, CurrentTime));
+					fLinkInCapacity = min(AvailableSpaceCapacity, 1800 * g_DTASimulationInterval_InMin / 60.0f* pLink->GetInflowNumberOfLanes(DayNo, CurrentTime));
 				else // non freeway links
 					fLinkInCapacity = AvailableSpaceCapacity;
 
@@ -877,7 +919,7 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 
 				float PerHourCapacity = pLink->GetHourlyPerLaneCapacity(CurrentTime);  // static capacity from BRP function
 				float number_of_lanes = pLink->GetNumberOfLanes(DayNo, CurrentTime, OutFlowFlag);
-				float number_vehicles_per_simulation_interval = PerHourCapacityAtCurrentSimulatioInterval *g_DTASimulationInterval / 60.0f * number_of_lanes; //60 --> cap per min --> unit # of vehicle per simulation interval
+				float number_vehicles_per_simulation_interval = PerHourCapacityAtCurrentSimulatioInterval *g_DTASimulationInterval_InMin / 60.0f * number_of_lanes; //60 --> cap per min --> unit # of vehicle per simulation interval
 
 				if (CurrentTime >= (g_DemandLoadingEndTimeInMin + g_RelaxInFlowConstraintAfterDemandLoadingTime))  // g_RelaxInFlowConstraintAfterDemandLoadingTime min after demand loading period, do not apply in capacity constraint
 					pLink->LinkInCapacity = 3 * number_of_lanes;  // allow max flow rate into the parking lot to discharge all vehicles
@@ -1152,7 +1194,7 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 
 				int number_of_links = g_VehicleMap[vehicle_id]->m_NodeSize - 1;
 				float ArrivalTimeOnDSN = 0;
-				if (g_floating_point_value_less_than_or_eq_comparison(CurrentTime - g_DTASimulationInterval, vi.event_time_stamp))
+				if (g_floating_point_value_less_than_or_eq_comparison(CurrentTime - g_DTASimulationInterval_InMin, vi.event_time_stamp))
 					// arrival at previous interval
 				{  // no delay 
 					ArrivalTimeOnDSN = vi.event_time_stamp;
@@ -1680,7 +1722,7 @@ bool g_VehicularSimulation(int DayNo, double CurrentTime, int meso_simulation_ti
 							int following_agent_id = g_VehicleMap[vehicle_id]->m_following_agent_id;
 							int new_departure_time = g_VehicleMap[vehicle_id]->m_ArrivalTime + g_VehicleMap[following_agent_id]->m_duration_in_min;
 							g_VehicleMap[following_agent_id]->m_DepartureTime = new_departure_time;
-							g_VehicleTDListMap[new_departure_time * 10].m_AgentIDVector.push_back(following_agent_id);
+							g_VehicleTDListMap[new_departure_time * g_simulation_time_intervals_per_min].m_AgentIDVector.push_back(following_agent_id);
 						}
 					}
 
@@ -1942,7 +1984,7 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 		DTALink* pLink = g_LinkVector[li];
 		pLink->SetupMOE();
 
-		pLink->m_FFTT_simulation_interval = int(pLink->m_FreeFlowTravelTime / g_DTASimulationInterval);
+		pLink->m_FFTT_simulation_interval = int(pLink->m_FreeFlowTravelTime / g_DTASimulationInterval_InMin);
 
 		if (TrafficFlowModelFlag == tfm_point_queue)
 		{
@@ -2063,8 +2105,8 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 	meso_simulation_time_interval_no = 0;
 	for (time = g_DemandLoadingStartTimeInMin; time < min(g_PlanningHorizon, g_SimululationReadyToEnd); meso_simulation_time_interval_no++)  // the simulation time clock is advanced by 0.1 seconds		
 	{
-		time = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no*g_DTASimulationInterval;
-		int time_int = time * 10;
+		time = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no*g_DTASimulationInterval_InMin;
+		int time_int = time * g_simulation_time_intervals_per_min;
 		if (g_VehicleTDListMap.find(time_int) != g_VehicleTDListMap.end())
 		{
 			g_VehicleTDListMap[time_int].m_AgentIDVector.clear();  // reset second dimensional vector		
@@ -2075,8 +2117,8 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 	meso_simulation_time_interval_no = 0;
 	for (time = g_DemandLoadingStartTimeInMin; time < min(g_PlanningHorizon, g_SimululationReadyToEnd); meso_simulation_time_interval_no++)  // the simulation time clock is advanced by 0.1 seconds		
 	{
-		time = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no*g_DTASimulationInterval;
-		int time_int = time * 10;
+		time = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no*g_DTASimulationInterval_InMin;  // time in min:
+		int time_int = g_DemandLoadingStartTimeInMin * g_simulation_time_intervals_per_min + meso_simulation_time_interval_no;
 		if (g_OriginalVehicleTDListMap.find(time_int) != g_OriginalVehicleTDListMap.end())
 		{
 			for (int s = 0; s < g_OriginalVehicleTDListMap[time_int].m_AgentIDVector.size(); s++)
@@ -2092,7 +2134,7 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 
 	for (time = g_DemandLoadingStartTimeInMin; time < min(g_PlanningHorizon, g_SimululationReadyToEnd); meso_simulation_time_interval_no++)  // the simulation time clock is advanced by 0.1 seconds
 	{
-		time = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no*g_DTASimulationInterval;
+		time = g_DemandLoadingStartTimeInMin + meso_simulation_time_interval_no*g_DTASimulationInterval_InMin;
 
 
 
@@ -2106,7 +2148,7 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 				output.NetworkClearanceTimePeriod_in_Min = time - g_DemandLoadingStartTimeInMin;
 			
 		}
-		if (meso_simulation_time_interval_no % 50 == 0 && bPrintOut) // every 5 min
+		if (meso_simulation_time_interval_no % (5* g_simulation_time_intervals_per_min) == 0 && bPrintOut) // every 5 min
 		{
 
 			int hour = ((int)(time)) / 60;
@@ -2119,7 +2161,7 @@ NetworkLoadingOutput g_NetworkLoading(e_traffic_flow_model TrafficFlowModelFlag 
 			g_LogFile << "simulation clock: " << time_str << ", # of vehicles  -- Generated: " << g_Number_of_GeneratedVehicles << ", In network: " << g_Number_of_GeneratedVehicles - g_Number_of_CompletedVehicles << endl;
 		}
 
-		if (meso_simulation_time_interval_no % 600 == 0 && bPrintOut) // every 60 min
+		if (meso_simulation_time_interval_no % (60* g_simulation_time_intervals_per_min) == 0 && bPrintOut) // every 60 min
 		{
 			cout << " -- " << g_GetAppRunningTime() << endl;
 			g_LogFile << " -- " << g_GetAppRunningTime() << endl;
@@ -2474,7 +2516,7 @@ float GetTimeDependentCapacityAtSignalizedIntersection(int CycleLength_in_second
 
 	ASSERT(CycleLength_in_second >= 1);
 
-	float simulation_time_interval_in_second = g_DTASimulationInterval * 60;
+	float simulation_time_interval_in_second = g_DTASimulationInterval_InMin * 60;
 
 	float GreenEndTime_in_second = GreenStartTime_in_second + EffectiveGreenTime_in_second;
 

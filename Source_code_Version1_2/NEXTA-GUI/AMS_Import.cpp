@@ -1123,6 +1123,7 @@ BOOL CTLiteDoc::OnOpenAMSDocument(CString FileName)
 	//				if(link_type_name.size() >=1)
 	type = poFeature->GetFieldAsInteger(link_type_name.c_str ());
 
+
 	if(m_LinkTypeMap.find(type) == m_LinkTypeMap.end() && link_type_waring_map.find(type) ==link_type_waring_map.end() )
 	{   
 		if (type != 0)
@@ -1138,7 +1139,7 @@ BOOL CTLiteDoc::OnOpenAMSDocument(CString FileName)
 		}
 		else
 		{
-			continue;
+			type=0;
 		}
 
 	}

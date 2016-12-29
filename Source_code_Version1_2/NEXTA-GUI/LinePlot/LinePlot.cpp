@@ -19,6 +19,9 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "..\TLite.h"
+#include "..\Network.h"
+#include "..\TLiteDoc.h"
 #include "LinePlotTest.h"
 #include "LinePlot.h"
 #include "math.h"
@@ -1072,11 +1075,12 @@ CPlotData &CLinePlot::operator[](UINT unIndex)
 };
 /////////////////////////////////////////////////////////////////////////////
 
-int CLinePlot::Add(CString szName, COLORREF crColor, enumPlotStyle nStyle, FLOATPOINT *pptData, UINT uiPointCount)
+int CLinePlot::Add(CString szName, COLORREF crColor, enumPlotStyle nStyle, FLOATPOINT *pptData, UINT uiPointCount, int LinkNo)
 {
 	//  create a new plot
 	CPlotData PlotData(szName, crColor, (int)(nStyle), pptData, uiPointCount);
 	m_lstPlotData.push_back(PlotData);
+
 	//  change the selected one to this one.
 	m_nSelected = m_lstPlotData.size()-1;
 	//  should the x-axis limits be adjusted?
@@ -1472,12 +1476,12 @@ void CLinePlot::OnMouseMove(UINT nFlags, CPoint point)
 
 void CLinePlot::EmitSelectionChanged()
 {
-	CWnd *pwndParent = GetParent();
-	NMHDR msgNotif;
-	msgNotif.code = NM_PLOT_SEL_CHANGE;
-	msgNotif.hwndFrom = this->GetSafeHwnd();
-	msgNotif.idFrom = this->GetDlgCtrlID();
-	pwndParent->SendMessage(WM_NOTIFY, 0, (UINT)&msgNotif);
+	//CWnd *pwndParent = GetParent();
+	//NMHDR msgNotif;
+	//msgNotif.code = NM_PLOT_SEL_CHANGE;
+	//msgNotif.hwndFrom = this->GetSafeHwnd();
+	//msgNotif.idFrom = this->GetDlgCtrlID();
+	//pwndParent->SendMessage(WM_NOTIFY, 0, (UINT)&msgNotif);
 }
 /////////////////////////////////////////////////////////////////////////////
 
@@ -1747,6 +1751,8 @@ void CLinePlot::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 	m_SelectedDataItemNo = -1;
 	double screen_distance = 99999;
+	int ii_selected = -1;
+
 	for (int ii=0; ii<m_lstPlotData.size(); ii++)
 	{
 	if (m_lstPlotData[ii].m_nStyle == enum_LpScatter && ii == m_nSelected)
@@ -1767,23 +1773,44 @@ void CLinePlot::OnLButtonDblClk(UINT nFlags, CPoint point)
 				{
 					screen_distance = distance;
 					m_SelectedDataItemNo = p;
+					ii_selected = ii;
 				}
 				}
 			}
 
 	  }
 	}
-	if(screen_distance< 50)
+	if (screen_distance < 50)
 	{
 
-	CWnd *pwndParent = GetParent();
-	NMHDR msgNotif;
-	msgNotif.code = NM_PLOT_SEL_CHANGE;
-	msgNotif.hwndFrom = this->GetSafeHwnd();
-	msgNotif.idFrom = this->GetDlgCtrlID();
-	pwndParent->SendMessage(WM_NOTIFY, 0, (UINT)&msgNotif);	
-	Invalidate();	
-	}
+		int SelDataItemNo = m_SelectedDataItemNo;
 
+		UpdateData(1);
+
+		if (SelDataItemNo >= 0)
+		{
+			int LinkNo = m_lstPlotData[ii_selected].m_PointData[m_SelectedDataItemNo].LinkNo;
+			if (LinkNo >= 0)
+			{
+
+				std::list<CTLiteDoc*>::iterator iDoc = g_DocumentList.begin();
+				while (iDoc != g_DocumentList.end())
+				{
+					(*iDoc)->m_SelectedLinkNo = LinkNo;
+					(*iDoc)->ZoomToSelectedLink((*iDoc)->m_SelectedLinkNo);
+
+
+					iDoc++;
+				}
+
+
+
+
+
+			}
+
+			Invalidate();
+		}
+	}
 	CWnd::OnLButtonDblClk(nFlags, point);
 }

@@ -94,6 +94,10 @@ extern e_signal_representation_model g_SignalRepresentationFlag;
 #define _MAX_ODT_PATH_SIZE_4_ODME 50
 #define _MAX_PATH_NODE_SIZE_4_ODME 300
 
+extern int g_simulation_time_interval_step;
+extern int g_simulation_time_intervals_per_min;
+
+
 extern int g_ODZoneNumberSize;
 extern int g_ODZoneIDSize;
 extern int g_number_of_prohibited_movements;
@@ -108,7 +112,7 @@ enum Traffic_State {FreeFlow,PartiallyCongested,FullyCongested};
 enum Traffic_MOE {MOE_crashes,MOE_CO2, MOE_total_energy};
 
 enum Tolling_Method {no_toll,time_dependent_toll,VMT_toll,SO_toll};
-extern double g_DTASimulationInterval;
+extern double g_DTASimulationInterval_InMin;
 
 
 extern int g_CalculateUEGapForAllAgents;
@@ -2222,14 +2226,14 @@ return pow(((p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y)),0.5);
 			m_BPRLinkTravelTimeVector[p] = m_FreeFlowTravelTime;
 			m_BPRLinkTravelCostVector[p] = m_FreeFlowTravelTime;
 		}
-		m_FFTT_simulation_interval = int(m_FreeFlowTravelTime/g_DTASimulationInterval);
+		m_FFTT_simulation_interval = int(m_FreeFlowTravelTime/g_DTASimulationInterval_InMin);
 		LoadingBufferVector = NULL;
 
 		MicroSimulationLastVehiclePassingTimeStamp = 0;
 
 		LoadingBufferSize = 0;
 
-		m_BackwardWaveTimeInSimulationInterval = int(m_Length/m_BackwardWaveSpeed*60/g_DTASimulationInterval); // assume backwave speed is 20 mph, 600 conversts hour to simulation intervals
+		m_BackwardWaveTimeInSimulationInterval = int(m_Length/m_BackwardWaveSpeed*60/g_DTASimulationInterval_InMin); // assume backwave speed is 20 mph, 600 conversts hour to simulation intervals
 
 		CFlowArrivalCount = 0;
 		CFlowImpactedCount = 0;

@@ -215,10 +215,22 @@ BOOL CTLiteApp::InitInstance()
 
 		}else
 		{
-        m_pDocTemplate2DView = new CMultiDocTemplate(IDR_TLiteTYPE1,
-                RUNTIME_CLASS(CTLiteDoc),
-                RUNTIME_CLASS(CChildFrame), // custom MDI child frame
-                RUNTIME_CLASS(CTLiteView));
+
+
+
+#ifndef _WIN64
+		m_pDocTemplate2DView = new CMultiDocTemplate(IDR_TLITETYPE3,
+			RUNTIME_CLASS(CTLiteDoc),
+			RUNTIME_CLASS(CChildFrame), // custom MDI child frame
+			RUNTIME_CLASS(CTLiteView)); 
+#else
+			m_pDocTemplate2DView = new CMultiDocTemplate(IDR_TLITETYPE1,
+				RUNTIME_CLASS(CTLiteDoc),
+				RUNTIME_CLASS(CChildFrame), // custom MDI child frame
+				RUNTIME_CLASS(CTLiteView));
+
+#endif
+
 		
 		
 		}

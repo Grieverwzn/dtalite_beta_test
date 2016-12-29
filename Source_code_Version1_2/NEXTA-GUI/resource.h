@@ -92,6 +92,8 @@
 #define IDS_STRING10101                 153
 #define IDD_DIALOG_LinkProperties       154
 #define IDR_TLiteTYPE2                  154
+#define IDR_TLITETYPE3                  254
+
 #define IDS_STRING10102                 154
 #define IDD_DIALOG_Settings             155
 #define IDS_STRING10103                 155
@@ -572,6 +574,7 @@
 #define IDC_CHECK_OPTIMIZATIONMETHOD    1226
 #define IDC_COMBO_STUDY_PERIOD          1226
 #define IDC_CHECK_OPTIMIZATION_OBS      1227
+#define IDC_BUTTON_INCREASE_LINK_TEXT_SIZE3 1227
 #define IDC_HIDE_RIGHT_TURN             1228
 #define IDC_COMBOTIMINGPLAN             1229
 #define IDC_COMBO_Timing_Plan_2         1230
@@ -1512,7 +1515,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        258
+#define _APS_NEXT_RESOURCE_VALUE        259
 #define _APS_NEXT_COMMAND_VALUE         33816
 #define _APS_NEXT_CONTROL_VALUE         1330
 #define _APS_NEXT_SYMED_VALUE           109

@@ -154,6 +154,8 @@ class CLinePlot : public CWnd
   //  constants.
   public:
 
+
+
 	  int              m_SelectedDataItemNo;
 	  int                m_nSelected;
 	  int m_StartHour, m_AggregationWindow;
@@ -205,7 +207,7 @@ class CLinePlot : public CWnd
   public:
 	int m_XScaleInterval;
   	BOOL              Create(const RECT& rect, UINT uiFlags, CWnd* pwndParent, UINT uiID);
-    int               Add(CString szName, COLORREF crColor, enumPlotStyle nStyle, FLOATPOINT *pptData, UINT uiPointCount);
+    int               Add(CString szName, COLORREF crColor, enumPlotStyle nStyle, FLOATPOINT *pptData, UINT uiPointCount, int LinkNo);
     int               Add(CString szName, COLORREF crColor, enumPlotStyle nStyle, std::vector<FLOATPOINT> *pvecData);
 	  void              Clear();
 	  bool              Remove(int nIndex);

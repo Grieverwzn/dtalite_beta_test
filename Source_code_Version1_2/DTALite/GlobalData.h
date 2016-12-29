@@ -305,7 +305,7 @@ extern HistoricalDemand g_SystemDemand;
 extern std::vector<NetworkMOE>  g_NetworkMOEAry;
 
 // time inteval settings in assignment and simulation
-extern double g_DTASimulationInterval; // min
+extern double g_DTASimulationInterval_InMin; // min
 extern int g_number_of_intervals_per_min; // round to nearest integer
 extern int g_number_of_car_following_intervals_per_min;
 extern int g_AggregationTimetInterval; // min

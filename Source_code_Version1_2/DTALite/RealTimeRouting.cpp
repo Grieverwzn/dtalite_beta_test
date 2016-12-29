@@ -441,20 +441,29 @@ void g_AgentBasedPathAdjustmentWithRealTimeInfo(int ProcessID, int VehicleID , d
 		// if this is a pre-trip vehicle, and he has not obtained real-time information yet
 
 
+			if (pVeh->m_bLoaded == true)
+			{
+				CurrentLinkID = pVeh->m_LinkAry[pVeh->m_SimLinkSequenceNo].LinkNo;
+				StartingNodeID = g_LinkVector[CurrentLinkID]->m_ToNodeID;
+			}
+			else
+			{
+				CurrentLinkID = -1;
+				StartingNodeID = pVeh->m_OriginNodeID ;
 
-			CurrentLinkID = pVeh->m_LinkAry[pVeh->m_SimLinkSequenceNo].LinkNo;
-			StartingNodeID = g_LinkVector[CurrentLinkID]->m_ToNodeID;
-
+			}
 			if(StartingNodeID == pVeh->m_DestinationNodeID )  // you will reach the destination (on the last link).
 				return;
 
 			// copy existing link number (and remaining links)
-
+			if(pVeh->m_bLoaded == true)
+			{
 			for(int i = 0; i< pVeh->m_NodeSize -1; i++)
 			{
 				CurrentPathLinkList[i] = 	pVeh->m_LinkAry[i].LinkNo;
 				AbsArrivalTimeOnDSNVector[i]= pVeh->m_LinkAry[i].AbsArrivalTimeOnDSN ;
 			}
+			
 
 
 			link_count = pVeh->m_SimLinkSequenceNo;
@@ -466,7 +475,7 @@ void g_AgentBasedPathAdjustmentWithRealTimeInfo(int ProcessID, int VehicleID , d
 				
 			}
 			
-
+			}
 			//if(is.Type == 2) // detour VMS
 			//{
 			//for(int ll = 0; ll < is.DetourLinkSize ; ll++)
@@ -507,6 +516,9 @@ void g_AgentBasedPathAdjustmentWithRealTimeInfo(int ProcessID, int VehicleID , d
 
 		if (bSwitchFlag == 1)  // logging
 		{
+			if (CurrentLinkID != -1)
+			{
+			
 			_proxy_ABM_log(0, "** enroute-info agent %d's with destination node %d, on link %d->%d, current path",
 				pVeh->m_AgentID,
 				g_NodeVector[pVeh->m_DestinationNodeID].m_NodeNumber,
@@ -542,7 +554,7 @@ void g_AgentBasedPathAdjustmentWithRealTimeInfo(int ProcessID, int VehicleID , d
 
 			}
 			_proxy_ABM_log(-1, "\n");
-
+			}
 		}
 
 

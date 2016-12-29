@@ -3,6 +3,7 @@
 #include "io.h"
 
 
+
 CXMLFile::CXMLFile(void)
 {
 	// Init members
@@ -37,48 +38,48 @@ void CXMLFile::Unload()
 
 BOOL CXMLFile::LoadFromFile(LPTSTR lpszXMLFilePath)
 {
-	BOOL bResult = FALSE;
+//	BOOL bResult = FALSE;
+//
+//	// Unload previously loaded XML file
+//	Unload();
+//
+//	// Try to open XML file
+//	FILE* xmlFile = _tfopen(lpszXMLFilePath, _T("r"));
+//	if (xmlFile != NULL)
+//	{
+//		// Get file length
+//		m_dwDataSize = _filelength(xmlFile->_file);
+//
+//		// Read file data
+//		m_lpData = (BYTE*)malloc(m_dwDataSize*sizeof(BYTE));
+//		DWORD dwActualSize = 0;
+//		if ((dwActualSize=(DWORD)fread(m_lpData, sizeof(BYTE), m_dwDataSize, xmlFile)))
+//		{
+//			// Update actual data size
+//			if (dwActualSize != m_dwDataSize)
+//			{
+//				m_dwDataSize = dwActualSize;
+//				m_lpData = (BYTE*)realloc(m_lpData, m_dwDataSize*sizeof(BYTE));
+//			}
+//
+//			// Create "XML:ROOT" element
+//			m_lpXMLElement = new CXMLElement();
+//			m_lpXMLElement->Create(_T("XML:ROOT"), XET_TAG);
+//
+//			// Parse XML file
+//			DWORD dwStartOffset = 0;
+//			DWORD dwEndOffset = m_dwDataSize;
+//			if (ParseXMLElement(m_lpXMLElement, dwStartOffset, dwEndOffset))
+//			{
+//				bResult = TRUE;
+//			}
+//		}
+//
+//		// Close XML file
+//		fclose(xmlFile);
+//	}
 
-	// Unload previously loaded XML file
-	Unload();
-
-	// Try to open XML file
-	FILE* xmlFile = _tfopen(lpszXMLFilePath, _T("r"));
-	if (xmlFile != NULL)
-	{
-		// Get file length
-		m_dwDataSize = _filelength(xmlFile->_file);
-
-		// Read file data
-		m_lpData = (BYTE*)malloc(m_dwDataSize*sizeof(BYTE));
-		DWORD dwActualSize = 0;
-		if ((dwActualSize=(DWORD)fread(m_lpData, sizeof(BYTE), m_dwDataSize, xmlFile)))
-		{
-			// Update actual data size
-			if (dwActualSize != m_dwDataSize)
-			{
-				m_dwDataSize = dwActualSize;
-				m_lpData = (BYTE*)realloc(m_lpData, m_dwDataSize*sizeof(BYTE));
-			}
-
-			// Create "XML:ROOT" element
-			m_lpXMLElement = new CXMLElement();
-			m_lpXMLElement->Create(_T("XML:ROOT"), XET_TAG);
-
-			// Parse XML file
-			DWORD dwStartOffset = 0;
-			DWORD dwEndOffset = m_dwDataSize;
-			if (ParseXMLElement(m_lpXMLElement, dwStartOffset, dwEndOffset))
-			{
-				bResult = TRUE;
-			}
-		}
-
-		// Close XML file
-		fclose(xmlFile);
-	}
-
-	return bResult;
+	return true;
 }
 
 BOOL CXMLFile::LoadFromStream(LPBYTE lpData, DWORD dwDataSize)
